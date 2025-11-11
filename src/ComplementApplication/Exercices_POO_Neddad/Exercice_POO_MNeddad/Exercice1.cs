@@ -2,7 +2,7 @@
 
 namespace Exercice_POO_MNeddad
 {
-    class Program
+    class Exercice1
     {
         static void Main()
         {
