@@ -75,3 +75,29 @@ decimal prixLait1 = selectLait.Acheter(-2);
 if (prixLait1>0) WriteLine($"Total a payer : {prixLait1} Eur");
 decimal prixLait2 = selectLait.Acheter(120);
 if (prixLait2>0) WriteLine($"Total a payer : {prixLait2} Eur");
+
+WriteLine("-------- Exercice 5 --------");
+
+// Création des animaux
+Animal[] pets = new Animal[4];
+pets[0]  = new Chien("Max", 6, "Chien");
+pets[1] = new Chat("Minou", 8, "Chat");
+pets[2] = new Oiseau("Piw", 1, "Oiseau", "Bleu");
+pets[3] = new Chat("Eyra", 12, "puma");
+
+// Test individuel
+foreach (var pet in pets)
+{
+    pet.FaireBruit();
+    switch (pet.EspeceType)
+    {
+        case "Chien" : pet.Manger("Os");
+            break;
+        case "Oiseau" : pet.Manger("graines");
+            break;
+        case "Chat" : pet.Manger("croquettes");
+            break;
+        default: pet.Manger("Sa nouriture");
+            break;
+    }
+}
