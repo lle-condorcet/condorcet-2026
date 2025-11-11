@@ -6,6 +6,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Conditions", "Conditions\Co
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Loops", "Loops\Loops.csproj", "{70E92B59-D9B0-4038-83E0-6E67147D87E5}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Exercice_POO_MNeddad", "Exercices_POO_Neddad\Exercice_POO_MNeddad\Exercice_POO_MNeddad.csproj", "{696F530A-6DDB-4158-8D97-A2E6895BD402}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -24,5 +26,9 @@ Global
 		{70E92B59-D9B0-4038-83E0-6E67147D87E5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{70E92B59-D9B0-4038-83E0-6E67147D87E5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{70E92B59-D9B0-4038-83E0-6E67147D87E5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{696F530A-6DDB-4158-8D97-A2E6895BD402}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{696F530A-6DDB-4158-8D97-A2E6895BD402}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{696F530A-6DDB-4158-8D97-A2E6895BD402}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{696F530A-6DDB-4158-8D97-A2E6895BD402}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
