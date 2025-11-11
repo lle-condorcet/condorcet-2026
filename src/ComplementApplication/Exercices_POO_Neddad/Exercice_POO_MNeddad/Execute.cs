@@ -56,3 +56,22 @@ foreach (var nrn in nrnTests)
 }
 
 WriteLine("-------- Exercice 4 --------");
+
+Magasin magasin = new Magasin("EspaceMarket");
+Produit banane = new Produit("Banane", 1.49m, 150);
+Produit lait = new Produit("Lait", 0.92m, 97);
+
+magasin.AjouterProduit(banane);
+magasin.AjouterProduit(lait);
+magasin.AfficherProduits();
+
+Produit selectBanane = magasin.TrouverProduit("Banane");
+decimal prixBanane = selectBanane.Acheter(2);
+if (prixBanane>0) WriteLine($"Total a payer : {prixBanane} Eur");
+magasin.AfficherProduits();
+Produit selectPomme = magasin.TrouverProduit("Pomme");
+Produit selectLait = magasin.TrouverProduit("Lait");
+decimal prixLait1 = selectLait.Acheter(-2);
+if (prixLait1>0) WriteLine($"Total a payer : {prixLait1} Eur");
+decimal prixLait2 = selectLait.Acheter(120);
+if (prixLait2>0) WriteLine($"Total a payer : {prixLait2} Eur");
