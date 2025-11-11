@@ -101,3 +101,15 @@ foreach (var pet in pets)
             break;
     }
 }
+
+WriteLine("-------- Exercice 6 --------");
+
+var e1 = new Etudiant("Ali", "A001", new List<decimal> { 14, 16, 12 });
+var e2 = new Etudiant("Sara", "A002", new List<decimal> { 8, 10, 9 });
+var e3 = new Etudiant("Lina", "A003", new List<decimal> { 18, 17, 19 });
+var e4 = new Etudiant("Omar", "A004", new List<decimal>());  // aucunne note
+e4.AjouterNote(25);    // note invalide
+e4.AjouterNote(15);    // note valide
+var classe = new Classe("Informatique", new List<Etudiant> { e1, e2, e3, e4 });
+classe.AfficherTous(); // tests complets
+new Classe("Vide", new List<Etudiant>()).AfficherTous(); // test classe sans étudiant
