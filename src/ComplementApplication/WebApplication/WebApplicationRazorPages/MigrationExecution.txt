@@ -103,3 +103,121 @@ info: Microsoft.EntityFrameworkCore.Database.Command[20101]
 info: Microsoft.EntityFrameworkCore.Database.Command[20101]
       Executed DbCommand (1ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
       DELETE FROM "__EFMigrationsLock";
+      
+PS D:\condorcet-2026\src\ComplementApplication\WebApplication\WebApplicationRazorPages> dotnet ef migrations add InitialSeed --context ApplicationDbContext       
+Build started...
+Build succeeded.
+The Entity Framework tools version '9.0.5' is older than that of the runtime '9.0.11'. Update the tools for the latest features and bug fixes. See https://aka.ms/AAc1fbw for more information.
+Done. To undo this action, use 'ef migrations remove'
+PS D:\condorcet-2026\src\ComplementApplication\WebApplication\WebApplicationRazorPages> dotnet ef database update --context ApplicationDbContext
+Build started...
+Build succeeded.
+The Entity Framework tools version '9.0.5' is older than that of the runtime '9.0.11'. Update the tools for the latest features and bug fixes. See https://aka.ms/AAc1fbw for more information.
+info: Microsoft.EntityFrameworkCore.Migrations[20411]
+      Acquiring an exclusive lock for migration application. See https://aka.ms/efcore-docs-migrations-lock for more information if this takes too long.
+Acquiring an exclusive lock for migration application. See https://aka.ms/efcore-docs-migrations-lock for more information if this takes too long.
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (6ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT COUNT(*) FROM "sqlite_master" WHERE "name" = '__EFMigrationsLock' AND "type" = 'table';
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (5ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      INSERT OR IGNORE INTO "__EFMigrationsLock"("Id", "Timestamp") VALUES(1, '2025-12-10 19:31:52.0250042+00:00');
+      SELECT changes();
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE TABLE IF NOT EXISTS "__EFMigrationsHistory" (
+          "MigrationId" TEXT NOT NULL CONSTRAINT "PK___EFMigrationsHistory" PRIMARY KEY,
+          "ProductVersion" TEXT NOT NULL
+      );
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT COUNT(*) FROM "sqlite_master" WHERE "name" = '__EFMigrationsHistory' AND "type" = 'table';
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT "MigrationId", "ProductVersion"
+      FROM "__EFMigrationsHistory"
+      ORDER BY "MigrationId";
+info: Microsoft.EntityFrameworkCore.Migrations[20402]
+      Applying migration '20251210192950_InitialSeed'.
+Applying migration '20251210192950_InitialSeed'.
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      INSERT INTO "Job" ("Id", "Name")
+      VALUES (1, 'Employé');
+      SELECT changes();
+      
+      INSERT INTO "Job" ("Id", "Name")
+      VALUES (2, 'Ouvrier');
+      SELECT changes();
+      
+      INSERT INTO "Job" ("Id", "Name")
+      VALUES (3, 'Indépendant');
+      SELECT changes();
+      
+      INSERT INTO "Job" ("Id", "Name")
+      VALUES (4, 'Chef d''entreprise');
+      SELECT changes();
+      
+      INSERT INTO "Job" ("Id", "Name")
+      VALUES (5, 'Cadre');
+      SELECT changes();
+      
+      INSERT INTO "Job" ("Id", "Name")
+      VALUES (6, 'Profession libérale');
+      SELECT changes();
+      
+      INSERT INTO "Job" ("Id", "Name")
+      VALUES (7, 'Fonctionnaire');
+      SELECT changes();
+      
+      INSERT INTO "Job" ("Id", "Name")
+      VALUES (8, 'Enseignant');
+      SELECT changes();
+      
+      INSERT INTO "Job" ("Id", "Name")
+      VALUES (9, 'Politicien');
+      SELECT changes();
+      
+      INSERT INTO "Job" ("Id", "Name")
+      VALUES (10, 'Journaliste');
+      SELECT changes();
+      
+      INSERT INTO "Job" ("Id", "Name")
+      VALUES (11, 'Artiste');
+      SELECT changes();
+      
+      INSERT INTO "Job" ("Id", "Name")
+      VALUES (12, 'Artisan');
+      SELECT changes();
+      
+      INSERT INTO "Job" ("Id", "Name")
+      VALUES (13, 'Retraité');
+      SELECT changes();
+      
+      INSERT INTO "Job" ("Id", "Name")
+      VALUES (14, 'Etudiant');
+      SELECT changes();
+      
+      INSERT INTO "Job" ("Id", "Name")
+      VALUES (15, 'Demandeur d''emploi');
+      SELECT changes();
+      
+      INSERT INTO "Job" ("Id", "Name")
+      VALUES (16, 'Sans');
+      SELECT changes();
+      
+      INSERT INTO "Job" ("Id", "Name")
+      VALUES (17, 'Autre');
+      SELECT changes();
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      INSERT INTO "Person" ("Id", "BirthDate", "Email", "FullName", "IsAlive", "JobId")
+      VALUES (1, '1970-07-23 00:00:00', 'john.doe@test.be', 'John Doe', 1, 6);
+      SELECT changes();
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+      VALUES ('20251210192950_InitialSeed', '9.0.11');
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (1ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      DELETE FROM "__EFMigrationsLock";

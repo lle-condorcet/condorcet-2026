@@ -1,0 +1,59 @@
+﻿@page
+@model WebApplicationRazorPages.Pages.Persons.List
+
+<table class="table table-striped">
+    <thead>
+    <tr>
+        <th scope="col">#</th>
+        <th scope="col">Nom et prénom</th>
+        <th scope="col">Adresse e-mail</th>
+        <th scope="col">Date de naissance</th>
+        <th scope="col">Est en vie ?</th>
+        <th scope="col">Job</th>
+        <th scope="col">Action(s)</th>
+    </tr>
+    </thead>
+    <tbody>
+        @foreach (List.PersonViewModel person in Model.Persons)
+        {
+            <tr>
+                <th scope="row">@person.Id</th>
+                <td>@person.FullName</td>
+                <td>@(person.Email ?? "-")</td>
+                <td>
+                    @* Use application base culture *@
+                    @person.BirthDate.ToShortDateString()
+                    @* fr-FR, fr-BE, fr-CA *@
+                    @* 100.000,00 € *@
+                    @* 100 000,00 $ *@
+                    @* ToString("C") => show number in currency display *@
+                    @* To avoid in case of several culture handling *@
+                    @* @person.BirthDate.ToString("dd/MM/yyyy") *@
+                </td>
+                <td>
+                    @* @if (person.IsAlive) *@
+                    @* { *@
+                    @*     <div class="form-check"> *@
+                    @*         <input class="form-check-input" type="checkbox" value="" id="checkCheckedDisabled" checked disabled> *@
+                    @*     </div> *@
+                    @* } *@
+                    @* else *@
+                    @* { *@
+                    @*     <div class="form-check"> *@
+                    @*         <input class="form-check-input" type="checkbox" value="" id="checkCheckedDisabled" disabled> *@
+                    @*     </div> *@
+                    @* } *@
+                    
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" value="" @(person.IsAlive ? "checked" : "") disabled>
+                    </div>
+                </td>
+                <td>@person.JobName</td>
+                <td>
+                    @* TODO: create action buttons *@
+                    <a class="btn btn-danger" asp-page-handler="Delete" asp-route-id="@person.Id">Supprimer</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
