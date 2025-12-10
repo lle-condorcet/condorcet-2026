@@ -1,0 +1,976 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LINQ with Entity Framework - Cheatsheet</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+            animation: slideDown 0.6s ease-out;
+        }
+
+        header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        header p {
+            font-size: 1.1em;
+            opacity: 0.95;
+        }
+
+        .section {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        .section h2 {
+            color: #667eea;
+            margin-bottom: 25px;
+            font-size: 1.6em;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .cheatsheet-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 25px;
+            margin-bottom: 20px;
+        }
+
+        .code-block {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            border-radius: 8px;
+        }
+
+        .code-block h3 {
+            color: #667eea;
+            font-size: 1.1em;
+            margin-bottom: 10px;
+        }
+
+        .code-block p {
+            font-size: 0.9em;
+            margin-bottom: 10px;
+            color: #666;
+        }
+
+        pre {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 15px;
+            border-radius: 6px;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85em;
+            line-height: 1.5;
+            margin-top: 10px;
+        }
+
+        .code-keyword {
+            color: #569cd6;
+        }
+
+        .code-type {
+            color: #4ec9b0;
+        }
+
+        .code-string {
+            color: #ce9178;
+        }
+
+        .code-comment {
+            color: #6a9955;
+        }
+
+        .code-method {
+            color: #dcdcaa;
+        }
+
+        .code-property {
+            color: #d7ba7d;
+        }
+
+        .comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 20px 0;
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            border: 2px solid #667eea;
+        }
+
+        .comparison-col {
+            padding: 10px;
+        }
+
+        .comparison-col h4 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 1em;
+        }
+
+        .note {
+            background: #fff3cd;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            font-size: 0.95em;
+        }
+
+        .note strong {
+            color: #667eea;
+        }
+
+        .table-scroll {
+            overflow-x: auto;
+            margin: 20px 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+
+        table th {
+            background: #667eea;
+            color: white;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        table td {
+            padding: 12px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .tag {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            margin-right: 8px;
+            margin-bottom: 8px;
+        }
+
+        .tag.warning {
+            background: #ff6b6b;
+        }
+
+        .tag.success {
+            background: #51cf66;
+        }
+
+        @media (max-width: 768px) {
+            .cheatsheet-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .comparison {
+                grid-template-columns: 1fr;
+            }
+
+            header h1 {
+                font-size: 1.8em;
+            }
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📚 LINQ with Entity Framework</h1>
+            <p>Cheatsheet complète - Toutes les opérations essentielles</p>
+        </header>
+
+        <!-- SECTION: SELECT -->
+        <div class="section">
+            <h2>🔍 SELECT - Projection et Récupération</h2>
+            <div class="cheatsheet-grid">
+                <div class="code-block">
+                    <h3>Récupérer tous les enregistrements</h3>
+                    <p>Retourne une liste complète</p>
+                    <pre><span class="code-keyword">var</span> users = <span class="code-keyword">await</span> _db.Users.<span class="code-method">ToListAsync</span>();</pre>
+                </div>
+
+                <div class="code-block">
+                    <h3>Récupérer le premier élément</h3>
+                    <p>Retourne un seul objet ou null</p>
+                    <pre><span class="code-keyword">var</span> user = <span class="code-keyword">await</span> _db.Users
+    .<span class="code-method">FirstOrDefaultAsync</span>();</pre>
+                </div>
+
+                <div class="code-block">
+                    <h3>Projection avec Select</h3>
+                    <p>Transformer les données</p>
+                    <pre><span class="code-keyword">var</span> names = <span class="code-keyword">await</span> _db.Users
+    .<span class="code-method">Select</span>(u => u.Name)
+    .<span class="code-method">ToListAsync</span>();</pre>
+                </div>
+
+                <div class="code-block">
+                    <h3>Projection en objet anonyme</h3>
+                    <p>Créer une nouvelle structure</p>
+                    <pre><span class="code-keyword">var</span> result = <span class="code-keyword">await</span> _db.Users
+    .<span class="code-method">Select</span>(u => <span class="code-keyword">new</span> { u.Id, u.Name })
+    .<span class="code-method">ToListAsync</span>();</pre>
+                </div>
+
+                <div class="code-block">
+                    <h3>Récupérer distinctement</h3>
+                    <p>Éliminer les doublons</p>
+                    <pre><span class="code-keyword">var</span> countries = <span class="code-keyword">await</span> _db.Users
+    .<span class="code-method">Select</span>(u => u.Country)
+    .<span class="code-method">Distinct</span>()
+    .<span class="code-method">ToListAsync</span>();</pre>
+                </div>
+
+                <div class="code-block">
+                    <h3>Récupérer un nombre spécifique</h3>
+                    <p>Limiter les résultats</p>
+                    <pre><span class="code-keyword">var</span> top5 = <span class="code-keyword">await</span> _db.Users
+    .<span class="code-method">Take</span>(5)
+    .<span class="code-method">ToListAsync</span>();</pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION: WHERE -->
+        <div class="section">
+            <h2>🔎 WHERE - Filtrage</h2>
+            <div class="cheatsheet-grid">
+                <div class="code-block">
+                    <h3>Filtrage simple</h3>
+                    <p>Une condition</p>
+                    <pre><span class="code-keyword">var</span> adults = <span class="code-keyword">await</span> _db.Users
+    .<span class="code-method">Where</span>(u => u.Age >= 18)
+    .<span class="code-method">ToListAsync</span>();</pre>
+                </div>
+
+                <div class="code-block">
+                    <h3>Filtrage avec AND (&&)</h3>
+                    <p>Plusieurs conditions</p>
+                    <pre><span class="code-keyword">var</span> result = <span class="code-keyword">await</span> _db.Users
+    .<span class="code-method">Where</span>(u => u.Age >= 18 && u.IsActive)
+    .<span class="code-method">ToListAsync</span>();</pre>
+                </div>
+
+                <div class="code-block">
+                    <h3>Filtrage avec OR (||)</h3>
+                    <p>Une condition ou l'autre</p>
+                    <pre><span class="code-keyword">var</span> result = <span class="code-keyword">await</span> _db.Users
+    .<span class="code-method">Where</span>(u => u.Role == <span class="code-string">"Admin"</span> 
+               || u.Role == <span class="code-string">"Manager"</span>)
+    .<span class="code-method">ToListAsync</span>();</pre>
+                </div>
+
+                <div class="code-block">
+                    <h3>Filtrage par chaîne de caractères</h3>
+                    <p>Recherche textuelle</p>
+                    <pre><span class="code-keyword">var</span> result = <span class="code-keyword">await</span> _db.Users
+    .<span class="code-method">Where</span>(u => u.Name.<span class="code-method">Contains</span>(<span class="code-string">"John"</span>))
+    .<span class="code-method">ToListAsync</span>();</pre>
+                </div>
+
+                <div class="code-block">
+                    <h3>Filtrage avec StartsWith/EndsWith</h3>
+                    <p>Vérifier le début/fin</p>
+                    <pre><span class="code-keyword">var</span> result = <span class="code-keyword">await</span> _db.Users
+    .<span class="code-method">Where</span>(u => u.Email.<span class="code-method">EndsWith</span>(<span class="code-string">"@gmail.com"</span>))
+    .<span class="code-method">ToListAsync</span>();</pre>
+                </div>
+
+                <div class="code-block">
+                    <h3>Filtrage avec liste (IN)</h3>
+                    <p>Vérifier si dans une liste</p>
+                    <pre><span class="code-keyword">var</span> ids = <span class="code-keyword">new</span> [] { 1, 2, 3 };
+<span class="code-keyword">var</span> result = <span class="code-keyword">await</span> _db.Users
+    .<span class="code-method">Where</span>(u => ids.<span class="code-method">Contains</span>(u.Id))
+    .<span class="code-method">ToListAsync</span>();</pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION: INCLUDE/JOIN -->
+        <div class="section">
+            <h2>🔗 INCLUDE & JOIN - Relations</h2>
+            <div class="cheatsheet-grid">
+                <div class="code-block">
+                    <h3>Include - Eager Loading</h3>
+                    <p>Charger les données liées</p>
+                    <pre><span class="code-keyword">var</span> users = <span class="code-keyword">await</span> _db.Users
+    .<span class="code-method">Include</span>(u => u.Orders)
+    .<span class="code-method">ToListAsync</span>();</pre>
+                </div>
+
+                <div class="code-block">
+                    <h3>Include imbriqué</h3>
+                    <p>Relations à plusieurs niveaux</p>
+                    <pre><span class="code-keyword">var</span> users = <span class="code-keyword">await</span> _db.Users
+    .<span class="code-method">Include</span>(u => u.Orders)
+    .<span class="code-method">ThenInclude</span>(o => o.Items)
+    .<span class="code-method">ToListAsync</span>();</pre>
+                </div>
+
+                <div class="code-block">
+                    <h3>Inner Join</h3>
+                    <p>Fusionner deux tables</p>
+                    <pre><span class="code-keyword">var</span> result = <span class="code-keyword">await</span> _db.Users
+    .<span class="code-method">Join</span>(_db.Orders,
+        u => u.Id,
+        o => o.UserId,
+        (u, o) => <span class="code-keyword">new</span> { u, o })
+    .<span class="code-method">ToListAsync</span>();</pre>
+                </div>
+
+                <div class="code-block">
+                    <h3>Left Join avec SelectMany</h3>
+                    <p>Inclure tous même sans relation</p>
+                    <pre><span class="code-keyword">var</span> result = <span class="code-keyword">await</span> _db.Users
+    .<span class="code-method">SelectMany</span>(u => u.Orders.<span class="code-method">DefaultIfEmpty</span>(),
+        (u, o) => <span class="code-keyword">new</span> { u, o })
+    .<span class="code-method">ToListAsync</span>();</pre>
+                </div>
+
+                <div class="code-block">
+                    <h3>Lazy Loading avec virtual</h3>
+                    <p>Charger à la demande</p>
+                    <pre><span class="code-keyword">public class</span> User {
+    <span class="code-keyword">public</span> <span class="code-type">int</span> Id { <span class="code-keyword">get</span>; <span class="code-keyword">set</span>; }
+    <span class="code-keyword">public virtual</span> <span class="code-type">List</span>&lt;Order&gt; Orders { <span class="code-keyword">get</span>; <span class="code-keyword">set</span>; }
+}</pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION: ORDER -->
+        <div class="section">
+            <h2>📊 ORDER - Tri</h2>
+            <div class="cheatsheet-grid">
+                <div class="code-block">
+                    <h3>Trier en ordre croissant</h3>
+                    <p>Ordre A à Z, 0 à 9</p>
+                    <pre><span class="code-keyword">var</span> sorted = <span class="code-keyword">await</span> _db.Users
+    .<span class="code-method">OrderBy</span>(u => u.Name)
+    .<span class="code-method">ToListAsync</span>();</pre>
+                </div>
+
+                <div class="code-block">
+                    <h3>Trier en ordre décroissant</h3>
+                    <p>Ordre Z à A, 9 à 0</p>
+                    <pre><span class="code-keyword">var</span> sorted = <span class="code-keyword">await</span> _db.Users
+    .<span class="code-method">OrderByDescending</span>(u => u.Age)
+    .<span class="code-method">ToListAsync</span>();</pre>
+                </div>
+
+                <div class="code-block">
+                    <h3>Tri multiple</h3>
+                    <p>Tri secondaire avec ThenBy</p>
+                    <pre><span class="code-keyword">var</span> sorted = <span class="code-keyword">await</span> _db.Users
+    .<span class="code-method">OrderBy</span>(u => u.Country)
+    .<span class="code-method">ThenBy</span>(u => u.Name)
+    .<span class="code-method">ToListAsync</span>();</pre>
+                </div>
+
+                <div class="code-block">
+                    <h3>Tri avec Skip et Take</h3>
+                    <p>Pagination</p>
+                    <pre><span class="code-keyword">var</span> page2 = <span class="code-keyword">await</span> _db.Users
+    .<span class="code-method">OrderBy</span>(u => u.Id)
+    .<span class="code-method">Skip</span>(10)
+    .<span class="code-method">Take</span>(10)
+    .<span class="code-method">ToListAsync</span>();</pre>
+                </div>
+
+                <div class="code-block">
+                    <h3>Tri avec reverse</h3>
+                    <p>Inverser l'ordre</p>
+                    <pre><span class="code-keyword">var</span> reversed = <span class="code-keyword">await</span> _db.Users
+    .<span class="code-method">OrderBy</span>(u => u.Name)
+    .<span class="code-method">Reverse</span>()
+    .<span class="code-method">ToListAsync</span>();</pre>
+                </div>
+
+                <div class="code-block">
+                    <h3>Aléatoire</h3>
+                    <p>Ordre aléatoire</p>
+                    <pre><span class="code-keyword">var</span> random = <span class="code-keyword">await</span> _db.Users
+    .<span class="code-method">OrderBy</span>(u => EF.Functions.<span class="code-method">Random</span>())
+    .<span class="code-method">ToListAsync</span>();</pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION: GROUP -->
+        <div class="section">
+            <h2>🎯 GROUP BY - Regroupement</h2>
+            <div class="cheatsheet-grid">
+                <div class="code-block">
+                    <h3>Regroupement simple</h3>
+                    <p>Grouper par une propriété</p>
+                    <pre><span class="code-keyword">var</span> grouped = <span class="code-keyword">await</span> _db.Users
+    .<span class="code-method">GroupBy</span>(u => u.Country)
+    .<span class="code-method">ToListAsync</span>();
+
+<span class="code-keyword">foreach</span> (<span class="code-keyword">var</span> group <span class="code-keyword">in</span> grouped) {
+    Console.<span class="code-method">WriteLine</span>(group.Key);
+}</pre>
+                </div>
+
+                <div class="code-block">
+                    <h3>Compter par groupe</h3>
+                    <p>Nombre d'éléments par groupe</p>
+                    <pre><span class="code-keyword">var</span> counts = <span class="code-keyword">await</span> _db.Users
+    .<span class="code-method">GroupBy</span>(u => u.Country)
+    .<span class="code-method">Select</span>(g => <span class="code-keyword">new</span> {
+        Country = g.Key,
+        Count = g.<span class="code-method">Count</span>()
+    })
+    .<span class="code-method">ToListAsync</span>();</pre>
+                </div>
+
+                <div class="code-block">
+                    <h3>Regroupement avec agrégation</h3>
+                    <p>Sum, Average, Min, Max par groupe</p>
+                    <pre><span class="code-keyword">var</span> stats = <span class="code-keyword">await</span> _db.Users
+    .<span class="code-method">GroupBy</span>(u => u.Department)
+    .<span class="code-method">Select</span>(g => <span class="code-keyword">new</span> {
+        Dept = g.Key,
+        AvgAge = g.<span class="code-method">Average</span>(u => u.Age),
+        TotalSalary = g.<span class="code-method">Sum</span>(u => u.Salary)
+    })
+    .<span class="code-method">ToListAsync</span>();</pre>
+                </div>
+
+                <div class="code-block">
+                    <h3>Regroupement multiple</h3>
+                    <p>Grouper par plusieurs colonnes</p>
+                    <pre><span class="code-keyword">var</span> grouped = <span class="code-keyword">await</span> _db.Users
+    .<span class="code-method">GroupBy</span>(u => <span class="code-keyword">new</span> { u.Country, u.City })
+    .<span class="code-method">ToListAsync</span>();</pre>
+                </div>
+
+                <div class="code-block">
+                    <h3>Filtrer après regroupement (Having)</h3>
+                    <p>Filtrer les groupes</p>
+                    <pre><span class="code-keyword">var</span> result = <span class="code-keyword">await</span> _db.Users
+    .<span class="code-method">GroupBy</span>(u => u.Country)
+    .<span class="code-method">Where</span>(g => g.<span class="code-method">Count</span>() > 5)
+    .<span class="code-method">Select</span>(g => <span class="code-keyword">new</span> {
+        Country = g.Key,
+        Count = g.<span class="code-method">Count</span>()
+    })
+    .<span class="code-method">ToListAsync</span>();</pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION: AGGREGATE -->
+        <div class="section">
+            <h2>📈 AGGREGATE - Opérations d'Agrégation</h2>
+            <div class="cheatsheet-grid">
+                <div class="code-block">
+                    <h3>Compter</h3>
+                    <p>Nombre total d'enregistrements</p>
+                    <pre><span class="code-keyword">var</span> count = <span class="code-keyword">await</span> _db.Users
+    .<span class="code-method">CountAsync</span>();
+
+<span class="code-comment">// Avec filtre</span>
+<span class="code-keyword">var</span> adults = <span class="code-keyword">await</span> _db.Users
+    .<span class="code-method">CountAsync</span>(u => u.Age >= 18);</pre>
+                </div>
+
+                <div class="code-block">
+                    <h3>Somme</h3>
+                    <p>Additionner les valeurs</p>
+                    <pre><span class="code-keyword">var</span> total = <span class="code-keyword">await</span> _db.Orders
+    .<span class="code-method">SumAsync</span>(o => o.Amount);</pre>
+                </div>
+
+                <div class="code-block">
+                    <h3>Moyenne</h3>
+                    <p>Calculer la moyenne</p>
+                    <pre><span class="code-keyword">var</span> avgAge = <span class="code-keyword">await</span> _db.Users
+    .<span class="code-method">AverageAsync</span>(u => u.Age);</pre>
+                </div>
+
+                <div class="code-block">
+                    <h3>Minimum et Maximum</h3>
+                    <p>Valeurs extrêmes</p>
+                    <pre><span class="code-keyword">var</span> minAge = <span class="code-keyword">await</span> _db.Users
+    .<span class="code-method">MinAsync</span>(u => u.Age);
+
+<span class="code-keyword">var</span> maxSalary = <span class="code-keyword">await</span> _db.Users
+    .<span class="code-method">MaxAsync</span>(u => u.Salary);</pre>
+                </div>
+
+                <div class="code-block">
+                    <h3>Vérifier l'existence</h3>
+                    <p>Any() et All()</p>
+                    <pre><span class="code-keyword">var</span> hasAdmins = <span class="code-keyword">await</span> _db.Users
+    .<span class="code-method">AnyAsync</span>(u => u.Role == <span class="code-string">"Admin"</span>);
+
+<span class="code-keyword">var</span> allActive = <span class="code-keyword">await</span> _db.Users
+    .<span class="code-method">AllAsync</span>(u => u.IsActive);</pre>
+                </div>
+
+                <div class="code-block">
+                    <h3>Première valeur existante</h3>
+                    <p>First vs FirstOrDefault</p>
+                    <pre><span class="code-comment">// Lance exception si rien</span>
+<span class="code-keyword">var</span> first = <span class="code-keyword">await</span> _db.Users
+    .<span class="code-method">FirstAsync</span>();
+
+<span class="code-comment">// Retourne null si rien</span>
+<span class="code-keyword">var</span> firstOrNull = <span class="code-keyword">await</span> _db.Users
+    .<span class="code-method">FirstOrDefaultAsync</span>();</pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION: INSERT/UPDATE/DELETE -->
+        <div class="section">
+            <h2>✏️ INSERT, UPDATE, DELETE</h2>
+            <div class="cheatsheet-grid">
+                <div class="code-block">
+                    <h3>Insérer un enregistrement</h3>
+                    <p>Ajouter une nouvelle ligne</p>
+                    <pre><span class="code-keyword">var</span> newUser = <span class="code-keyword">new</span> <span class="code-type">User</span> {
+    Name = <span class="code-string">"John"</span>,
+    Email = <span class="code-string">"john@example.com"</span>
+};
+
+_db.Users.<span class="code-method">Add</span>(newUser);
+<span class="code-keyword">await</span> _db.<span class="code-method">SaveChangesAsync</span>();</pre>
+                </div>
+
+                <div class="code-block">
+                    <h3>Insérer plusieurs enregistrements</h3>
+                    <p>AddRange()</p>
+                    <pre><span class="code-keyword">var</span> users = <span class="code-keyword">new</span> <span class="code-type">List</span>&lt;<span class="code-type">User</span>&gt; {
+    <span class="code-keyword">new</span> <span class="code-type">User</span> { Name = <span class="code-string">"Alice"</span> },
+    <span class="code-keyword">new</span> <span class="code-type">User</span> { Name = <span class="code-string">"Bob"</span> }
+};
+
+_db.Users.<span class="code-method">AddRange</span>(users);
+<span class="code-keyword">await</span> _db.<span class="code-method">SaveChangesAsync</span>();</pre>
+                </div>
+
+                <div class="code-block">
+                    <h3>Mettre à jour un enregistrement</h3>
+                    <p>Modifier et sauvegarder</p>
+                    <pre><span class="code-keyword">var</span> user = <span class="code-keyword">await</span> _db.Users
+    .<span class="code-method">FirstOrDefaultAsync</span>(u => u.Id == id);
+
+<span class="code-keyword">if</span> (user != <span class="code-keyword">null</span>) {
+    user.Name = <span class="code-string">"Jane"</span>;
+    <span class="code-keyword">await</span> _db.<span class="code-method">SaveChangesAsync</span>();
+}</pre>
+                </div>
+
+                <div class="code-block">
+                    <h3>Mise à jour en masse</h3>
+                    <p>Modifier plusieurs enregistrements</p>
+                    <pre><span class="code-keyword">var</span> users = <span class="code-keyword">await</span> _db.Users
+    .<span class="code-method">Where</span>(u => u.Country == <span class="code-string">"USA"</span>)
+    .<span class="code-method">ToListAsync</span>();
+
+<span class="code-keyword">foreach</span> (<span class="code-keyword">var</span> user <span class="code-keyword">in</span> users) {
+    user.IsActive = <span class="code-keyword">true</span>;
+}
+
+<span class="code-keyword">await</span> _db.<span class="code-method">SaveChangesAsync</span>();</pre>
+                </div>
+
+                <div class="code-block">
+                    <h3>Supprimer un enregistrement</h3>
+                    <p>Supprimer et sauvegarder</p>
+                    <pre><span class="code-keyword">var</span> user = <span class="code-keyword">await</span> _db.Users
+    .<span class="code-method">FirstOrDefaultAsync</span>(u => u.Id == id);
+
+<span class="code-keyword">if</span> (user != <span class="code-keyword">null</span>) {
+    _db.Users.<span class="code-method">Remove</span>(user);
+    <span class="code-keyword">await</span> _db.<span class="code-method">SaveChangesAsync</span>();
+}</pre>
+                </div>
+
+                <div class="code-block">
+                    <h3>Supprimer plusieurs enregistrements</h3>
+                    <p>RemoveRange()</p>
+                    <pre><span class="code-keyword">var</span> inactive = <span class="code-keyword">await</span> _db.Users
+    .<span class="code-method">Where</span>(u => !u.IsActive)
+    .<span class="code-method">ToListAsync</span>();
+
+_db.Users.<span class="code-method">RemoveRange</span>(inactive);
+<span class="code-keyword">await</span> _db.<span class="code-method">SaveChangesAsync</span>();</pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION: ADVANCED -->
+        <div class="section">
+            <h2>🚀 Requêtes Avancées</h2>
+            <div class="cheatsheet-grid">
+                <div class="code-block">
+                    <h3>Raw SQL</h3>
+                    <p>Exécuter du SQL natif</p>
+                    <pre><span class="code-keyword">var</span> users = <span class="code-keyword">await</span> _db.Users
+    .<span class="code-method">FromSqlInterpolated</span>(
+        $<span class="code-string">"SELECT * FROM Users WHERE Age > {age}"</span>)
+    .<span class="code-method">ToListAsync</span>();</pre>
+                </div>
+
+                <div class="code-block">
+                    <h3>Include avec Where</h3>
+                    <p>Filtrer les relations chargées</p>
+                    <pre><span class="code-keyword">var</span> users = <span class="code-keyword">await</span> _db.Users
+    .<span class="code-method">Include</span>(u => u.Orders
+        .<span class="code-method">Where</span>(o => o.Total > 100))
+    .<span class="code-method">ToListAsync</span>();</pre>
+                </div>
+
+                <div class="code-block">
+                    <h3>Union de deux requêtes</h3>
+                    <p>Combiner deux LINQ</p>
+                    <pre><span class="code-keyword">var</span> query1 = _db.Users
+    .<span class="code-method">Where</span>(u => u.Role == <span class="code-string">"Admin"</span>);
+
+<span class="code-keyword">var</span> query2 = _db.Users
+    .<span class="code-method">Where</span>(u => u.IsVIP);
+
+<span class="code-keyword">var</span> combined = <span class="code-keyword">await</span> query1
+    .<span class="code-method">Union</span>(query2)
+    .<span class="code-method">ToListAsync</span>();</pre>
+                </div>
+
+                <div class="code-block">
+                    <h3>Intersection</h3>
+                    <p>Éléments communs à deux requêtes</p>
+                    <pre><span class="code-keyword">var</span> active = _db.Users
+    .<span class="code-method">Where</span>(u => u.IsActive);
+
+<span class="code-keyword">var</span> premium = _db.Users
+    .<span class="code-method">Where</span>(u => u.IsPremium);
+
+<span class="code-keyword">var</span> result = <span class="code-keyword">await</span> active
+    .<span class="code-method">Intersect</span>(premium)
+    .<span class="code-method">ToListAsync</span>();</pre>
+                </div>
+
+                <div class="code-block">
+                    <h3>Except</h3>
+                    <p>Éléments d'une requête sauf l'autre</p>
+                    <pre><span class="code-keyword">var</span> allUsers = _db.Users;
+<span class="code-keyword">var</span> banned = _db.Users
+    .<span class="code-method">Where</span>(u => u.IsBanned);
+
+<span class="code-keyword">var</span> active = <span class="code-keyword">await</span> allUsers
+    .<span class="code-method">Except</span>(banned)
+    .<span class="code-method">ToListAsync</span>();</pre>
+                </div>
+
+                <div class="code-block">
+                    <h3>Utiliser des variables (LINQ to Objects)</h3>
+                    <p>Combiner client et serveur</p>
+                    <pre><span class="code-keyword">var</span> ids = <span class="code-keyword">new</span>[] { 1, 2, 3 };
+<span class="code-keyword">var</span> users = <span class="code-keyword">await</span> _db.Users
+    .<span class="code-keyword">Where</span>(u => ids.<span class="code-method">Contains</span>(u.Id))
+    .<span class="code-method">ToListAsync</span>();
+
+<span class="code-comment">// Filtrage client après</span>
+<span class="code-keyword">var</span> filtered = users
+    .<span class="code-method">Where</span>(u => u.Orders.<span class="code-method">Any</span>())
+    .<span class="code-method">ToList</span>();</pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION: PERFORMANCE -->
+        <div class="section">
+            <h2>⚡ Optimisation de Performance</h2>
+            <div class="cheatsheet-grid">
+                <div class="code-block">
+                    <h3>Éviter N+1 Queries</h3>
+                    <p>Mauvais ❌ vs Bon ✅</p>
+                    <div class="comparison">
+                        <div class="comparison-col">
+                            <h4>❌ Mauvais</h4>
+                            <pre><span class="code-keyword">var</span> users = <span class="code-keyword">await</span> _db.Users
+    .<span class="code-method">ToListAsync</span>();
+
+<span class="code-keyword">foreach</span> (<span class="code-keyword">var</span> user <span class="code-keyword">in</span> users) {
+    <span class="code-comment">// 1 query par user!</span>
+    <span class="code-keyword">var</span> orders = user.Orders;
+}</pre>
+                        </div>
+                        <div class="comparison-col">
+                            <h4>✅ Bon</h4>
+                            <pre><span class="code-keyword">var</span> users = <span class="code-keyword">await</span> _db.Users
+    .<span class="code-method">Include</span>(u => u.Orders)
+    .<span class="code-method">ToListAsync</span>();
+
+<span class="code-comment">// 1 seule query!</span></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="code-block">
+                    <h3>AsNoTracking</h3>
+                    <p>Lecture seule, plus rapide</p>
+                    <pre><span class="code-keyword">var</span> users = <span class="code-keyword">await</span> _db.Users
+    .<span class="code-method">AsNoTracking</span>()
+    .<span class="code-method">ToListAsync</span>();
+
+<span class="code-comment">// Entity Framework n'a pas besoin</span>
+<span class="code-comment">// de tracker les changements</span></pre>
+                </div>
+
+                <div class="code-block">
+                    <h3>Select avant ToList</h3>
+                    <p>Réduire les données transférées</p>
+                    <pre><span class="code-comment">// Mauvais - toutes les colonnes</span>
+<span class="code-keyword">var</span> users = <span class="code-keyword">await</span> _db.Users
+    .<span class="code-method">ToListAsync</span>();
+
+<span class="code-comment">// Bon - seulement ce qu'il faut</span>
+<span class="code-keyword">var</span> names = <span class="code-keyword">await</span> _db.Users
+    .<span class="code-method">Select</span>(u => u.Name)
+    .<span class="code-method">ToListAsync</span>();</pre>
+                </div>
+
+                <div class="code-block">
+                    <h3>Pagination efficace</h3>
+                    <p>Skip et Take au serveur</p>
+                    <pre><span class="code-var">int</span> pageSize = 10;
+<span class="code-var">int</span> pageNumber = 2;
+
+<span class="code-keyword">var</span> users = <span class="code-keyword">await</span> _db.Users
+    .<span class="code-method">OrderBy</span>(u => u.Id)
+    .<span class="code-method">Skip</span>((pageNumber - 1) * pageSize)
+    .<span class="code-method">Take</span>(pageSize)
+    .<span class="code-method">ToListAsync</span>();</pre>
+                </div>
+
+                <div class="code-block">
+                    <h3>Split Query</h3>
+                    <p>Plusieurs queries au lieu d'une complexe</p>
+                    <pre><span class="code-keyword">var</span> users = <span class="code-keyword">await</span> _db.Users
+    .<span class="code-method">Include</span>(u => u.Orders)
+    .<span class="code-method">Include</span>(u => u.Addresses)
+    .<span class="code-method">AsSplitQuery</span>()
+    .<span class="code-method">ToListAsync</span>();</pre>
+                </div>
+
+                <div class="code-block">
+                    <h3>ExecuteUpdate (EF Core 7+)</h3>
+                    <p>Mise à jour sans charger les données</p>
+                    <pre><span class="code-keyword">await</span> _db.Users
+    .<span class="code-method">Where</span>(u => u.Country == <span class="code-string">"USA"</span>)
+    .<span class="code-method">ExecuteUpdateAsync</span>(x =>
+        x.<span class="code-method">SetProperty</span>(u => u.IsActive, <span class="code-keyword">true</span>));
+
+<span class="code-comment">// Pas besoin de SaveChanges()</span></pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION: TABLE DE REFERENCE -->
+        <div class="section">
+            <h2>📋 Tableau de Référence Rapide</h2>
+            <div class="table-scroll">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Opération</th>
+                            <th>Syntaxe</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><span class="tag">SELECT</span></td>
+                            <td><code>Select(x => x.Property)</code></td>
+                            <td>Projection/transformation</td>
+                        </tr>
+                        <tr>
+                            <td><span class="tag">WHERE</span></td>
+                            <td><code>Where(x => condition)</code></td>
+                            <td>Filtrage</td>
+                        </tr>
+                        <tr>
+                            <td><span class="tag">ORDER BY</span></td>
+                            <td><code>OrderBy(x => x.Prop)</code></td>
+                            <td>Tri croissant</td>
+                        </tr>
+                        <tr>
+                            <td><span class="tag">ORDER BY DESC</span></td>
+                            <td><code>OrderByDescending(x => x.Prop)</code></td>
+                            <td>Tri décroissant</td>
+                        </tr>
+                        <tr>
+                            <td><span class="tag">LIMIT</span></td>
+                            <td><code>Take(n)</code></td>
+                            <td>Limiter les résultats</td>
+                        </tr>
+                        <tr>
+                            <td><span class="tag">OFFSET</span></td>
+                            <td><code>Skip(n)</code></td>
+                            <td>Sauter les N premiers</td>
+                        </tr>
+                        <tr>
+                            <td><span class="tag">GROUP BY</span></td>
+                            <td><code>GroupBy(x => x.Prop)</code></td>
+                            <td>Regrouper</td>
+                        </tr>
+                        <tr>
+                            <td><span class="tag">COUNT</span></td>
+                            <td><code>Count()</code></td>
+                            <td>Compter les enregistrements</td>
+                        </tr>
+                        <tr>
+                            <td><span class="tag">SUM</span></td>
+                            <td><code>Sum(x => x.Prop)</code></td>
+                            <td>Additionner</td>
+                        </tr>
+                        <tr>
+                            <td><span class="tag">AVG</span></td>
+                            <td><code>Average(x => x.Prop)</code></td>
+                            <td>Moyenne</td>
+                        </tr>
+                        <tr>
+                            <td><span class="tag">MIN/MAX</span></td>
+                            <td><code>Min()/Max()</code></td>
+                            <td>Valeur minimum/maximum</td>
+                        </tr>
+                        <tr>
+                            <td><span class="tag">EXISTS</span></td>
+                            <td><code>Any()</code></td>
+                            <td>Vérifier l'existence</td>
+                        </tr>
+                        <tr>
+                            <td><span class="tag">JOIN</span></td>
+                            <td><code>Include()/Join()</code></td>
+                            <td>Fusionner les tables</td>
+                        </tr>
+                        <tr>
+                            <td><span class="tag">DISTINCT</span></td>
+                            <td><code>Distinct()</code></td>
+                            <td>Éliminer les doublons</td>
+                        </tr>
+                        <tr>
+                            <td><span class="tag success">INSERT</span></td>
+                            <td><code>Add()/AddRange()</code></td>
+                            <td>Ajouter des données</td>
+                        </tr>
+                        <tr>
+                            <td><span class="tag success">UPDATE</span></td>
+                            <td><code>Modify object</code></td>
+                            <td>Modifier des données</td>
+                        </tr>
+                        <tr>
+                            <td><span class="tag warning">DELETE</span></td>
+                            <td><code>Remove()/RemoveRange()</code></td>
+                            <td>Supprimer des données</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- SECTION: TIPS -->
+        <div class="section" style="background: #fff3cd; border-left: 4px solid #667eea;">
+            <h2>💡 Conseils et Pièges Courants</h2>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+                <div class="note" style="background: white;">
+                    <strong>✅ Toujours attendre les async</strong>
+                    <p>Utilisez <code>await</code> avec <code>ToListAsync()</code>, <code>FirstOrDefaultAsync()</code>, etc.</p>
+                </div>
+                <div class="note" style="background: white;">
+                    <strong>❌ Éviter les boucles LINQ</strong>
+                    <p>Faire le filtrage au serveur avec <code>Where()</code>, pas en C# après <code>ToList()</code></p>
+                </div>
+                <div class="note" style="background: white;">
+                    <strong>✅ Utiliser AsNoTracking()</strong>
+                    <p>Pour les requêtes de lecture seule, ça améliore les performances</p>
+                </div>
+                <div class="note" style="background: white;">
+                    <strong>❌ Problème N+1 Queries</strong>
+                    <p>Toujours utiliser <code>Include()</code> pour charger les relations associées</p>
+                </div>
+                <div class="note" style="background: white;">
+                    <strong>✅ SaveChangesAsync()</strong>
+                    <p>Toujours sauvegarder avec async, ne pas bloquer le thread</p>
+                </div>
+                <div class="note" style="background: white;">
+                    <strong>❌ Éviter ThenInclude excessif</strong>
+                    <p>Trop de ThenInclude = requête SQL très complexe et lente</p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</body>
+</html>

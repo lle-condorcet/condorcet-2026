@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HTML Tags & HTML Helpers - Cheatsheet</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: #333;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+            animation: slideDown 0.6s ease-out;
+        }
+
+        header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        header p {
+            font-size: 1.1em;
+            opacity: 0.95;
+        }
+
+        .section {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        .section h2 {
+            color: #f5576c;
+            margin-bottom: 25px;
+            font-size: 1.6em;
+            border-bottom: 3px solid #f5576c;
+            padding-bottom: 10px;
+        }
+
+        .cheatsheet-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 25px;
+            margin-bottom: 20px;
+        }
+
+        .code-pair {
+            background: #f8f9fa;
+            border-left: 4px solid #f5576c;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .code-pair h3 {
+            color: #f5576c;
+            font-size: 1.1em;
+            margin-bottom: 15px;
+        }
+
+        .code-pair p {
+            font-size: 0.9em;
+            margin-bottom: 15px;
+            color: #666;
+        }
+
+        .comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .comparison-col {
+            padding: 15px;
+            background: #fafafa;
+            border-radius: 6px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .comparison-col h4 {
+            color: #f5576c;
+            margin-bottom: 10px;
+            font-size: 0.95em;
+            font-weight: 600;
+        }
+
+        pre {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 12px;
+            border-radius: 6px;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.8em;
+            line-height: 1.4;
+            margin-top: 8px;
+        }
+
+        .code-keyword {
+            color: #569cd6;
+        }
+
+        .code-type {
+            color: #4ec9b0;
+        }
+
+        .code-string {
+            color: #ce9178;
+        }
+
+        .code-comment {
+            color: #6a9955;
+        }
+
+        .code-method {
+            color: #dcdcaa;
+        }
+
+        .code-property {
+            color: #d7ba7d;
+        }
+
+        .code-tag {
+            color: #808080;
+        }
+
+        .note {
+            background: #fff3cd;
+            border-left: 4px solid #f5576c;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            font-size: 0.95em;
+        }
+
+        .note strong {
+            color: #f5576c;
+        }
+
+        .tag {
+            display: inline-block;
+            background: #f5576c;
+            color: white;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            margin-right: 8px;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .tag.form {
+            background: #667eea;
+        }
+
+        .tag.input {
+            background: #51cf66;
+        }
+
+        .tag.text {
+            background: #ff922b;
+        }
+
+        .table-scroll {
+            overflow-x: auto;
+            margin: 20px 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+
+        table th {
+            background: #f5576c;
+            color: white;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        table td {
+            padding: 12px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .html-tag {
+            font-family: 'Courier New', monospace;
+            background: #f0f0f0;
+            padding: 2px 6px;
+            border-radius: 3px;
+            color: #f5576c;
+            font-weight: 600;
+        }
+
+        .helper {
+            font-family: 'Courier New', monospace;
+            background: #e3f2fd;
+            padding: 2px 6px;
+            border-radius: 3px;
+            color: #1976d2;
+            font-weight: 600;
+        }
+
+        @media (max-width: 768px) {
+            .comparison {
+                grid-template-columns: 1fr;
+            }
+
+            header h1 {
+                font-size: 1.8em;
+            }
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🏷️ HTML Tags & HTML Helpers</h1>
+            <p>Cheatsheet complète - Balises HTML vs Équivalents Razor en C#</p>
+        </header>
+
+        <!-- SECTION: FORMULAIRES -->
+        <div class="section">
+            <h2>📋 Formulaires</h2>
+            <div class="cheatsheet-grid">
+                <div class="code-pair">
+                    <h3><span class="tag form">FORM</span> Formulaire</h3>
+                    <p>Conteneur pour envoyer des données</p>
+                    <div class="comparison">
+                        <div class="comparison-col">
+                            <h4>❌ HTML Simple</h4>
+                            <pre><span class="code-tag">&lt;form</span> <span class="code-property">action</span>=<span class="code-string">"/users/create"</span> <span class="code-property">method</span>=<span class="code-string">"POST"</span><span class="code-tag">&gt;</span>
+  <span class="code-tag">&lt;input</span> <span class="code-property">type</span>=<span class="code-string">"hidden"</span> <span class="code-property">name</span>=<span class="code-string">"__RequestVerificationToken"</span> <span class="code-tag">/&gt;</span>
+<span class="code-tag">&lt;/form&gt;</span></pre>
+                        </div>
+                        <div class="comparison-col">
+                            <h4>✅ HTML Helper</h4>
+                            <pre><span class="code-method">@Html</span>.<span class="code-method">BeginForm</span>(<span class="code-string">"Create"</span>, <span class="code-string">"Users"</span>)
+{
+    <span class="code-method">@Html</span>.<span class="code-method">AntiForgeryToken</span>()
+}
+
+<span class="code-comment">// Ou avec Razor Pages:</span>
+<span class="code-tag">&lt;form</span> <span class="code-property">method</span>=<span class="code-string">"post"</span><span class="code-tag">&gt;</span></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="code-pair">
+                    <h3><span class="tag input">INPUT</span> Champ texte</h3>
+                    <p>Saisie textuelle simple</p>
+                    <div class="comparison">
+                        <div class="comparison-col">
+                            <h4>❌ HTML Simple</h4>
+                            <pre><span class="code-tag">&lt;input</span> <span class="code-property">type</span>=<span class="code-string">"text"</span> <span class="code-property">name</span>=<span class="code-string">"Name"</span> <span class="code-property">value</span>=<span class="code-string">"John"</span> <span class="code-tag">/&gt;</span></pre>
+                        </div>
+                        <div class="comparison-col">
+                            <h4>✅ HTML Helper</h4>
+                            <pre><span class="code-method">@Html</span>.<span class="code-method">TextBoxFor</span>(m => m.Name)</pre>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="code-pair">
+                    <h3><span class="tag input">INPUT HIDDEN</span> Champ caché</h3>
+                    <p>Valeur non visible à l'utilisateur</p>
+                    <div class="comparison">
+                        <div class="comparison-col">
+                            <h4>❌ HTML Simple</h4>
+                            <pre><span class="code-tag">&lt;input</span> <span class="code-property">type</span>=<span class="code-string">"hidden"</span> <span class="code-property">name</span>=<span class="code-string">"Id"</span> <span class="code-property">value</span>=<span class="code-string">"5"</span> <span class="code-tag">/&gt;</span></pre>
+                        </div>
+                        <div class="comparison-col">
+                            <h4>✅ HTML Helper</h4>
+                            <pre><span class="code-method">@Html</span>.<span class="code-method">HiddenFor</span>(m => m.Id)</pre>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="code-pair">
+                    <h3><span class="tag input">INPUT PASSWORD</span> Mot de passe</h3>
+                    <p>Champ avec caractères masqués</p>
+                    <div class="comparison">
+                        <div class="comparison-col">
+                            <h4>❌ HTML Simple</h4>
+                            <pre><span class="code-tag">&lt;input</span> <span class="code-property">type</span>=<span class="code-string">"password"</span> <span class="code-property">name</span>=<span class="code-string">"Password"</span> <span class="code-tag">/&gt;</span></pre>
+                        </div>
+                        <div class="comparison-col">
+                            <h4>✅ HTML Helper</h4>
+                            <pre><span class="code-method">@Html</span>.<span class="code-method">PasswordFor</span>(m => m.Password)</pre>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="code-pair">
+                    <h3><span class="tag input">INPUT EMAIL</span> Email</h3>
+                    <p>Validation email native</p>
+                    <div class="comparison">
+                        <div class="comparison-col">
+                            <h4>❌ HTML Simple</h4>
+                            <pre><span class="code-tag">&lt;input</span> <span class="code-property">type</span>=<span class="code-string">"email"</span> <span class="code-property">name</span>=<span class="code-string">"Email"</span> <span class="code-tag">/&gt;</span></pre>
+                        </div>
+                        <div class="comparison-col">
+                            <h4>✅ HTML Helper</h4>
+                            <pre><span class="code-method">@Html</span>.<span class="code-method">TextBoxFor</span>(m => m.Email, 
+    <span class="code-keyword">new</span> { <span class="code-property">type</span> = <span class="code-string">"email"</span> })</pre>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="code-pair">
+                    <h3><span class="tag input">INPUT NUMBER</span> Nombre</h3>
+                    <p>Champ numérique</p>
+                    <div class="comparison">
+                        <div class="comparison-col">
+                            <h4>❌ HTML Simple</h4>
+                            <pre><span class="code-tag">&lt;input</span> <span class="code-property">type</span>=<span class="code-string">"number"</span> <span class="code-property">name</span>=<span class="code-string">"Age"</span> <span class="code-tag">/&gt;</span></pre>
+                        </div>
+                        <div class="comparison-col">
+                            <h4>✅ HTML Helper</h4>
+                            <pre><span class="code-method">@Html</span>.<span class="code-method">TextBoxFor</span>(m => m.Age,
+    <span class="code-keyword">new</span> { <span class="code-property">type</span> = <span class="code-string">"number"</span> })</pre>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="code-pair">
+                    <h3><span class="tag input">INPUT CHECKBOX</span> Case à cocher</h3>
+                    <p>Option booléenne</p>
+                    <div class="comparison">
+                        <div class="comparison-col">
+                            <h4>❌ HTML Simple</h4>
+                            <pre><span class="code-tag">&lt;input</span> <span class="code-property">type</span>=<span class="code-string">"checkbox"</span> <span class="code-property">name</span>=<span class="code-string">"IsActive"</span> <span class="code-tag">/&gt;</span></pre>
+                        </div>
+                        <div class="comparison-col">
+                            <h4>✅ HTML Helper</h4>
+                            <pre><span class="code-method">@Html</span>.<span class="code-method">CheckBoxFor</span>(m => m.IsActive)</pre>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="code-pair">
+                    <h3><span class="tag input">TEXTAREA</span> Zone de texte</h3>
+                    <p>Texte multi-lignes</p>
+                    <div class="comparison">
+                        <div class="comparison-col">
+                            <h4>❌ HTML Simple</h4>
+                            <pre><span class="code-tag">&lt;textarea</span> <span class="code-property">name</span>=<span class="code-string">"Description"</span> <span class="code-property">rows</span>=<span class="code-string">"5"</span><span class="code-tag">&gt;&lt;/textarea&gt;</span></pre>
+                        </div>
+                        <div class="comparison-col">
+                            <h4>✅ HTML Helper</h4>
+                            <pre><span class="code-method">@Html</span>.<span class="code-method">TextAreaFor</span>(m => m.Description, 
+    <span class="code-keyword">new</span> { <span class="code-property">rows</span> = 5 })</pre>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="code-pair">
+                    <h3><span class="tag input">SELECT</span> Liste déroulante</h3>
+                    <p>Choix parmi une liste</p>
+                    <div class="comparison">
+                        <div class="comparison-col">
+                            <h4>❌ HTML Simple</h4>
+                            <pre><span class="code-tag">&lt;select</span> <span class="code-property">name</span>=<span class="code-string">"RoleId"</span><span class="code-tag">&gt;</span>
+  <span class="code-tag">&lt;option</span> <span class="code-property">value</span>=<span class="code-string">"1"</span><span class="code-tag">&gt;</span>Admin<span class="code-tag">&lt;/option&gt;</span>
+  <span class="code-tag">&lt;option</span> <span class="code-property">value</span>=<span class="code-string">"2"</span><span class="code-tag">&gt;</span>User<span class="code-tag">&lt;/option&gt;</span>
+<span class="code-tag">&lt;/select&gt;</span></pre>
+                        </div>
+                        <div class="comparison-col">
+                            <h4>✅ HTML Helper</h4>
+                            <pre><span class="code-method">@Html</span>.<span class="code-method">DropDownListFor</span>(m => m.RoleId,
+    (IEnumerable&lt;SelectListItem&gt;)ViewBag.Roles)</pre>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="code-pair">
+                    <h3><span class="tag input">INPUT BUTTON</span> Bouton</h3>
+                    <p>Action ou soumission</p>
+                    <div class="comparison">
+                        <div class="comparison-col">
+                            <h4>❌ HTML Simple</h4>
+                            <pre><span class="code-tag">&lt;button</span> <span class="code-property">type</span>=<span class="code-string">"submit"</span><span class="code-tag">&gt;</span>
+  Envoyer
+<span class="code-tag">&lt;/button&gt;</span></pre>
+                        </div>
+                        <div class="comparison-col">
+                            <h4>✅ HTML Helper</h4>
+                            <pre><span class="code-tag">&lt;button</span> <span class="code-property">type</span>=<span class="code-string">"submit"</span> <span class="code-property">class</span>=<span class="code-string">"btn btn-primary"</span><span class="code-tag">&gt;</span>
+  Envoyer
+<span class="code-tag">&lt;/button&gt;</span></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION: VALIDATION -->
+        <div class="section">
+            <h2>✅ Validation</h2>
+            <div class="cheatsheet-grid">
+                <div class="code-pair">
+                    <h3>Message d'erreur</h3>
+                    <p>Afficher les erreurs de validation</p>
+                    <div class="comparison">
+                        <div class="comparison-col">
+                            <h4>❌ HTML Simple</h4>
+                            <pre><span class="code-tag">&lt;div</span> <span class="code-property">class</span>=<span class="code-string">"error"</span><span class="code-tag">&gt;</span>
+  Le nom est requis
+<span class="code-tag">&lt;/div&gt;</span></pre>
+                        </div>
+                        <div class="comparison-col">
+                            <h4>✅ HTML Helper</h4>
+                            <pre><span class="code-method">@Html</span>.<span class="code-method">ValidationMessageFor</span>(
+    m => m.Name)</pre>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="code-pair">
+                    <h3>Résumé des erreurs</h3>
+                    <p>Lister toutes les erreurs de validation</p>
+                    <div class="comparison">
+                        <div class="comparison-col">
+                            <h4>❌ HTML Simple</h4>
+                            <pre><span class="code-tag">&lt;div</span> <span class="code-property">class</span>=<span class="code-string">"validation-errors"</span><span class="code-tag">&gt;</span>
+  @<span class="code-keyword">foreach</span> (<span class="code-keyword">var</span> error <span class="code-keyword">in</span> ModelState.Values.SelectMany(v => v.Errors))
+  {
+    <span class="code-tag">&lt;p&gt;</span>@error.ErrorMessage<span class="code-tag">&lt;/p&gt;</span>
+  }
+<span class="code-tag">&lt;/div&gt;</span></pre>
+                        </div>
+                        <div class="comparison-col">
+                            <h4>✅ HTML Helper</h4>
+                            <pre><span class="code-method">@Html</span>.<span class="code-method">ValidationSummary</span>()</pre>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="code-pair">
+                    <h3>Classe CSS de validation</h3>
+                    <p>Appliquer une classe au champ invalide</p>
+                    <div class="comparison">
+                        <div class="comparison-col">
+                            <h4>❌ HTML Simple</h4>
+                            <pre><span class="code-tag">&lt;input</span> <span class="code-property">type</span>=<span class="code-string">"text"</span> 
+    <span class="code-property">class</span>=<span class="code-string">"form-control is-invalid"</span><span class="code-tag">&gt;</span></pre>
+                        </div>
+                        <div class="comparison-col">
+                            <h4>✅ HTML Helper</h4>
+                            <pre><span class="code-method">@Html</span>.<span class="code-method">TextBoxFor</span>(m => m.Name,
+    <span class="code-keyword">new</span> { 
+        <span class="code-property">@class</span> = ViewData.ModelState[<span class="code-string">"Name"</span>]?.<span class="code-property">Errors</span>.Any() == <span class="code-keyword">true</span> ? <span class="code-string">"is-invalid"</span> : <span class="code-string">""</span>
+    })</pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION: LIENS ET NAVIGATION -->
+        <div class="section">
+            <h2>🔗 Liens et Navigation</h2>
+            <div class="cheatsheet-grid">
+                <div class="code-pair">
+                    <h3>Lien hypertexte</h3>
+                    <p>Navigation vers une page</p>
+                    <div class="comparison">
+                        <div class="comparison-col">
+                            <h4>❌ HTML Simple</h4>
+                            <pre><span class="code-tag">&lt;a</span> <span class="code-property">href</span>=<span class="code-string">"/users/edit/5"</span><span class="code-tag">&gt;</span>
+  Modifier
+<span class="code-tag">&lt;/a&gt;</span></pre>
+                        </div>
+                        <div class="comparison-col">
+                            <h4>✅ HTML Helper</h4>
+                            <pre><span class="code-method">@Html</span>.<span class="code-method">ActionLink</span>(<span class="code-string">"Modifier"</span>, 
+    <span class="code-string">"Edit"</span>, <span class="code-string">"Users"</span>, 
+    <span class="code-keyword">new</span> { id = 5 })</pre>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="code-pair">
+                    <h3>Lien avec route personnalisée</h3>
+                    <p>Navigation avec route nommée</p>
+                    <div class="comparison">
+                        <div class="comparison-col">
+                            <h4>❌ HTML Simple</h4>
+                            <pre><span class="code-tag">&lt;a</span> <span class="code-property">href</span>=<span class="code-string">"/users/5"</span><span class="code-tag">&gt;</span>
+  Détails
+<span class="code-tag">&lt;/a&gt;</span></pre>
+                        </div>
+                        <div class="comparison-col">
+                            <h4>✅ HTML Helper</h4>
+                            <pre><span class="code-method">@Html</span>.<span class="code-method">RouteLink</span>(<span class="code-string">"Détails"</span>,
+    <span class="code-string">"UserDetails"</span>, 
+    <span class="code-keyword">new</span> { id = 5 })</pre>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="code-pair">
+                    <h3>Lien vers action</h3>
+                    <p>Navigation dynamique vers une action</p>
+                    <div class="comparison">
+                        <div class="comparison-col">
+                            <h4>❌ HTML Simple</h4>
+                            <pre><span class="code-tag">&lt;a</span> <span class="code-property">href</span>=<span class="code-string">"@Url.Action("Create", "Users")"</span><span class="code-tag">&gt;</span>
+  Nouveau
+<span class="code-tag">&lt;/a&gt;</span></pre>
+                        </div>
+                        <div class="comparison-col">
+                            <h4>✅ HTML Helper</h4>
+                            <pre><span class="code-method">@Html</span>.<span class="code-method">ActionLink</span>(<span class="code-string">"Nouveau"</span>,
+    <span class="code-string">"Create"</span>, <span class="code-string">"Users"</span>)</pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION: AFFICHAGE -->
+        <div class="section">
+            <h2>📺 Affichage de Données</h2>
+            <div class="cheatsheet-grid">
+                <div class="code-pair">
+                    <h3>DisplayFor - Affichage formaté</h3>
+                    <p>Afficher une valeur formatée</p>
+                    <div class="comparison">
+                        <div class="comparison-col">
+                            <h4>❌ HTML Simple</h4>
+                            <pre>@Model.CreatedDate.<span class="code-method">ToString</span>(<span class="code-string">"dd/MM/yyyy"</span>)</pre>
+                        </div>
+                        <div class="comparison-col">
+                            <h4>✅ HTML Helper</h4>
+                            <pre><span class="code-method">@Html</span>.<span class="code-method">DisplayFor</span>(
+    m => m.CreatedDate)</pre>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="code-pair">
+                    <h3>DisplayNameFor - Nom du champ</h3>
+                    <p>Afficher le nom du champ (label)</p>
+                    <div class="comparison">
+                        <div class="comparison-col">
+                            <h4>❌ HTML Simple</h4>
+                            <pre><span class="code-tag">&lt;label&gt;</span>Nom complet<span class="code-tag">&lt;/label&gt;</span></pre>
+                        </div>
+                        <div class="comparison-col">
+                            <h4>✅ HTML Helper</h4>
+                            <pre><span class="code-method">@Html</span>.<span class="code-method">DisplayNameFor</span>(
+    m => m.FullName)</pre>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="code-pair">
+                    <h3>Label - Étiquette de champ</h3>
+                    <p>Associer un label à un champ</p>
+                    <div class="comparison">
+                        <div class="comparison-col">
+                            <h4>❌ HTML Simple</h4>
+                            <pre><span class="code-tag">&lt;label</span> <span class="code-property">for</span>=<span class="code-string">"Name"</span><span class="code-tag">&gt;</span>
+  Nom
+<span class="code-tag">&lt;/label&gt;</span></pre>
+                        </div>
+                        <div class="comparison-col">
+                            <h4>✅ HTML Helper</h4>
+                            <pre><span class="code-method">@Html</span>.<span class="code-method">LabelFor</span>(m => m.Name)</pre>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="code-pair">
+                    <h3>Expression vs Value</h3>
+                    <p>Afficher une simple valeur</p>
+                    <div class="comparison">
+                        <div class="comparison-col">
+                            <h4>❌ HTML Simple</h4>
+                            <pre>@Model.Name</pre>
+                        </div>
+                        <div class="comparison-col">
+                            <h4>✅ HTML Helper</h4>
+                            <pre><span class="code-method">@Html</span>.<span class="code-method">DisplayTextFor</span>(
+    m => m.Name)</pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION: SCRIPTS ET STYLES -->
+        <div class="section">
+            <h2>🎨 Scripts et Styles</h2>
+            <div class="cheatsheet-grid">
+                <div class="code-pair">
+                    <h3>Lien CSS</h3>
+                    <p>Inclure une feuille de styles</p>
+                    <div class="comparison">
+                        <div class="comparison-col">
+                            <h4>❌ HTML Simple</h4>
+                            <pre><span class="code-tag">&lt;link</span> <span class="code-property">rel</span>=<span class="code-string">"stylesheet"</span> 
+    <span class="code-property">href</span>=<span class="code-string">"/css/style.css"</span> <span class="code-tag">/&gt;</span></pre>
+                        </div>
+                        <div class="comparison-col">
+                            <h4>✅ HTML Helper</h4>
+                            <pre><span class="code-method">@Html</span>.<span class="code-method">Raw</span>(<span class="code-string">"&lt;link rel='stylesheet' href='/css/style.css' /&gt;"</span>)
+
+<span class="code-comment">// Ou utiliser Asp-href</span>
+<span class="code-tag">&lt;link</span> <span class="code-property">rel</span>=<span class="code-string">"stylesheet"</span> <span class="code-property">href</span>=<span class="code-string">"/css/style.css"</span> <span class="code-tag">/&gt;</span></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="code-pair">
+                    <h3>Balise Script</h3>
+                    <p>Inclure un fichier JavaScript</p>
+                    <div class="comparison">
+                        <div class="comparison-col">
+                            <h4>❌ HTML Simple</h4>
+                            <pre><span class="code-tag">&lt;script</span> <span class="code-property">src</span>=<span class="code-string">"/js/app.js"</span><span class="code-tag">&gt;&lt;/script&gt;</span></pre>
+                        </div>
+                        <div class="comparison-col">
+                            <h4>✅ HTML Helper</h4>
+                            <pre><span class="code-tag">&lt;script</span> <span class="code-property">src</span>=<span class="code-string">"/js/app.js"</span><span class="code-tag">&gt;&lt;/script&gt;</span>
+
+<span class="code-comment">// Ou avec Tag Helpers</span>
+<span class="code-tag">&lt;script</span> <span class="code-property">asp-src</span>=<span class="code-string">"/js/app.js"</span><span class="code-tag">&gt;&lt;/script&gt;</span></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="code-pair">
+                    <h3>Style inline</h3>
+                    <p>Appliquer du CSS inline</p>
+                    <div class="comparison">
+                        <div class="comparison-col">
+                            <h4>❌ HTML Simple</h4>
+                            <pre><span class="code-tag">&lt;div</span> <span class="code-property">style</span>=<span class="code-string">"color: red; font-size: 16px;"</span><span class="code-tag">&gt;</span></pre>
+                        </div>
+                        <div class="comparison-col">
+                            <h4>✅ HTML Helper</h4>
+                            <pre><span class="code-tag">&lt;div</span> <span class="code-property">style</span>=<span class="code-string">"color: red; font-size: 16px;"</span><span class="code-tag">&gt;</span>
+
+<span class="code-comment">// Mieux: utiliser les classes CSS</span>
+<span class="code-tag">&lt;div</span> <span class="code-property">class</span>=<span class="code-string">"text-danger fs-5"</span><span class="code-tag">&gt;</span></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION: TAG HELPERS -->
+        <div class="section">
+            <h2>🏷️ Tag Helpers (ASP.NET Core)</h2>
+            <div class="cheatsheet-grid">
+                <div class="code-pair">
+                    <h3>asp-for</h3>
+                    <p>Lier un élément à une propriété</p>
+                    <div class="comparison">
+                        <div class="comparison-col">
+                            <h4>❌ HTML Simple</h4>
+                            <pre><span class="code-tag">&lt;input</span> <span class="code-property">type</span>=<span class="code-string">"text"</span> <span class="code-property">name</span>=<span class="code-string">"Name"</span> <span class="code-tag">/&gt;</span></pre>
+                        </div>
+                        <div class="comparison-col">
+                            <h4>✅ Tag Helper</h4>
+                            <pre><span class="code-tag">&lt;input</span> <span class="code-property">asp-for</span>=<span class="code-string">"@Model.Name"</span> <span class="code-tag">/&gt;</span></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="code-pair">
+                    <h3>asp-action & asp-controller</h3>
+                    <p>Générer les URLs dynamiquement</p>
+                    <div class="comparison">
+                        <div class="comparison-col">
+                            <h4>❌ HTML Simple</h4>
+                            <pre><span class="code-tag">&lt;a</span> <span class="code-property">href</span>=<span class="code-string">"/users/edit/5"</span><span class="code-tag">&gt;</span>Modifier<span class="code-tag">&lt;/a&gt;</span></pre>
+                        </div>
+                        <div class="comparison-col">
+                            <h4>✅ Tag Helper</h4>
+                            <pre><span class="code-tag">&lt;a</span> <span class="code-property">asp-action</span>=<span class="code-string">"Edit"</span> 
+   <span class="code-property">asp-controller</span>=<span class="code-string">"Users"</span>
+   <span class="code-property">asp-route-id</span>=<span class="code-string">"5"</span><span class="code-tag">&gt;</span>
+  Modifier
+<span class="code-tag">&lt;/a&gt;</span></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="code-pair">
+                    <h3>asp-items</h3>
+                    <p>Lier une liste aux options</p>
+                    <div class="comparison">
+                        <div class="comparison-col">
+                            <h4>❌ HTML Simple</h4>
+                            <pre><span class="code-tag">&lt;select&gt;</span>
+  <span class="code-tag">&lt;option&gt;</span>...<span class="code-tag">&lt;/option&gt;</span>
+<span class="code-tag">&lt;/select&gt;</span></pre>
+                        </div>
+                        <div class="comparison-col">
+                            <h4>✅ Tag Helper</h4>
+                            <pre><span class="code-tag">&lt;select</span> <span class="code-property">asp-for</span>=<span class="code-string">"@Model.RoleId"</span> 
+    <span class="code-property">asp-items</span>=<span class="code-string">"@(new SelectList(Model.Roles, "Id", "Name"))"</span><span class="code-tag">&gt;</span>
+<span class="code-tag">&lt;/select&gt;</span></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="code-pair">
+                    <h3>asp-validation-for</h3>
+                    <p>Afficher les messages de validation</p>
+                    <div class="comparison">
+                        <div class="comparison-col">
+                            <h4>❌ HTML Simple</h4>
+                            <pre><span class="code-tag">&lt;span</span> <span class="code-property">class</span>=<span class="code-string">"error"</span><span class="code-tag">&gt;</span>...<span class="code-tag">&lt;/span&gt;</span></pre>
+                        </div>
+                        <div class="comparison-col">
+                            <h4>✅ Tag Helper</h4>
+                            <pre><span class="code-tag">&lt;span</span> <span class="code-property">asp-validation-for</span>=<span class="code-string">"@Model.Email"</span> 
+    <span class="code-property">class</span>=<span class="code-string">"text-danger"</span><span class="code-tag">&gt;&lt;/span&gt;</span></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="code-pair">
+                    <h3>asp-append-version</h3>
+                    <p>Ajouter une version aux ressources</p>
+                    <div class="comparison">
+                        <div class="comparison-col">
+                            <h4>❌ HTML Simple</h4>
+                            <pre><span class="code-tag">&lt;link</span> <span class="code-property">href</span>=<span class="code-string">"/css/style.css?v=123"</span> <span class="code-tag">/&gt;</span></pre>
+                        </div>
+                        <div class="comparison-col">
+                            <h4>✅ Tag Helper</h4>
+                            <pre><span class="code-tag">&lt;link</span> <span class="code-property">href</span>=<span class="code-string">"/css/style.css"</span> 
+    <span class="code-property">asp-append-version</span>=<span class="code-string">"true"</span> <span class="code-tag">/&gt;</span></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION: TABLEAU REFERENCE -->
+        <div class="section">
+            <h2>📋 Tableau de Référence Complète</h2>
+            <div class="table-scroll">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Élément HTML</th>
+                            <th>HTML Helper / Tag Helper</th>
+                            <th>Utilisation</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><span class="html-tag">&lt;input type="text"&gt;</span></td>
+                            <td><span class="helper">@Html.TextBoxFor()</span></td>
+                            <td>Champ texte</td>
+                        </tr>
+                        <tr>
+                            <td><span class="html-tag">&lt;input type="hidden"&gt;</span></td>
+                            <td><span class="helper">@Html.HiddenFor()</span></td>
+                            <td>Champ caché</td>
+                        </tr>
+                        <tr>
+                            <td><span class="html-tag">&lt;input type="password"&gt;</span></td>
+                            <td><span class="helper">@Html.PasswordFor()</span></td>
+                            <td>Mot de passe</td>
+                        </tr>
+                        <tr>
+                            <td><span class="html-tag">&lt;input type="checkbox"&gt;</span></td>
+                            <td><span class="helper">@Html.CheckBoxFor()</span></td>
+                            <td>Case à cocher</td>
+                        </tr>
+                        <tr>
+                            <td><span class="html-tag">&lt;textarea&gt;</span></td>
+                            <td><span class="helper">@Html.TextAreaFor()</span></td>
+                            <td>Zone de texte</td>
+                        </tr>
+                        <tr>
+                            <td><span class="html-tag">&lt;select&gt;</span></td>
+                            <td><span class="helper">@Html.DropDownListFor()</span></td>
+                            <td>Liste déroulante</td>
+                        </tr>
+                        <tr>
+                            <td><span class="html-tag">&lt;label&gt;</span></td>
+                            <td><span class="helper">@Html.LabelFor()</span></td>
+                            <td>Étiquette</td>
+                        </tr>
+                        <tr>
+                            <td><span class="html-tag">&lt;a&gt;</span></td>
+                            <td><span class="helper">@Html.ActionLink()</span></td>
+                            <td>Lien hypertexte</td>
+                        </tr>
+                        <tr>
+                            <td><span class="html-tag">&lt;div&gt; (affichage)</span></td>
+                            <td><span class="helper">@Html.DisplayFor()</span></td>
+                            <td>Afficher formaté</td>
+                        </tr>
+                        <tr>
+                            <td><span class="html-tag">&lt;span&gt; (validation)</span></td>
+                            <td><span class="helper">@Html.ValidationMessageFor()</span></td>
+                            <td>Message d'erreur</td>
+                        </tr>
+                        <tr>
+                            <td><span class="html-tag">&lt;form&gt;</span></td>
+                            <td><span class="helper">@Html.BeginForm()</span></td>
+                            <td>Conteneur formulaire</td>
+                        </tr>
+                        <tr>
+                            <td><span class="html-tag">Token CSRF</span></td>
+                            <td><span class="helper">@Html.AntiForgeryToken()</span></td>
+                            <td>Protection CSRF</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- SECTION: CONSEILS -->
+        <div class="section" style="background: #fff3cd;">
+            <h2>💡 Conseils et Bonnes Pratiques</h2>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 20px;">
+                <div class="note" style="background: white;">
+                    <strong>✅ Préférer les Tag Helpers</strong>
+                    <p>Les Tag Helpers (ASP.NET Core) sont plus modernes et lisibles que les HTML Helpers. <span class="helper">asp-for</span> est mieux que <span class="helper">@Html.TextBoxFor()</span></p>
+                </div>
+                <div class="note" style="background: white;">
+                    <strong>✅ Utiliser les expressions Lambda</strong>
+                    <p>Les expressions Lambda offrent une meilleure intellisense et refactoring. <span class="helper">m => m.Name</span> au lieu de chaînes de caractères</p>
+                </div>
+                <div class="note" style="background: white;">
+                    <strong>❌ Éviter les URLs en dur</strong>
+                    <p>Ne pas écrire <span class="html-tag">href="/users/edit"</span> mais utiliser les helpers <span class="helper">asp-action</span> et <span class="helper">asp-controller</span></p>
+                </div>
+                <div class="note" style="background: white;">
+                    <strong>✅ Toujours valider côté serveur</strong>
+                    <p>Même avec la validation HTML5 côté client, valider toujours au serveur avec <span class="helper">ModelState.IsValid</span></p>
+                </div>
+                <div class="note" style="background: white;">
+                    <strong>✅ Utiliser DisplayNameFor pour les labels</strong>
+                    <p>Cela utilise les attributs <span class="helper">[Display(Name="...")]</span> du modèle, rendant la maintenance plus facile</p>
+                </div>
+                <div class="note" style="background: white;">
+                    <strong>❌ Ne pas oublier @Html.AntiForgeryToken()</strong>
+                    <p>Toujours inclure le token CSRF dans les formulaires POST pour la sécurité</p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</body>
+</html>

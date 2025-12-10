@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Razor Pages en C# - Guide Complet</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: #333;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+            animation: slideDown 0.6s ease-out;
+        }
+
+        header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        header p {
+            font-size: 1.1em;
+            opacity: 0.95;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        .card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+        }
+
+        .card h2 {
+            color: #f5576c;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+            border-bottom: 3px solid #f5576c;
+            padding-bottom: 10px;
+        }
+
+        .card ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .card li {
+            padding: 12px 0;
+            border-bottom: 1px solid #eee;
+            font-size: 0.95em;
+            line-height: 1.6;
+        }
+
+        .card li:last-child {
+            border-bottom: none;
+        }
+
+        .card li strong {
+            color: #f5576c;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .section {
+            background: white;
+            border-radius: 12px;
+            padding: 40px;
+            margin-bottom: 40px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            animation: fadeInUp 0.8s ease-out;
+        }
+
+        .section h2 {
+            color: #f5576c;
+            margin-bottom: 30px;
+            font-size: 1.8em;
+            text-align: center;
+        }
+
+        .section h3 {
+            color: #f5576c;
+            margin: 30px 0 15px 0;
+            font-size: 1.3em;
+        }
+
+        pre {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #3e3e42;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            line-height: 1.6;
+            margin: 15px 0;
+        }
+
+        .code-keyword {
+            color: #569cd6;
+        }
+
+        .code-type {
+            color: #4ec9b0;
+        }
+
+        .code-string {
+            color: #ce9178;
+        }
+
+        .code-comment {
+            color: #6a9955;
+        }
+
+        .code-method {
+            color: #dcdcaa;
+        }
+
+        .code-property {
+            color: #d7ba7d;
+        }
+
+        .flow-diagram {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .flow-item {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 8px;
+            min-width: 150px;
+            text-align: center;
+            font-weight: 600;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            flex: 1;
+            min-height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .arrow {
+            font-size: 2em;
+            color: #f5576c;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+
+        .tree {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            line-height: 1.8;
+            border-left: 4px solid #f5576c;
+            overflow-x: auto;
+        }
+
+        .folder {
+            color: #e67e22;
+            font-weight: 600;
+        }
+
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin: 20px 0;
+        }
+
+        .comparison-item {
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #f5576c;
+        }
+
+        .comparison-item h4 {
+            color: #f5576c;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+        }
+
+        .vs-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin: 20px 0;
+        }
+
+        .vs-item {
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-top: 4px solid #f5576c;
+        }
+
+        .vs-item h3 {
+            color: #f5576c;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+            text-align: center;
+        }
+
+        .vs-item ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .vs-item li {
+            padding: 10px 0;
+            border-bottom: 1px solid #e0e0e0;
+            font-size: 0.95em;
+            line-height: 1.5;
+        }
+
+        .vs-item li:last-child {
+            border-bottom: none;
+        }
+
+        .tips {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 12px;
+            padding: 30px;
+            color: white;
+            margin-top: 40px;
+            animation: fadeInUp 1.2s ease-out;
+        }
+
+        .tips h2 {
+            margin-bottom: 20px;
+            font-size: 1.5em;
+        }
+
+        .tips ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .tips li {
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.2);
+            display: flex;
+            align-items: flex-start;
+        }
+
+        .tips li:last-child {
+            border-bottom: none;
+        }
+
+        .tips li:before {
+            content: "✓";
+            font-weight: bold;
+            margin-right: 15px;
+            font-size: 1.2em;
+            flex-shrink: 0;
+        }
+
+        .highlight-box {
+            background: #fff3cd;
+            border-left: 4px solid #f5576c;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            font-size: 0.95em;
+        }
+
+        .highlight-box strong {
+            color: #f5576c;
+        }
+
+        @media (max-width: 768px) {
+            .comparison-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .vs-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .flow-diagram {
+                flex-direction: column;
+            }
+
+            .arrow {
+                transform: rotate(90deg);
+                margin: 10px 0;
+            }
+
+            header h1 {
+                font-size: 1.8em;
+            }
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .btn-container {
+            text-align: center;
+            margin-top: 40px;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 15px 40px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📄 Razor Pages en C#</h1>
+            <p>Architecture simplifiée pour applications web ASP.NET Core</p>
+        </header>
+
+        <div class="main-content">
+            <div class="card">
+                <h2>📋 Structure</h2>
+                <ul>
+                    <li>
+                        <strong>Concept</strong>
+                        Une seule page = un fichier .cshtml + un PageModel
+                    </li>
+                    <li>
+                        <strong>Fusion</strong>
+                        Combine la logique (C#) et la vue (HTML) au même endroit
+                    </li>
+                    <li>
+                        <strong>Localisation</strong>
+                        Dossier <code>Pages/</code> à la racine
+                    </li>
+                    <li>
+                        <strong>Convention</strong>
+                        Index.cshtml + Index.cshtml.cs
+                    </li>
+                </ul>
+            </div>
+
+            <div class="card">
+                <h2>⚙️ PageModel</h2>
+                <ul>
+                    <li>
+                        <strong>Rôle</strong>
+                        Classe C# derrière chaque page Razor
+                    </li>
+                    <li>
+                        <strong>Héritage</strong>
+                        Hérite de <code>PageModel</code>
+                    </li>
+                    <li>
+                        <strong>Contenu</strong>
+                        Propriétés publiques, méthodes pour traiter les requêtes
+                    </li>
+                    <li>
+                        <strong>Méthodes</strong>
+                        OnGet, OnPost, OnDelete, etc.
+                    </li>
+                </ul>
+            </div>
+
+            <div class="card">
+                <h2>🎨 Vue Razor</h2>
+                <ul>
+                    <li>
+                        <strong>Fichier</strong>
+                        Extension .cshtml (C# + HTML)
+                    </li>
+                    <li>
+                        <strong>Accès au Model</strong>
+                        Via <code>@Model</code> ou <code>@page</code>
+                    </li>
+                    <li>
+                        <strong>Binding automatique</strong>
+                        Les propriétés du PageModel sont accessibles directement
+                    </li>
+                    <li>
+                        <strong>Directives</strong>
+                        @page, @model, @using, @inject
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>🔄 Flux de Requête Razor Pages</h2>
+            <div class="flow-diagram">
+                <div class="flow-item">Requête HTTP<br>🌐</div>
+                <div class="arrow">→</div>
+                <div class="flow-item">PageModel<br>⚙️</div>
+                <div class="arrow">→</div>
+                <div class="flow-item">OnGet/OnPost<br>📊</div>
+                <div class="arrow">→</div>
+                <div class="flow-item">Page.cshtml<br>👁️</div>
+                <div class="arrow">→</div>
+                <div class="flow-item">Réponse HTML<br>✅</div>
+            </div>
+
+            <h3>📁 Arborescence Standard</h3>
+            <div class="tree">
+<span class="folder">📦 ProjetRazorPages/</span>
+<span class="folder">📁 Pages/</span>
+├─ Index.cshtml
+├─ Index.cshtml.cs
+├─ Privacy.cshtml
+├─ Privacy.cshtml.cs
+│
+├─ <span class="folder">Users/ (dossier)</span>
+│   ├─ Index.cshtml
+│   ├─ Index.cshtml.cs
+│   ├─ Create.cshtml
+│   ├─ Create.cshtml.cs
+│   ├─ Edit.cshtml
+│   └─ Edit.cshtml.cs
+│
+└─ <span class="folder">Shared/</span>
+    ├─ _Layout.cshtml
+    └─ _ValidationScriptsPartial.cshtml
+
+<span class="folder">📁 Models/</span>
+├─ User.cs
+└─ Product.cs
+
+<span class="folder">📁 wwwroot/</span>
+├─ css/
+├─ js/
+└─ images/
+
+📄 appsettings.json
+📄 Program.cs
+            </div>
+
+            <div class="highlight-box">
+                <strong>⚡ Différence clé:</strong> Contrairement au MVC, il n'y a pas de dossier Controllers séparé. La logique se trouve directement avec la page dans le fichier .cshtml.cs
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>💡 Anatomie d'une Razor Page</h2>
+            
+            <h3>PageModel (Index.cshtml.cs)</h3>
+            <pre><span class="code-keyword">using</span> Microsoft.AspNetCore.Mvc.RazorPages;
+<span class="code-keyword">using</span> YourApp.Models;
+
+<span class="code-keyword">namespace</span> YourApp.Pages
+{
+    <span class="code-keyword">public class</span> <span class="code-type">IndexModel</span> : <span class="code-type">PageModel</span>
+    {
+        <span class="code-keyword">private readonly</span> <span class="code-type">ILogger</span>&lt;<span class="code-type">IndexModel</span>&gt; _logger;
+        
+        <span class="code-keyword">public</span> <span class="code-type">List</span>&lt;<span class="code-type">User</span>&gt; <span class="code-property">Users</span> { <span class="code-keyword">get; set;</span> }
+        <span class="code-keyword">public string</span> <span class="code-property">SearchTerm</span> { <span class="code-keyword">get; set;</span> }
+
+        <span class="code-keyword">public</span> <span class="code-type">IndexModel</span>(<span class="code-type">ILogger</span>&lt;<span class="code-type">IndexModel</span>&gt; logger)
+        {
+            _logger = logger;
+        }
+
+        <span class="code-keyword">public void</span> <span class="code-method">OnGet</span>()
+        {
+            Users = <span class="code-keyword">new</span> <span class="code-type">List</span>&lt;<span class="code-type">User</span>&gt;
+            {
+                <span class="code-keyword">new</span> <span class="code-type">User</span> { <span class="code-property">Id</span> = 1, <span class="code-property">Name</span> = <span class="code-string">"Alice"</span> },
+                <span class="code-keyword">new</span> <span class="code-type">User</span> { <span class="code-property">Id</span> = 2, <span class="code-property">Name</span> = <span class="code-string">"Bob"</span> }
+            };
+        }
+
+        <span class="code-keyword">public</span> <span class="code-type">IActionResult</span> <span class="code-method">OnPost</span>()
+        {
+            <span class="code-comment">// Traiter la soumission du formulaire</span>
+            <span class="code-keyword">if</span> (!ModelState.IsValid)
+                <span class="code-keyword">return</span> <span class="code-method">Page</span>();
+
+            <span class="code-keyword">return</span> <span class="code-method">RedirectToPage</span>(<span class="code-string">"Success"</span>);
+        }
+    }
+}</pre>
+
+            <h3>Vue Razor (Index.cshtml)</h3>
+            <pre><span class="code-keyword">@page</span>
+<span class="code-keyword">@model</span> <span class="code-type">IndexModel</span>
+
+&lt;div class=<span class="code-string">"container"</span>&gt;
+    &lt;h1&gt;Liste des Utilisateurs&lt;/h1&gt;
+
+    &lt;form method=<span class="code-string">"post"</span>&gt;
+        &lt;input type=<span class="code-string">"text"</span>
+               asp-for=<span class="code-string">"@Model.SearchTerm"</span>
+               placeholder=<span class="code-string">"Rechercher..."</span> /&gt;
+        &lt;button type=<span class="code-string">"submit"</span>&gt;Rechercher&lt;/button&gt;
+    &lt;/form&gt;
+
+    &lt;table&gt;
+        &lt;tr&gt;
+            &lt;th&gt;ID&lt;/th&gt;
+            &lt;th&gt;Nom&lt;/th&gt;
+        &lt;/tr&gt;
+        @<span class="code-keyword">foreach</span> (<span class="code-keyword">var</span> user <span class="code-keyword">in</span> Model.<span class="code-property">Users</span>)
+        {
+            &lt;tr&gt;
+                &lt;td&gt;@user.<span class="code-property">Id</span>&lt;/td&gt;
+                &lt;td&gt;@user.<span class="code-property">Name</span>&lt;/td&gt;
+            &lt;/tr&gt;
+        }
+    &lt;/table&gt;
+&lt;/div&gt;</pre>
+        </div>
+
+        <div class="section">
+            <h2>🔀 MVC vs Razor Pages</h2>
+            <div class="vs-grid">
+                <div class="vs-item">
+                    <h3>🏛️ MVC</h3>
+                    <ul>
+                        <li>3 couches séparées (Model, View, Controller)</li>
+                        <li>Idéal pour projets complexes et grands</li>
+                        <li>Meilleure séparation des responsabilités</li>
+                        <li>Controller regroupe plusieurs actions</li>
+                        <li>Logique métier dans Controllers</li>
+                        <li>Plus de fichiers à gérer</li>
+                        <li>Courbe d'apprentissage plus élevée</li>
+                    </ul>
+                </div>
+                <div class="vs-item">
+                    <h3>📄 Razor Pages</h3>
+                    <ul>
+                        <li>Une page = une seule responsabilité</li>
+                        <li>Idéal pour sites simples à moyens</li>
+                        <li>Moins de boilerplate</li>
+                        <li>Une page = un PageModel</li>
+                        <li>Logique proche de la vue</li>
+                        <li>Moins de fichiers, plus lisible</li>
+                        <li>Courbe d'apprentissage plus douce</li>
+                    </ul>
+                </div>
+            </div>
+
+            <h3>📊 Comparaison du Flux de Requête</h3>
+            <div class="comparison-grid">
+                <div class="comparison-item">
+                    <h4>MVC - Requête Utilisateur</h4>
+                    <pre><span class="code-string">Requête</span>
+   ↓
+<span class="code-string">/users/edit/5</span>
+   ↓
+<span class="code-type">UsersController.cs</span>
+   ↓
+<span class="code-method">Edit</span>(<span class="code-keyword">int</span> id)
+   ↓
+<span class="code-type">Models/User.cs</span>
+   ↓
+<span class="code-type">Views/Users/Edit.cshtml</span>
+   ↓
+<span class="code-string">Réponse</span></pre>
+                </div>
+                <div class="comparison-item">
+                    <h4>Razor Pages - Requête Utilisateur</h4>
+                    <pre><span class="code-string">Requête</span>
+   ↓
+<span class="code-string">/users/edit?id=5</span>
+   ↓
+<span class="code-type">Pages/Users/Edit.cshtml</span>
+<span class="code-type">Pages/Users/Edit.cshtml.cs</span>
+   ↓
+<span class="code-method">OnGet</span>(<span class="code-keyword">int</span> id)
+   ↓
+<span class="code-type">Modèle de données</span>
+   ↓
+<span class="code-string">Réponse</span></pre>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>📌 Directives Razor Pages Essentielles</h2>
+            <div class="comparison-grid">
+                <div class="comparison-item">
+                    <h4>@page</h4>
+                    <pre><span class="code-comment">// Rend le fichier .cshtml</span>
+<span class="code-comment">// une Razor Page routable</span>
+<span class="code-keyword">@page</span>
+
+<span class="code-comment">// Options:</span>
+<span class="code-keyword">@page</span> <span class="code-string">"/users/list"</span>
+<span class="code-keyword">@page</span> <span class="code-string">"{id}"</span></pre>
+                </div>
+                <div class="comparison-item">
+                    <h4>@model</h4>
+                    <pre><span class="code-comment">// Spécifie le PageModel</span>
+<span class="code-keyword">@model</span> <span class="code-type">IndexModel</span>
+
+<span class="code-comment">// Accès aux propriétés:</span>
+&lt;h1&gt;@Model.<span class="code-property">Title</span>&lt;/h1&gt;</pre>
+                </div>
+                <div class="comparison-item">
+                    <h4>asp-for</h4>
+                    <pre><span class="code-comment">// Lie les éléments HTML</span>
+<span class="code-comment">// aux propriétés du PageModel</span>
+&lt;input asp-for=<span class="code-string">"@Model.Email"</span> /&gt;
+&lt;label asp-for=<span class="code-string">"@Model.Name"</span>&gt;
+    Nom
+&lt;/label&gt;</pre>
+                </div>
+                <div class="comparison-item">
+                    <h4>@inject</h4>
+                    <pre><span class="code-comment">// Injection de dépendance</span>
+<span class="code-comment">// directement dans la page</span>
+<span class="code-keyword">@inject</span> <span class="code-type">ILogger</span>&lt;<span class="code-type">IndexModel</span>&gt; logger
+
+@{
+    logger.<span class="code-method">LogInformation</span>(<span class="code-string">"Page chargée"</span>);
+}</pre>
+                </div>
+            </div>
+        </div>
+
+        <div class="tips">
+            <h2>⭐ Bonnes Pratiques Essentielles</h2>
+            <ul>
+                <li><strong>Une page = Une responsabilité</strong> - Chaque Razor Page doit avoir un seul but clair</li>
+                <li><strong>Nommage cohérent</strong> - Index.cshtml + Index.cshtml.cs, Create.cshtml + Create.cshtml.cs</li>
+                <li><strong>Validation des données</strong> - Utiliser [Required], [StringLength], [EmailAddress] dans le PageModel</li>
+                <li><strong>ModelState.IsValid</strong> - Toujours vérifier avant de traiter les données POST</li>
+                <li><strong>Injection de dépendances</strong> - Utiliser le constructeur du PageModel, pas new</li>
+                <li><strong>Async/Await</strong> - OnGetAsync(), OnPostAsync() pour les opérations asynchrones</li>
+                <li><strong>Partials réutilisables</strong> - Créer des fichiers _PartialName.cshtml pour les éléments répétitifs</li>
+                <li><strong>Routing</strong> - @page "route personnalisée" si besoin, sinon la convention par défaut</li>
+                <li><strong>Sécurité CSRF</strong> - ASP.NET gère automatiquement, mais vérifier les formulaires</li>
+            </ul>
+        </div>
+
+        <div class="btn-container">
+            <button class="btn" onclick="alert('Guide Razor Pages compris! 🚀')">J\'ai compris! 🎯</button>
+        </div>
+    </div>
+</body>
+</html>

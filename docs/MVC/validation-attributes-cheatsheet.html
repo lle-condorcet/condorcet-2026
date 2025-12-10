@@ -1,0 +1,1049 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>C# Model Validation Attributes - Cheatsheet</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+            animation: slideDown 0.6s ease-out;
+        }
+
+        header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        header p {
+            font-size: 1.1em;
+            opacity: 0.95;
+        }
+
+        .section {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        .section h2 {
+            color: #667eea;
+            margin-bottom: 25px;
+            font-size: 1.6em;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .validation-block {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+        }
+
+        .validation-block h3 {
+            color: #667eea;
+            font-size: 1.15em;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .validation-block p {
+            font-size: 0.9em;
+            margin-bottom: 15px;
+            color: #666;
+        }
+
+        .code-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 15px;
+        }
+
+        .code-col {
+            padding: 15px;
+            background: #fafafa;
+            border-radius: 6px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .code-col h4 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 0.95em;
+            font-weight: 600;
+        }
+
+        pre {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 12px;
+            border-radius: 6px;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.8em;
+            line-height: 1.4;
+            margin-top: 8px;
+        }
+
+        .code-keyword {
+            color: #569cd6;
+        }
+
+        .code-type {
+            color: #4ec9b0;
+        }
+
+        .code-string {
+            color: #ce9178;
+        }
+
+        .code-comment {
+            color: #6a9955;
+        }
+
+        .code-method {
+            color: #dcdcaa;
+        }
+
+        .code-property {
+            color: #d7ba7d;
+        }
+
+        .code-attribute {
+            color: #4ec9b0;
+        }
+
+        .note {
+            background: #fff3cd;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            font-size: 0.95em;
+        }
+
+        .note strong {
+            color: #667eea;
+        }
+
+        .tag {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            margin-right: 8px;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .tag.required {
+            background: #ff6b6b;
+        }
+
+        .tag.format {
+            background: #51cf66;
+        }
+
+        .tag.range {
+            background: #ff922b;
+        }
+
+        .tag.remote {
+            background: #868e96;
+        }
+
+        .impact {
+            background: #e7f5ff;
+            border-left: 4px solid #667eea;
+            padding: 12px;
+            border-radius: 6px;
+            margin: 10px 0;
+            font-size: 0.9em;
+        }
+
+        .impact strong {
+            color: #667eea;
+        }
+
+        .table-scroll {
+            overflow-x: auto;
+            margin: 20px 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+
+        table th {
+            background: #667eea;
+            color: white;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        table td {
+            padding: 12px;
+            border-bottom: 1px solid #e0e0e0;
+            font-size: 0.9em;
+        }
+
+        table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .attribute-name {
+            font-family: 'Courier New', monospace;
+            background: #f0f0f0;
+            padding: 2px 6px;
+            border-radius: 3px;
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .html-attr {
+            font-family: 'Courier New', monospace;
+            background: #f0f0f0;
+            padding: 2px 6px;
+            border-radius: 3px;
+            color: #ff6b6b;
+            font-weight: 600;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .code-section {
+                grid-template-columns: 1fr;
+            }
+
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+
+            header h1 {
+                font-size: 1.8em;
+            }
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>✔️ Validation Model Attributes</h1>
+            <p>Cheatsheet - Attributs C# et leur impact sur le HTML généré</p>
+        </header>
+
+        <!-- SECTION: REQUIRED -->
+        <div class="section">
+            <h2>🔴 Attributs Requis</h2>
+
+            <div class="validation-block">
+                <h3><span class="tag required">[Required]</span> Le champ est obligatoire</h3>
+                <p>Force la saisie d'une valeur. Valide côté serveur ET client.</p>
+                
+                <div class="code-section">
+                    <div class="code-col">
+                        <h4>📝 Code C#</h4>
+                        <pre><span class="code-attribute">[Required</span>(<span class="code-property">ErrorMessage</span> = <span class="code-string">"Le nom est obligatoire"</span>)]
+<span class="code-keyword">public</span> <span class="code-type">string</span> <span class="code-property">Name</span> { <span class="code-keyword">get</span>; <span class="code-keyword">set</span>; }</pre>
+                    </div>
+                    <div class="code-col">
+                        <h4>🌐 HTML Généré</h4>
+                        <pre><span class="code-tag">&lt;input</span> <span class="code-property">type</span>=<span class="code-string">"text"</span>
+    <span class="code-property">name</span>=<span class="code-string">"Name"</span>
+    <span class="code-property">data-val</span>=<span class="code-string">"true"</span>
+    <span class="code-property">data-val-required</span>=<span class="code-string">"Le nom est obligatoire"</span>
+    <span class="code-property">required</span> <span class="code-tag">/&gt;</span></pre>
+                    </div>
+                </div>
+
+                <div class="impact">
+                    <strong>💥 Impact HTML:</strong> Ajoute les attributs <span class="html-attr">required</span>, <span class="html-attr">data-val</span> et <span class="html-attr">data-val-required</span>. Le navigateur affiche une validation native.
+                </div>
+            </div>
+
+            <div class="validation-block">
+                <h3><span class="tag required">[RequiredIfTrue]</span> Conditionnel (Custom)</h3>
+                <p>Le champ est requis si une autre propriété booléenne est vraie.</p>
+                
+                <div class="code-section">
+                    <div class="code-col">
+                        <h4>📝 Code C#</h4>
+                        <pre><span class="code-attribute">[RequiredIf</span>(<span class="code-string">"HasMiddleName"</span>, <span class="code-keyword">true</span>)]
+<span class="code-keyword">public</span> <span class="code-type">string</span> <span class="code-property">MiddleName</span> { <span class="code-keyword">get</span>; <span class="code-keyword">set</span>; }</pre>
+                    </div>
+                    <div class="code-col">
+                        <h4>🌐 HTML Généré</h4>
+                        <pre><span class="code-tag">&lt;input</span> <span class="code-property">type</span>=<span class="code-string">"text"</span>
+    <span class="code-property">name</span>=<span class="code-string">"MiddleName"</span>
+    <span class="code-property">data-val</span>=<span class="code-string">"true"</span>
+    <span class="code-property">data-val-requiredif</span>=<span class="code-string">"..."</span> <span class="code-tag">/&gt;</span></pre>
+                    </div>
+                </div>
+
+                <div class="impact">
+                    <strong>💥 Impact HTML:</strong> Ajoute <span class="html-attr">data-val-requiredif</span> pour validation JavaScript côté client avec dépendance conditionnelle.
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION: FORMAT -->
+        <div class="section">
+            <h2>📧 Attributs de Format</h2>
+
+            <div class="validation-block">
+                <h3><span class="tag format">[EmailAddress]</span> Format email</h3>
+                <p>Valide que la valeur est un email valide.</p>
+                
+                <div class="code-section">
+                    <div class="code-col">
+                        <h4>📝 Code C#</h4>
+                        <pre><span class="code-attribute">[EmailAddress</span>(<span class="code-property">ErrorMessage</span> = <span class="code-string">"Email invalide"</span>)]
+<span class="code-keyword">public</span> <span class="code-type">string</span> <span class="code-property">Email</span> { <span class="code-keyword">get</span>; <span class="code-keyword">set</span>; }</pre>
+                    </div>
+                    <div class="code-col">
+                        <h4>🌐 HTML Généré</h4>
+                        <pre><span class="code-tag">&lt;input</span> <span class="code-property">type</span>=<span class="code-string">"email"</span>
+    <span class="code-property">name</span>=<span class="code-string">"Email"</span>
+    <span class="code-property">data-val</span>=<span class="code-string">"true"</span>
+    <span class="code-property">data-val-email</span>=<span class="code-string">"Email invalide"</span> <span class="code-tag">/&gt;</span></pre>
+                    </div>
+                </div>
+
+                <div class="impact">
+                    <strong>💥 Impact HTML:</strong> Ajoute <span class="html-attr">type="email"</span> et <span class="html-attr">data-val-email</span> pour validation navigateur ET JavaScript.
+                </div>
+            </div>
+
+            <div class="validation-block">
+                <h3><span class="tag format">[Url]</span> Format URL</h3>
+                <p>Valide que la valeur est une URL valide.</p>
+                
+                <div class="code-section">
+                    <div class="code-col">
+                        <h4>📝 Code C#</h4>
+                        <pre><span class="code-attribute">[Url</span>(<span class="code-property">ErrorMessage</span> = <span class="code-string">"URL invalide"</span>)]
+<span class="code-keyword">public</span> <span class="code-type">string</span> <span class="code-property">Website</span> { <span class="code-keyword">get</span>; <span class="code-keyword">set</span>; }</pre>
+                    </div>
+                    <div class="code-col">
+                        <h4>🌐 HTML Généré</h4>
+                        <pre><span class="code-tag">&lt;input</span> <span class="code-property">type</span>=<span class="code-string">"url"</span>
+    <span class="code-property">name</span>=<span class="code-string">"Website"</span>
+    <span class="code-property">data-val</span>=<span class="code-string">"true"</span>
+    <span class="code-property">data-val-url</span>=<span class="code-string">"URL invalide"</span> <span class="code-tag">/&gt;</span></pre>
+                    </div>
+                </div>
+
+                <div class="impact">
+                    <strong>💥 Impact HTML:</strong> Ajoute <span class="html-attr">type="url"</span> et <span class="html-attr">data-val-url</span> pour validation URL.
+                </div>
+            </div>
+
+            <div class="validation-block">
+                <h3><span class="tag format">[Phone]</span> Format téléphone</h3>
+                <p>Valide que la valeur est un numéro de téléphone valide.</p>
+                
+                <div class="code-section">
+                    <div class="code-col">
+                        <h4>📝 Code C#</h4>
+                        <pre><span class="code-attribute">[Phone</span>(<span class="code-property">ErrorMessage</span> = <span class="code-string">"Numéro invalide"</span>)]
+<span class="code-keyword">public</span> <span class="code-type">string</span> <span class="code-property">PhoneNumber</span> { <span class="code-keyword">get</span>; <span class="code-keyword">set</span>; }</pre>
+                    </div>
+                    <div class="code-col">
+                        <h4>🌐 HTML Généré</h4>
+                        <pre><span class="code-tag">&lt;input</span> <span class="code-property">type</span>=<span class="code-string">"tel"</span>
+    <span class="code-property">name</span>=<span class="code-string">"PhoneNumber"</span>
+    <span class="code-property">data-val</span>=<span class="code-string">"true"</span>
+    <span class="code-property">data-val-phone</span>=<span class="code-string">"Numéro invalide"</span> <span class="code-tag">/&gt;</span></pre>
+                    </div>
+                </div>
+
+                <div class="impact">
+                    <strong>💥 Impact HTML:</strong> Ajoute <span class="html-attr">type="tel"</span> et <span class="html-attr">data-val-phone</span> pour validation téléphone.
+                </div>
+            </div>
+
+            <div class="validation-block">
+                <h3><span class="tag format">[CreditCard]</span> Numéro de carte bancaire</h3>
+                <p>Valide que la valeur est un numéro de carte valide (checksum Luhn).</p>
+                
+                <div class="code-section">
+                    <div class="code-col">
+                        <h4>📝 Code C#</h4>
+                        <pre><span class="code-attribute">[CreditCard</span>(<span class="code-property">ErrorMessage</span> = <span class="code-string">"Carte invalide"</span>)]
+<span class="code-keyword">public</span> <span class="code-type">string</span> <span class="code-property">CardNumber</span> { <span class="code-keyword">get</span>; <span class="code-keyword">set</span>; }</pre>
+                    </div>
+                    <div class="code-col">
+                        <h4>🌐 HTML Généré</h4>
+                        <pre><span class="code-tag">&lt;input</span> <span class="code-property">type</span>=<span class="code-string">"text"</span>
+    <span class="code-property">name</span>=<span class="code-string">"CardNumber"</span>
+    <span class="code-property">data-val</span>=<span class="code-string">"true"</span>
+    <span class="code-property">data-val-creditcard</span>=<span class="code-string">"Carte invalide"</span> <span class="code-tag">/&gt;</span></pre>
+                    </div>
+                </div>
+
+                <div class="impact">
+                    <strong>💥 Impact HTML:</strong> Ajoute <span class="html-attr">data-val-creditcard</span> pour validation côté serveur.
+                </div>
+            </div>
+
+            <div class="validation-block">
+                <h3><span class="tag format">[RegularExpression]</span> Expression régulière</h3>
+                <p>Valide que la valeur correspond à un pattern regex.</p>
+                
+                <div class="code-section">
+                    <div class="code-col">
+                        <h4>📝 Code C#</h4>
+                        <pre><span class="code-attribute">[RegularExpression</span>(<span class="code-string">@"^[A-Z]{2}[0-9]{3}$"</span>,
+    <span class="code-property">ErrorMessage</span> = <span class="code-string">"Format invalide"</span>)]
+<span class="code-keyword">public</span> <span class="code-type">string</span> <span class="code-property">PostalCode</span> { <span class="code-keyword">get</span>; <span class="code-keyword">set</span>; }</pre>
+                    </div>
+                    <div class="code-col">
+                        <h4>🌐 HTML Généré</h4>
+                        <pre><span class="code-tag">&lt;input</span> <span class="code-property">type</span>=<span class="code-string">"text"</span>
+    <span class="code-property">name</span>=<span class="code-string">"PostalCode"</span>
+    <span class="code-property">data-val</span>=<span class="code-string">"true"</span>
+    <span class="code-property">data-val-regex</span>=<span class="code-string">"Format invalide"</span>
+    <span class="code-property">data-val-regex-pattern</span>=<span class="code-string">"^[A-Z]{2}[0-9]{3}$"</span> <span class="code-tag">/&gt;</span></pre>
+                    </div>
+                </div>
+
+                <div class="impact">
+                    <strong>💥 Impact HTML:</strong> Ajoute <span class="html-attr">data-val-regex</span> et <span class="html-attr">data-val-regex-pattern</span> pour validation pattern.
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION: LONGUEUR -->
+        <div class="section">
+            <h2>📏 Attributs de Longueur</h2>
+
+            <div class="validation-block">
+                <h3><span class="tag range">[StringLength]</span> Longueur de chaîne</h3>
+                <p>Valide que la chaîne a une longueur entre min et max.</p>
+                
+                <div class="code-section">
+                    <div class="code-col">
+                        <h4>📝 Code C#</h4>
+                        <pre><span class="code-attribute">[StringLength</span>(50, <span class="code-property">MinimumLength</span> = 3,
+    <span class="code-property">ErrorMessage</span> = <span class="code-string">"3 à 50 caractères"</span>)]
+<span class="code-keyword">public</span> <span class="code-type">string</span> <span class="code-property">Name</span> { <span class="code-keyword">get</span>; <span class="code-keyword">set</span>; }</pre>
+                    </div>
+                    <div class="code-col">
+                        <h4>🌐 HTML Généré</h4>
+                        <pre><span class="code-tag">&lt;input</span> <span class="code-property">type</span>=<span class="code-string">"text"</span>
+    <span class="code-property">name</span>=<span class="code-string">"Name"</span>
+    <span class="code-property">maxlength</span>=<span class="code-string">"50"</span>
+    <span class="code-property">data-val</span>=<span class="code-string">"true"</span>
+    <span class="code-property">data-val-length</span>=<span class="code-string">"3 à 50 caractères"</span>
+    <span class="code-property">data-val-length-max</span>=<span class="code-string">"50"</span>
+    <span class="code-property">data-val-length-min</span>=<span class="code-string">"3"</span> <span class="code-tag">/&gt;</span></pre>
+                    </div>
+                </div>
+
+                <div class="impact">
+                    <strong>💥 Impact HTML:</strong> Ajoute <span class="html-attr">maxlength</span>, <span class="html-attr">data-val-length</span>, <span class="html-attr">data-val-length-min</span> et <span class="html-attr">data-val-length-max</span>.
+                </div>
+            </div>
+
+            <div class="validation-block">
+                <h3><span class="tag range">[MinLength]</span> Longueur minimum</h3>
+                <p>Valide que la chaîne a une longueur minimum.</p>
+                
+                <div class="code-section">
+                    <div class="code-col">
+                        <h4>📝 Code C#</h4>
+                        <pre><span class="code-attribute">[MinLength</span>(5, <span class="code-property">ErrorMessage</span> = <span class="code-string">"Min 5 caractères"</span>)]
+<span class="code-keyword">public</span> <span class="code-type">string</span> <span class="code-property">Password</span> { <span class="code-keyword">get</span>; <span class="code-keyword">set</span>; }</pre>
+                    </div>
+                    <div class="code-col">
+                        <h4>🌐 HTML Généré</h4>
+                        <pre><span class="code-tag">&lt;input</span> <span class="code-property">type</span>=<span class="code-string">"password"</span>
+    <span class="code-property">name</span>=<span class="code-string">"Password"</span>
+    <span class="code-property">data-val</span>=<span class="code-string">"true"</span>
+    <span class="code-property">data-val-minlength</span>=<span class="code-string">"Min 5 caractères"</span>
+    <span class="code-property">data-val-minlength-min</span>=<span class="code-string">"5"</span> <span class="code-tag">/&gt;</span></pre>
+                    </div>
+                </div>
+
+                <div class="impact">
+                    <strong>💥 Impact HTML:</strong> Ajoute <span class="html-attr">data-val-minlength</span> et <span class="html-attr">data-val-minlength-min</span>.
+                </div>
+            </div>
+
+            <div class="validation-block">
+                <h3><span class="tag range">[MaxLength]</span> Longueur maximum</h3>
+                <p>Valide que la chaîne n'excède pas une longueur maximum.</p>
+                
+                <div class="code-section">
+                    <div class="code-col">
+                        <h4>📝 Code C#</h4>
+                        <pre><span class="code-attribute">[MaxLength</span>(100, <span class="code-property">ErrorMessage</span> = <span class="code-string">"Max 100 caractères"</span>)]
+<span class="code-keyword">public</span> <span class="code-type">string</span> <span class="code-property">Description</span> { <span class="code-keyword">get</span>; <span class="code-keyword">set</span>; }</pre>
+                    </div>
+                    <div class="code-col">
+                        <h4>🌐 HTML Généré</h4>
+                        <pre><span class="code-tag">&lt;input</span> <span class="code-property">type</span>=<span class="code-string">"text"</span>
+    <span class="code-property">name</span>=<span class="code-string">"Description"</span>
+    <span class="code-property">maxlength</span>=<span class="code-string">"100"</span>
+    <span class="code-property">data-val</span>=<span class="code-string">"true"</span>
+    <span class="code-property">data-val-maxlength</span>=<span class="code-string">"Max 100 caractères"</span>
+    <span class="code-property">data-val-maxlength-max</span>=<span class="code-string">"100"</span> <span class="code-tag">/&gt;</span></pre>
+                    </div>
+                </div>
+
+                <div class="impact">
+                    <strong>💥 Impact HTML:</strong> Ajoute <span class="html-attr">maxlength</span>, <span class="html-attr">data-val-maxlength</span> et <span class="html-attr">data-val-maxlength-max</span>.
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION: INTERVALLE -->
+        <div class="section">
+            <h2>📊 Attributs d'Intervalle</h2>
+
+            <div class="validation-block">
+                <h3><span class="tag range">[Range]</span> Intervalle de nombres</h3>
+                <p>Valide qu'un nombre est entre une valeur min et max.</p>
+                
+                <div class="code-section">
+                    <div class="code-col">
+                        <h4>📝 Code C#</h4>
+                        <pre><span class="code-attribute">[Range</span>(0, 150, <span class="code-property">ErrorMessage</span> = <span class="code-string">"Âge entre 0 et 150"</span>)]
+<span class="code-keyword">public</span> <span class="code-type">int</span> <span class="code-property">Age</span> { <span class="code-keyword">get</span>; <span class="code-keyword">set</span>; }</pre>
+                    </div>
+                    <div class="code-col">
+                        <h4>🌐 HTML Généré</h4>
+                        <pre><span class="code-tag">&lt;input</span> <span class="code-property">type</span>=<span class="code-string">"number"</span>
+    <span class="code-property">name</span>=<span class="code-string">"Age"</span>
+    <span class="code-property">min</span>=<span class="code-string">"0"</span>
+    <span class="code-property">max</span>=<span class="code-string">"150"</span>
+    <span class="code-property">data-val</span>=<span class="code-string">"true"</span>
+    <span class="code-property">data-val-range</span>=<span class="code-string">"Âge entre 0 et 150"</span>
+    <span class="code-property">data-val-range-min</span>=<span class="code-string">"0"</span>
+    <span class="code-property">data-val-range-max</span>=<span class="code-string">"150"</span> <span class="code-tag">/&gt;</span></pre>
+                    </div>
+                </div>
+
+                <div class="impact">
+                    <strong>💥 Impact HTML:</strong> Ajoute <span class="html-attr">min</span>, <span class="html-attr">max</span>, <span class="html-attr">data-val-range</span>, <span class="html-attr">data-val-range-min</span> et <span class="html-attr">data-val-range-max</span>.
+                </div>
+            </div>
+
+            <div class="validation-block">
+                <h3><span class="tag range">[Compare]</span> Comparaison avec autre propriété</h3>
+                <p>Valide qu'une propriété est égale à une autre (ex: confirmations).</p>
+                
+                <div class="code-section">
+                    <div class="code-col">
+                        <h4>📝 Code C#</h4>
+                        <pre><span class="code-attribute">[Compare</span>(<span class="code-string">"Password"</span>,
+    <span class="code-property">ErrorMessage</span> = <span class="code-string">"Les mots de passe ne correspondent pas"</span>)]
+<span class="code-keyword">public</span> <span class="code-type">string</span> <span class="code-property">ConfirmPassword</span> { <span class="code-keyword">get</span>; <span class="code-keyword">set</span>; }</pre>
+                    </div>
+                    <div class="code-col">
+                        <h4>🌐 HTML Généré</h4>
+                        <pre><span class="code-tag">&lt;input</span> <span class="code-property">type</span>=<span class="code-string">"password"</span>
+    <span class="code-property">name</span>=<span class="code-string">"ConfirmPassword"</span>
+    <span class="code-property">data-val</span>=<span class="code-string">"true"</span>
+    <span class="code-property">data-val-equalto</span>=<span class="code-string">"Les mots de passe ne correspondent pas"</span>
+    <span class="code-property">data-val-equalto-other</span>=<span class="code-string">"*.Password"</span> <span class="code-tag">/&gt;</span></pre>
+                    </div>
+                </div>
+
+                <div class="impact">
+                    <strong>💥 Impact HTML:</strong> Ajoute <span class="html-attr">data-val-equalto</span> et <span class="html-attr">data-val-equalto-other</span> pour validation de correspondance.
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION: AFFICHAGE -->
+        <div class="section">
+            <h2>🎨 Attributs d'Affichage</h2>
+
+            <div class="validation-block">
+                <h3>[Display] Personnaliser l'affichage</h3>
+                <p>Contrôle le nom affiché, l'ordre, le groupe et le format.</p>
+                
+                <div class="code-section">
+                    <div class="code-col">
+                        <h4>📝 Code C#</h4>
+                        <pre><span class="code-attribute">[Display</span>(<span class="code-property">Name</span> = <span class="code-string">"Adresse Email"</span>,
+    <span class="code-property">Order</span> = 1,
+    <span class="code-property">GroupName</span> = <span class="code-string">"Contact"</span>)]
+<span class="code-keyword">public</span> <span class="code-type">string</span> <span class="code-property">Email</span> { <span class="code-keyword">get</span>; <span class="code-keyword">set</span>; }</pre>
+                    </div>
+                    <div class="code-col">
+                        <h4>🌐 HTML Généré</h4>
+                        <pre><span class="code-tag">&lt;label</span> <span class="code-property">for</span>=<span class="code-string">"Email"</span><span class="code-tag">&gt;</span>
+  Adresse Email
+<span class="code-tag">&lt;/label&gt;</span>
+<span class="code-tag">&lt;input</span> <span class="code-property">type</span>=<span class="code-string">"email"</span>
+    <span class="code-property">name</span>=<span class="code-string">"Email"</span>
+    <span class="code-property">id</span>=<span class="code-string">"Email"</span> <span class="code-tag">/&gt;</span></pre>
+                    </div>
+                </div>
+
+                <div class="impact">
+                    <strong>💥 Impact HTML:</strong> Affecte les labels générés par <span class="html-attr">@Html.LabelFor()</span> et <span class="html-attr">@Html.DisplayNameFor()</span>.
+                </div>
+            </div>
+
+            <div class="validation-block">
+                <h3>[DisplayFormat] Format d'affichage</h3>
+                <p>Spécifie le format d'affichage pour les dates, nombres, etc.</p>
+                
+                <div class="code-section">
+                    <div class="code-col">
+                        <h4>📝 Code C#</h4>
+                        <pre><span class="code-attribute">[DisplayFormat</span>(<span class="code-property">DataFormatString</span> = <span class="code-string">"{0:dd/MM/yyyy}"</span>,
+    <span class="code-property">ApplyFormatInEditMode</span> = <span class="code-keyword">true</span>)]
+<span class="code-keyword">public</span> <span class="code-type">DateTime</span> <span class="code-property">BirthDate</span> { <span class="code-keyword">get</span>; <span class="code-keyword">set</span>; }</pre>
+                    </div>
+                    <div class="code-col">
+                        <h4>🌐 HTML Généré</h4>
+                        <pre><span class="code-tag">&lt;input</span> <span class="code-property">type</span>=<span class="code-string">"text"</span>
+    <span class="code-property">name</span>=<span class="code-string">"BirthDate"</span>
+    <span class="code-property">value</span>=<span class="code-string">"25/12/1990"</span> <span class="code-tag">/&gt;</span>
+
+<span class="code-comment">&lt;!-- ou --&gt;</span>
+<span class="code-tag">&lt;input</span> <span class="code-property">type</span>=<span class="code-string">"date"</span>
+    <span class="code-property">value</span>=<span class="code-string">"1990-12-25"</span> <span class="code-tag">/&gt;</span></pre>
+                    </div>
+                </div>
+
+                <div class="impact">
+                    <strong>💥 Impact HTML:</strong> Affecte le format de la valeur affichée dans le champ et son attribut <span class="html-attr">value</span>.
+                </div>
+            </div>
+
+            <div class="validation-block">
+                <h3>[UIHint] Indice de rendu</h3>
+                <p>Suggère un modèle d'affichage personnalisé.</p>
+                
+                <div class="code-section">
+                    <div class="code-col">
+                        <h4>📝 Code C#</h4>
+                        <pre><span class="code-attribute">[UIHint</span>(<span class="code-string">"MultilineText"</span>)]
+<span class="code-keyword">public</span> <span class="code-type">string</span> <span class="code-property">Description</span> { <span class="code-keyword">get</span>; <span class="code-keyword">set</span>; }</pre>
+                    </div>
+                    <div class="code-col">
+                        <h4>🌐 HTML Généré</h4>
+                        <pre><span class="code-tag">&lt;textarea</span> <span class="code-property">name</span>=<span class="code-string">"Description"</span> <span class="code-property">rows</span>=<span class="code-string">"4"</span><span class="code-tag">&gt;&lt;/textarea&gt;</span>
+
+<span class="code-comment">&lt;!-- Utilise le template ~/Views/Shared/EditorTemplates/MultilineText.cshtml --&gt;</span></pre>
+                    </div>
+                </div>
+
+                <div class="impact">
+                    <strong>💥 Impact HTML:</strong> Détermine quel template editor est utilisé pour rendre le champ.
+                </div>
+            </div>
+
+            <div class="validation-block">
+                <h3>[DataType] Type de données</h3>
+                <p>Spécifie le type de données pour influencer le rendu HTML.</p>
+                
+                <div class="code-section">
+                    <div class="code-col">
+                        <h4>📝 Code C#</h4>
+                        <pre><span class="code-attribute">[DataType</span>(<span class="code-type">DataType</span>.<span class="code-property">Password</span>)]
+<span class="code-keyword">public</span> <span class="code-type">string</span> <span class="code-property">Password</span> { <span class="code-keyword">get</span>; <span class="code-keyword">set</span>; }
+
+<span class="code-attribute">[DataType</span>(<span class="code-type">DataType</span>.<span class="code-property">Date</span>)]
+<span class="code-keyword">public</span> <span class="code-type">DateTime</span> <span class="code-property">BirthDate</span> { <span class="code-keyword">get</span>; <span class="code-keyword">set</span>; }</pre>
+                    </div>
+                    <div class="code-col">
+                        <h4>🌐 HTML Généré</h4>
+                        <pre><span class="code-tag">&lt;input</span> <span class="code-property">type</span>=<span class="code-string">"password"</span>
+    <span class="code-property">name</span>=<span class="code-string">"Password"</span> <span class="code-tag">/&gt;</span>
+
+<span class="code-tag">&lt;input</span> <span class="code-property">type</span>=<span class="code-string">"date"</span>
+    <span class="code-property">name</span>=<span class="code-string">"BirthDate"</span> <span class="code-tag">/&gt;</span></pre>
+                    </div>
+                </div>
+
+                <div class="impact">
+                    <strong>💥 Impact HTML:</strong> Ajoute l'attribut <span class="html-attr">type</span> approprié au champ (password, date, email, etc.).
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION: AVANCE -->
+        <div class="section">
+            <h2>🔧 Attributs Avancés</h2>
+
+            <div class="validation-block">
+                <h3><span class="tag remote">[Remote]</span> Validation serveur asynchrone</h3>
+                <p>Valide côté serveur en appelant une action via AJAX.</p>
+                
+                <div class="code-section">
+                    <div class="code-col">
+                        <h4>📝 Code C#</h4>
+                        <pre><span class="code-attribute">[Remote</span>(<span class="code-string">"CheckUsername"</span>,
+    <span class="code-string">"Account"</span>,
+    <span class="code-property">ErrorMessage</span> = <span class="code-string">"Utilisateur existe"</span>)]
+<span class="code-keyword">public</span> <span class="code-type">string</span> <span class="code-property">Username</span> { <span class="code-keyword">get</span>; <span class="code-keyword">set</span>; }</pre>
+                    </div>
+                    <div class="code-col">
+                        <h4>🌐 HTML Généré</h4>
+                        <pre><span class="code-tag">&lt;input</span> <span class="code-property">type</span>=<span class="code-string">"text"</span>
+    <span class="code-property">name</span>=<span class="code-string">"Username"</span>
+    <span class="code-property">data-val</span>=<span class="code-string">"true"</span>
+    <span class="code-property">data-val-remote</span>=<span class="code-string">"Utilisateur existe"</span>
+    <span class="code-property">data-val-remote-url</span>=<span class="code-string">"/Account/CheckUsername"</span> <span class="code-tag">/&gt;</span></pre>
+                    </div>
+                </div>
+
+                <div class="impact">
+                    <strong>💥 Impact HTML:</strong> Ajoute <span class="html-attr">data-val-remote</span> et <span class="html-attr">data-val-remote-url</span> pour validation AJAX asynchrone.
+                </div>
+            </div>
+
+            <div class="validation-block">
+                <h3>[Scaffold] Masquer un champ</h3>
+                <p>Spécifie si une propriété doit être affichée dans les formulaires.</p>
+                
+                <div class="code-section">
+                    <div class="code-col">
+                        <h4>📝 Code C#</h4>
+                        <pre><span class="code-attribute">[Scaffold</span>(<span class="code-keyword">false</span>)]
+<span class="code-keyword">public</span> <span class="code-type">int</span> <span class="code-property">Id</span> { <span class="code-keyword">get</span>; <span class="code-keyword">set</span>; }
+
+<span class="code-attribute">[Scaffold</span>(<span class="code-keyword">false</span>)]
+<span class="code-keyword">public</span> <span class="code-type">DateTime</span> <span class="code-property">CreatedDate</span> { <span class="code-keyword">get</span>; <span class="code-keyword">set</span>; }</pre>
+                    </div>
+                    <div class="code-col">
+                        <h4>🌐 HTML Généré</h4>
+                        <pre><span class="code-comment">&lt;!-- Le champ n'est pas rendu --&gt;</span>
+<span class="code-comment">&lt;!-- Utiliser un @Html.HiddenFor() manuel si nécessaire --&gt;</span>
+
+@<span class="code-keyword">if</span> (Model.Id > 0) {
+    <span class="code-method">@Html</span>.<span class="code-method">HiddenFor</span>(m => m.Id)
+}</pre>
+                    </div>
+                </div>
+
+                <div class="impact">
+                    <strong>💥 Impact HTML:</strong> Empêche le rendu automatique du champ. Utile pour les IDs générés automatiquement.
+                </div>
+            </div>
+
+            <div class="validation-block">
+                <h3>[Editable] Permet la modification</h3>
+                <p>Indique si le champ peut être modifié.</p>
+                
+                <div class="code-section">
+                    <div class="code-col">
+                        <h4>📝 Code C#</h4>
+                        <pre><span class="code-attribute">[Editable</span>(<span class="code-keyword">false</span>)]
+<span class="code-keyword">public</span> <span class="code-type">DateTime</span> <span class="code-property">CreatedDate</span> { <span class="code-keyword">get</span>; <span class="code-keyword">set</span>; }
+
+<span class="code-attribute">[Editable</span>(<span class="code-keyword">true</span>)]
+<span class="code-keyword">public</span> <span class="code-type">string</span> <span class="code-property">Name</span> { <span class="code-keyword">get</span>; <span class="code-keyword">set</span>; }</pre>
+                    </div>
+                    <div class="code-col">
+                        <h4>🌐 HTML Généré</h4>
+                        <pre><span class="code-comment">&lt;!-- Non éditable: rendu en display --&gt;</span>
+<span class="code-tag">&lt;span&gt;</span>@Model.CreatedDate<span class="code-tag">&lt;/span&gt;</span>
+
+<span class="code-comment">&lt;!-- Éditable: rendu en input --&gt;</span>
+<span class="code-tag">&lt;input</span> <span class="code-property">type</span>=<span class="code-string">"text"</span>
+    <span class="code-property">name</span>=<span class="code-string">"Name"</span> <span class="code-tag">/&gt;</span></pre>
+                    </div>
+                </div>
+
+                <div class="impact">
+                    <strong>💥 Impact HTML:</strong> Affecte le rendu par les templates d'édition (editor vs display).
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION: TABLEAU REFERENCE -->
+        <div class="section">
+            <h2>📋 Tableau de Référence Complète</h2>
+            <div class="table-scroll">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Attribut</th>
+                            <th>Attributs HTML Générés</th>
+                            <th>Validation</th>
+                            <th>Type de Données</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><span class="attribute-name">[Required]</span></td>
+                            <td><span class="html-attr">required</span>, <span class="html-attr">data-val-required</span></td>
+                            <td>Obligatoire</td>
+                            <td>Tous</td>
+                        </tr>
+                        <tr>
+                            <td><span class="attribute-name">[EmailAddress]</span></td>
+                            <td><span class="html-attr">type="email"</span>, <span class="html-attr">data-val-email</span></td>
+                            <td>Format email</td>
+                            <td>String</td>
+                        </tr>
+                        <tr>
+                            <td><span class="attribute-name">[Url]</span></td>
+                            <td><span class="html-attr">type="url"</span>, <span class="html-attr">data-val-url</span></td>
+                            <td>Format URL</td>
+                            <td>String</td>
+                        </tr>
+                        <tr>
+                            <td><span class="attribute-name">[Phone]</span></td>
+                            <td><span class="html-attr">type="tel"</span>, <span class="html-attr">data-val-phone</span></td>
+                            <td>Format téléphone</td>
+                            <td>String</td>
+                        </tr>
+                        <tr>
+                            <td><span class="attribute-name">[CreditCard]</span></td>
+                            <td><span class="html-attr">data-val-creditcard</span></td>
+                            <td>Numéro de carte</td>
+                            <td>String</td>
+                        </tr>
+                        <tr>
+                            <td><span class="attribute-name">[RegularExpression]</span></td>
+                            <td><span class="html-attr">data-val-regex</span>, <span class="html-attr">data-val-regex-pattern</span></td>
+                            <td>Pattern regex</td>
+                            <td>String</td>
+                        </tr>
+                        <tr>
+                            <td><span class="attribute-name">[StringLength]</span></td>
+                            <td><span class="html-attr">maxlength</span>, <span class="html-attr">data-val-length</span></td>
+                            <td>Longueur min/max</td>
+                            <td>String</td>
+                        </tr>
+                        <tr>
+                            <td><span class="attribute-name">[MinLength]</span></td>
+                            <td><span class="html-attr">data-val-minlength</span></td>
+                            <td>Longueur min</td>
+                            <td>String, Array</td>
+                        </tr>
+                        <tr>
+                            <td><span class="attribute-name">[MaxLength]</span></td>
+                            <td><span class="html-attr">maxlength</span>, <span class="html-attr">data-val-maxlength</span></td>
+                            <td>Longueur max</td>
+                            <td>String, Array</td>
+                        </tr>
+                        <tr>
+                            <td><span class="attribute-name">[Range]</span></td>
+                            <td><span class="html-attr">min</span>, <span class="html-attr">max</span>, <span class="html-attr">data-val-range</span></td>
+                            <td>Min/Max numérique</td>
+                            <td>Number</td>
+                        </tr>
+                        <tr>
+                            <td><span class="attribute-name">[Compare]</span></td>
+                            <td><span class="html-attr">data-val-equalto</span>, <span class="html-attr">data-val-equalto-other</span></td>
+                            <td>Égal à autre champ</td>
+                            <td>Tous</td>
+                        </tr>
+                        <tr>
+                            <td><span class="attribute-name">[Display]</span></td>
+                            <td>Affecte le label uniquement</td>
+                            <td>Pas de validation</td>
+                            <td>Tous</td>
+                        </tr>
+                        <tr>
+                            <td><span class="attribute-name">[DisplayFormat]</span></td>
+                            <td>Affecte l'attribut <span class="html-attr">value</span></td>
+                            <td>Pas de validation</td>
+                            <td>DateTime, Nombres</td>
+                        </tr>
+                        <tr>
+                            <td><span class="attribute-name">[DataType]</span></td>
+                            <td>Change <span class="html-attr">type</span> du champ</td>
+                            <td>Parfois</td>
+                            <td>Tous</td>
+                        </tr>
+                        <tr>
+                            <td><span class="attribute-name">[Remote]</span></td>
+                            <td><span class="html-attr">data-val-remote</span>, <span class="html-attr">data-val-remote-url</span></td>
+                            <td>Validation AJAX</td>
+                            <td>Tous</td>
+                        </tr>
+                        <tr>
+                            <td><span class="attribute-name">[Scaffold]</span></td>
+                            <td>Aucun (contrôle le rendu)</td>
+                            <td>Non</td>
+                            <td>Tous</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- SECTION: EXEMPLE COMPLET -->
+        <div class="section">
+            <h2>🎯 Exemple Complet Pratique</h2>
+            
+            <div class="grid-2">
+                <div>
+                    <h3 style="color: #667eea; margin-bottom: 15px;">📝 Code C# Complet</h3>
+                    <pre><span class="code-keyword">public class</span> <span class="code-type">RegisterModel</span>
+{
+    <span class="code-attribute">[Required</span>(<span class="code-property">ErrorMessage</span> = <span class="code-string">"Le nom est obligatoire"</span>)]
+    <span class="code-attribute">[StringLength</span>(100, <span class="code-property">MinimumLength</span> = 3)]
+    <span class="code-attribute">[Display</span>(<span class="code-property">Name</span> = <span class="code-string">"Nom complet"</span>)]
+    <span class="code-keyword">public</span> <span class="code-type">string</span> <span class="code-property">FullName</span> { <span class="code-keyword">get</span>; <span class="code-keyword">set</span>; }
+
+    <span class="code-attribute">[Required</span>]
+    <span class="code-attribute">[EmailAddress</span>]
+    <span class="code-attribute">[Display</span>(<span class="code-property">Name</span> = <span class="code-string">"Adresse email"</span>)]
+    <span class="code-keyword">public</span> <span class="code-type">string</span> <span class="code-property">Email</span> { <span class="code-keyword">get</span>; <span class="code-keyword">set</span>; }
+
+    <span class="code-attribute">[Required</span>]
+    <span class="code-attribute">[DataType</span>(<span class="code-type">DataType</span>.<span class="code-property">Password</span>)]
+    <span class="code-attribute">[StringLength</span>(100, <span class="code-property">MinimumLength</span> = 8)]
+    <span class="code-attribute">[Display</span>(<span class="code-property">Name</span> = <span class="code-string">"Mot de passe"</span>)]
+    <span class="code-keyword">public</span> <span class="code-type">string</span> <span class="code-property">Password</span> { <span class="code-keyword">get</span>; <span class="code-keyword">set</span>; }
+
+    <span class="code-attribute">[Required</span>]
+    <span class="code-attribute">[DataType</span>(<span class="code-type">DataType</span>.<span class="code-property">Password</span>)]
+    <span class="code-attribute">[Compare</span>(<span class="code-string">"Password"</span>)]
+    <span class="code-attribute">[Display</span>(<span class="code-property">Name</span> = <span class="code-string">"Confirmer le mot de passe"</span>)]
+    <span class="code-keyword">public</span> <span class="code-type">string</span> <span class="code-property">ConfirmPassword</span> { <span class="code-keyword">get</span>; <span class="code-keyword">set</span>; }
+
+    <span class="code-attribute">[Range</span>(18, 120, <span class="code-property">ErrorMessage</span> = <span class="code-string">"Âge entre 18 et 120"</span>)]
+    <span class="code-attribute">[Display</span>(<span class="code-property">Name</span> = <span class="code-string">"Âge"</span>)]
+    <span class="code-keyword">public</span> <span class="code-type">int</span> <span class="code-property">Age</span> { <span class="code-keyword">get</span>; <span class="code-keyword">set</span>; }
+}</pre>
+                </div>
+
+                <div>
+                    <h3 style="color: #667eea; margin-bottom: 15px;">🌐 HTML Généré (Automatiquement!)</h3>
+                    <pre><span class="code-tag">&lt;form</span> <span class="code-property">method</span>=<span class="code-string">"post"</span><span class="code-tag">&gt;</span>
+
+  <span class="code-tag">&lt;div&gt;</span>
+    <span class="code-tag">&lt;label</span> <span class="code-property">for</span>=<span class="code-string">"FullName"</span><span class="code-tag">&gt;</span>Nom complet<span class="code-tag">&lt;/label&gt;</span>
+    <span class="code-tag">&lt;input</span> <span class="code-property">type</span>=<span class="code-string">"text"</span> <span class="code-property">name</span>=<span class="code-string">"FullName"</span>
+        <span class="code-property">maxlength</span>=<span class="code-string">"100"</span> <span class="code-property">required</span>
+        <span class="code-property">data-val</span>=<span class="code-string">"true"</span>
+        <span class="code-property">data-val-required</span>=<span class="code-string">"Le nom est obligatoire"</span>
+        <span class="code-property">data-val-length</span>=<span class="code-string">"..."</span>
+        <span class="code-property">data-val-length-min</span>=<span class="code-string">"3"</span>
+        <span class="code-property">data-val-length-max</span>=<span class="code-string">"100"</span> <span class="code-tag">/&gt;</span>
+  <span class="code-tag">&lt;/div&gt;</span>
+
+  <span class="code-tag">&lt;div&gt;</span>
+    <span class="code-tag">&lt;label</span> <span class="code-property">for</span>=<span class="code-string">"Email"</span><span class="code-tag">&gt;</span>Adresse email<span class="code-tag">&lt;/label&gt;</span>
+    <span class="code-tag">&lt;input</span> <span class="code-property">type</span>=<span class="code-string">"email"</span> <span class="code-property">name</span>=<span class="code-string">"Email"</span> <span class="code-property">required</span>
+        <span class="code-property">data-val</span>=<span class="code-string">"true"</span>
+        <span class="code-property">data-val-email</span>=<span class="code-string">"..."</span> <span class="code-tag">/&gt;</span>
+  <span class="code-tag">&lt;/div&gt;</span>
+
+  <span class="code-tag">&lt;div&gt;</span>
+    <span class="code-tag">&lt;label</span> <span class="code-property">for</span>=<span class="code-string">"Age"</span><span class="code-tag">&gt;</span>Âge<span class="code-tag">&lt;/label&gt;</span>
+    <span class="code-tag">&lt;input</span> <span class="code-property">type</span>=<span class="code-string">"number"</span> <span class="code-property">name</span>=<span class="code-string">"Age"</span>
+        <span class="code-property">min</span>=<span class="code-string">"18"</span> <span class="code-property">max</span>=<span class="code-string">"120"</span>
+        <span class="code-property">data-val</span>=<span class="code-string">"true"</span>
+        <span class="code-property">data-val-range</span>=<span class="code-string">"Âge entre 18 et 120"</span>
+        <span class="code-property">data-val-range-min</span>=<span class="code-string">"18"</span>
+        <span class="code-property">data-val-range-max</span>=<span class="code-string">"120"</span> <span class="code-tag">/&gt;</span>
+  <span class="code-tag">&lt;/div&gt;</span>
+
+<span class="code-tag">&lt;/form&gt;</span></pre>
+                </div>
+            </div>
+
+            <div class="note" style="margin-top: 20px;">
+                <strong>✨ Wow!</strong> Tout cet HTML complexe est généré automatiquement par les HTML Helpers/Tag Helpers à partir des attributs C#! Pas besoin d'écrire manuellement tous les <span class="html-attr">data-val-*</span>.
+            </div>
+        </div>
+
+        <!-- SECTION: CONSEILS -->
+        <div class="section" style="background: #fff3cd;">
+            <h2>💡 Conseils et Bonnes Pratiques</h2>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 20px;">
+                <div class="note" style="background: white;">
+                    <strong>✅ Toujours valider côté serveur</strong>
+                    <p>Les attributs de validation HTML5/JavaScript côté client peuvent être contournés. Valider toujours au serveur avec <span class="attribute-name">ModelState.IsValid</span>.</p>
+                </div>
+                <div class="note" style="background: white;">
+                    <strong>✅ Utiliser [Display] pour les labels</strong>
+                    <p>Cela rend les labels maintenables et multilingues. Ne pas écrire les labels en dur en HTML.</p>
+                </div>
+                <div class="note" style="background: white;">
+                    <strong>✅ Laisser générer le HTML</strong>
+                    <p>Utiliser <span class="attribute-name">@Html.TextBoxFor()</span> ou <span class="attribute-name">asp-for</span> plutôt que d'écrire <span class="html-attr">&lt;input&gt;</span> manuellement. Les helpers génèrent tous les <span class="html-attr">data-val-*</span>.</p>
+                </div>
+                <div class="note" style="background: white;">
+                    <strong>❌ Ne pas mélanger les approches</strong>
+                    <p>Ne pas mettre la validation HTML5 en dur (<span class="html-attr">required</span>) ET les attributs C#. Laisse les attributs C# générer l'HTML.</p>
+                </div>
+                <div class="note" style="background: white;">
+                    <strong>✅ Inclure jQuery Validation</strong>
+                    <p>Pour la validation côté client avec les <span class="html-attr">data-val-*</span>, inclure <span class="code-string">jquery.validate.js</span> et <span class="code-string">jquery.validate.unobtrusive.js</span>.</p>
+                </div>
+                <div class="note" style="background: white;">
+                    <strong>✅ Utiliser [Remote] avec modération</strong>
+                    <p>La validation [Remote] effectue une requête AJAX à chaque frappe. Utiliser avec délai (debounce) pour éviter le spam de requêtes.</p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</body>
+</html>

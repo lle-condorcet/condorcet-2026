@@ -1,0 +1,11 @@
+﻿@using System.Security.Cryptography
+@{
+    ViewData["Title"] = "Privacy Policy";
+    var myPassword = "Abc123$$";
+    var myShaPassword = SHA512.Create().ComputeHash(Convert.FromBase64String(myPassword));
+}
+<h1>@ViewData["Title"]</h1>
+
+<p>Use this page to detail your site's privacy policy.</p>
+
+<p>@myShaPassword</p>
