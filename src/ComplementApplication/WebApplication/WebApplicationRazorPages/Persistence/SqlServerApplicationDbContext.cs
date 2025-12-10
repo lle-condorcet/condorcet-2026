@@ -1,13 +1,10 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using WebApplicationRazorPages.Persistence.Entities;
 
 namespace WebApplicationRazorPages.Persistence;
 
-public class ApplicationDbContext : DbContext
+public class SqlServerApplicationDbContext : DbContext
 {
-    public DbSet<Person> Person { get; set; }
-    
-    public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
+    public SqlServerApplicationDbContext(DbContextOptions<SqlServerApplicationDbContext> options)
         : base(options)
     {
     }

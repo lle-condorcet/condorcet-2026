@@ -6,6 +6,8 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorPages();
 builder.Services.AddSqlite<ApplicationDbContext>
     (builder.Configuration.GetConnectionString("MyDatabase"));
+// builder.Services.AddSqlServer<SqlServerApplicationDbContext>
+//     (builder.Configuration.GetConnectionString("MySqlServerDatabase"));
 
 var app = builder.Build();
 
