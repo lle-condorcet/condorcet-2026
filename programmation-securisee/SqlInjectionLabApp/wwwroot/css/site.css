@@ -1,0 +1,65 @@
+html { font-size: 14px; }
+@media (min-width: 768px) { html { font-size: 16px; } }
+
+body {
+    margin-bottom: 60px;
+    background-color: #f8f9fa;
+}
+
+pre {
+    background: #1e1e2e;
+    color: #cdd6f4;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    font-size: 0.82rem;
+    overflow-x: auto;
+}
+pre code { color: inherit; }
+code { color: #d63384; font-size: 0.88em; }
+
+.card { box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+.card-header { font-weight: 600; }
+
+.sql-display {
+    background: #1a1a2e;
+    color: #e94560;
+    font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+    font-size: 0.82rem;
+    padding: 0.8rem 1rem;
+    border-radius: 6px;
+    border: 1px solid #333;
+    white-space: pre-wrap;
+    word-break: break-all;
+}
+
+.payload-chip {
+    display: inline-block;
+    background: #2d2d3f;
+    color: #e94560;
+    font-family: monospace;
+    font-size: 0.78rem;
+    padding: 0.3rem 0.6rem;
+    border-radius: 4px;
+    border: 1px solid #444;
+    margin: 0.2rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.payload-chip:hover {
+    background: #e94560;
+    color: #fff;
+}
+
+.table-results {
+    font-size: 0.85rem;
+}
+.table-results th {
+    background: #343a40;
+    color: #fff;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.navbar-brand { font-size: 1.3rem; }
+.footer { font-size: 0.85rem; }

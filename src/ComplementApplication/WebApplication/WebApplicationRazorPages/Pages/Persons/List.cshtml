@@ -1,6 +1,8 @@
 ﻿@page
 @model WebApplicationRazorPages.Pages.Persons.List
 
+<a class="btn btn-primary" asp-page="CreateOrUpdate" asp-route-id="-1">Créer une nouvelle personne</a>
+
 <table class="table table-striped">
     <thead>
     <tr>
@@ -50,8 +52,8 @@
                 </td>
                 <td>@person.JobName</td>
                 <td>
-                    @* TODO: create action buttons *@
                     <a class="btn btn-danger" asp-page-handler="Delete" asp-route-id="@person.Id">Supprimer</a>
+                    <a class="btn btn-secondary" asp-page-handler="CreateOrUpdate" asp-route-id="@person.Id">Voir ou modifier</a>
                 </td>
             </tr>
         }

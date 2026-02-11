@@ -1,0 +1,149 @@
+@{
+    ViewData["Title"] = "Accueil";
+}
+
+<div class="row justify-content-center mt-4">
+    <div class="col-md-10">
+        <div class="text-center mb-5">
+            <h1 class="display-5 fw-bold">Labo SQL Injection</h1>
+            <p class="lead text-muted">
+                Exploitation et prevention des injections SQL dans une application .NET
+                avec une base de donnees de donnees personnelles.
+            </p>
+        </div>
+
+        <!-- Schema BDD -->
+        <div class="card border-dark mb-4">
+            <div class="card-header bg-dark text-white">Base de donnees du labo (SQLite en memoire)</div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <h6 class="text-primary">Persons (10 enregistrements)</h6>
+                        <ul class="small mb-0">
+                            <li>Nom, prenom, email, telephone</li>
+                            <li>Adresse, ville</li>
+                            <li><strong class="text-danger">Numero national</strong></li>
+                            <li><strong class="text-danger">Carte de credit</strong></li>
+                            <li><strong class="text-danger">IBAN, salaire</strong></li>
+                        </ul>
+                    </div>
+                    <div class="col-md-4">
+                        <h6 class="text-primary">Users (4 comptes)</h6>
+                        <ul class="small mb-0">
+                            <li>Username, email, role</li>
+                            <li><strong class="text-danger">Mots de passe en clair</strong></li>
+                            <li>Comptes admin et user</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-4">
+                        <h6 class="text-primary">SecretConfig (4 entrees)</h6>
+                        <ul class="small mb-0">
+                            <li><strong class="text-danger">Connection string production</strong></li>
+                            <li><strong class="text-danger">Cle API paiement</strong></li>
+                            <li><strong class="text-danger">Secret JWT</strong></li>
+                            <li><strong class="text-danger">Cle de chiffrement backup</strong></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pages du labo -->
+        <div class="row g-4 mb-4">
+            <div class="col-md-3">
+                <div class="card h-100 border-danger">
+                    <div class="card-body text-center">
+                        <h6 class="card-title text-danger">Recherche Vulnerable</h6>
+                        <p class="card-text small">Concatenation de chaines dans la requete SQL.</p>
+                        <a asp-controller="Search" asp-action="Vulnerable" class="btn btn-outline-danger btn-sm">Ouvrir</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card h-100 border-danger">
+                    <div class="card-body text-center">
+                        <h6 class="card-title text-danger">Login Vulnerable</h6>
+                        <p class="card-text small">Bypass d'authentification par injection SQL.</p>
+                        <a asp-controller="Login" asp-action="Vulnerable" class="btn btn-outline-danger btn-sm">Ouvrir</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card h-100 border-success">
+                    <div class="card-body text-center">
+                        <h6 class="card-title text-success">Recherche Securisee</h6>
+                        <p class="card-text small">Requetes parametrees : l'injection est impossible.</p>
+                        <a asp-controller="Search" asp-action="Secure" class="btn btn-outline-success btn-sm">Ouvrir</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card h-100 border-info">
+                    <div class="card-body text-center">
+                        <h6 class="card-title text-info">Console SQL</h6>
+                        <p class="card-text small">Execute directement du SQL pour explorer la BDD.</p>
+                        <a asp-controller="Admin" asp-action="Console" class="btn btn-outline-info btn-sm">Ouvrir</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section EF -->
+        <div class="card mb-4" style="border-color:#c084fc;">
+            <div class="card-header text-white" style="background:#c084fc;">Entity Framework : le parallele ORM</div>
+            <div class="card-body text-center">
+                <p class="mb-3">
+                    Comparez 3 approches avec Entity Framework : <code>FromSqlRaw</code> (vulnerable),
+                    <strong>LINQ</strong> (securise par defaut) et <code>FromSqlInterpolated</code> (securise avec SQL brut).
+                    Voyez le SQL genere par EF en temps reel.
+                </p>
+                <a asp-controller="EfDemo" asp-action="Index" class="btn btn-outline-primary">
+                    Ouvrir la comparaison EF
+                </a>
+            </div>
+        </div>
+
+        <!-- Types d'attaques -->
+        <div class="card border-warning mb-4">
+            <div class="card-header bg-warning text-dark">Attaques a tester</div>
+            <div class="card-body">
+                <table class="table table-sm mb-0">
+                    <thead><tr><th>Attaque</th><th>Payload</th><th>Effet</th></tr></thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Dump de toutes les donnees</strong></td>
+                            <td><code>' OR '1'='1</code></td>
+                            <td>Retourne TOUS les enregistrements de la table</td>
+                        </tr>
+                        <tr>
+                            <td><strong>UNION - vol de mots de passe</strong></td>
+                            <td><code>' UNION SELECT ... FROM Users --</code></td>
+                            <td>Extrait les donnees d'une autre table</td>
+                        </tr>
+                        <tr>
+                            <td><strong>UNION - secrets de config</strong></td>
+                            <td><code>' UNION SELECT ... FROM SecretConfig --</code></td>
+                            <td>Accede aux cles API, connection strings</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Bypass login</strong></td>
+                            <td><code>' OR '1'='1' --</code></td>
+                            <td>Se connecte sans mot de passe</td>
+                        </tr>
+                        <tr>
+                            <td><strong>DROP TABLE (destructif)</strong></td>
+                            <td><code>'; DROP TABLE Persons; --</code></td>
+                            <td>Supprime la table entiere !</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="alert alert-warning">
+            <strong>Usage educatif uniquement.</strong>
+            Ce laboratoire est concu pour l'apprentissage en environnement controle.
+            La BDD est en memoire et se reinitialise au redemarrage.
+        </div>
+    </div>
+</div>

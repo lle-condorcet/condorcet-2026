@@ -1,0 +1,1291 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bonnes Pratiques de Programmation Sécurisée</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.7;
+            color: #333;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 50px 20px;
+            text-align: center;
+        }
+        
+        header h1 {
+            font-size: 2.8em;
+            margin-bottom: 15px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        
+        header p {
+            font-size: 1.2em;
+            opacity: 0.95;
+        }
+        
+        .toc {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 25px;
+            margin: 30px;
+            border-radius: 5px;
+        }
+        
+        .toc h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 1.4em;
+        }
+        
+        .toc ul {
+            list-style-position: inside;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 15px;
+        }
+        
+        .toc li {
+            padding: 8px;
+            background: white;
+            border-radius: 4px;
+            border-left: 3px solid #667eea;
+            padding-left: 15px;
+        }
+        
+        .toc a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        
+        .toc a:hover {
+            color: #764ba2;
+            text-decoration: underline;
+        }
+        
+        .content {
+            padding: 40px;
+        }
+        
+        section {
+            margin-bottom: 60px;
+            scroll-margin-top: 20px;
+        }
+        
+        h2 {
+            color: #667eea;
+            font-size: 2em;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 3px solid #667eea;
+        }
+        
+        h3 {
+            color: #764ba2;
+            font-size: 1.6em;
+            margin: 35px 0 20px 0;
+        }
+        
+        h4 {
+            color: #555;
+            font-size: 1.2em;
+            margin: 25px 0 15px 0;
+        }
+        
+        .card {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        
+        .card.warning {
+            border-left-color: #ff6b6b;
+            background: #ffe0e0;
+        }
+        
+        .card.success {
+            border-left-color: #51cf66;
+            background: #e6fde6;
+        }
+        
+        .card.info {
+            border-left-color: #4dabf7;
+            background: #e0f2fe;
+        }
+        
+        .card.critical {
+            border-left-color: #ff3333;
+            background: #ffcccc;
+        }
+        
+        .code-block {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            margin: 15px 0;
+            line-height: 1.4;
+            font-family: 'Courier New', monospace;
+            border-left: 4px solid #667eea;
+            font-size: 0.9em;
+        }
+        
+        .code-bad {
+            border-left-color: #ff6b6b;
+        }
+        
+        .code-good {
+            border-left-color: #51cf66;
+        }
+        
+        pre {
+            margin: 0;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        
+        .comparison-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 20px 0;
+        }
+        
+        .comparison-box {
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        
+        .comparison-title {
+            padding: 12px 15px;
+            color: white;
+            font-weight: bold;
+            font-size: 0.95em;
+        }
+        
+        .bad-title {
+            background: #ff6b6b;
+        }
+        
+        .good-title {
+            background: #51cf66;
+        }
+        
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        
+        .table thead {
+            background: #667eea;
+            color: white;
+        }
+        
+        .table th {
+            padding: 15px;
+            text-align: left;
+            font-weight: bold;
+        }
+        
+        .table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .table tbody tr:hover {
+            background: #f8f9fa;
+        }
+        
+        .checklist {
+            list-style: none;
+            margin: 20px 0;
+        }
+        
+        .checklist li {
+            padding: 12px;
+            margin: 10px 0;
+            background: #f8f9fa;
+            border-radius: 5px;
+            border-left: 4px solid #667eea;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+        
+        .checklist li:before {
+            content: "✓";
+            color: #51cf66;
+            font-weight: bold;
+            font-size: 1.2em;
+            flex-shrink: 0;
+        }
+        
+        .checklist.warning li {
+            border-left-color: #ff6b6b;
+            background: #ffe0e0;
+        }
+        
+        .checklist.warning li:before {
+            content: "⚠";
+            color: #ff6b6b;
+        }
+        
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        
+        .feature-box {
+            background: white;
+            border: 2px solid #667eea;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .feature-icon {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .feature-title {
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+        
+        .example {
+            background: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        
+        .example-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #667eea;
+        }
+        
+        .dos-donts {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 20px 0;
+        }
+        
+        .do-box, .dont-box {
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        
+        .do-box {
+            border: 2px solid #51cf66;
+        }
+        
+        .dont-box {
+            border: 2px solid #ff6b6b;
+        }
+        
+        .do-title, .dont-title {
+            padding: 12px 15px;
+            color: white;
+            font-weight: bold;
+            font-size: 1em;
+        }
+        
+        .do-title {
+            background: #51cf66;
+        }
+        
+        .dont-title {
+            background: #ff6b6b;
+        }
+        
+        .do-content, .dont-content {
+            padding: 15px;
+            background: #f8f9fa;
+        }
+        
+        .do-content ul, .dont-content ul {
+            list-style-position: inside;
+            margin-left: 0;
+        }
+        
+        .do-content li, .dont-content li {
+            margin: 8px 0;
+            padding-left: 20px;
+        }
+        
+        .implementation-guide {
+            background: #e6fde6;
+            border-left: 4px solid #51cf66;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        
+        .implementation-guide h4 {
+            color: #51cf66;
+            margin-top: 0;
+        }
+        
+        .step-list {
+            list-style: none;
+            counter-reset: step-counter;
+            margin: 20px 0;
+        }
+        
+        .step-list li {
+            counter-increment: step-counter;
+            padding: 15px;
+            margin: 10px 0;
+            background: #f8f9fa;
+            border-radius: 5px;
+            border-left: 4px solid #667eea;
+            position: relative;
+            padding-left: 45px;
+        }
+        
+        .step-list li:before {
+            content: counter(step-counter);
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: #667eea;
+            color: white;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+        
+        .key-principles {
+            background: white;
+            border: 2px solid #667eea;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        .principle {
+            padding: 15px;
+            margin: 10px 0;
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            border-radius: 4px;
+        }
+        
+        .principle-title {
+            font-weight: bold;
+            color: #667eea;
+            font-size: 1.1em;
+            margin-bottom: 8px;
+        }
+        
+        footer {
+            background: #f8f9fa;
+            padding: 30px;
+            text-align: center;
+            border-top: 1px solid #ddd;
+            color: #666;
+        }
+        
+        @media (max-width: 768px) {
+            .comparison-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .dos-donts {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🔐 Bonnes Pratiques de Programmation Sécurisée</h1>
+            <p>Guide complet pour développer des applications robustes et sécurisées</p>
+        </header>
+        
+        <div class="toc">
+            <h2>📑 Table des matières</h2>
+            <ul>
+                <li><a href="#principes-cles">Principes clés de sécurité</a></li>
+                <li><a href="#validation-entrees">Validation des entrées</a></li>
+                <li><a href="#gestion-secrets">Gestion des secrets</a></li>
+                <li><a href="#authentification">Authentification et sessions</a></li>
+                <li><a href="#autorisation">Autorisation et contrôle d'accès</a></li>
+                <li><a href="#cryptographie">Cryptographie</a></li>
+                <li><a href="#gestion-erreurs">Gestion d'erreurs</a></li>
+                <li><a href="#logging">Logging et monitoring</a></li>
+                <li><a href="#gestion-dependances">Gestion des dépendances</a></li>
+                <li><a href="#architecture-securisee">Architecture sécurisée</a></li>
+                <li><a href="#revue-code">Revue de code</a></li>
+                <li><a href="#devsecops">DevSecOps</a></li>
+                <li><a href="#checklist-finale">Checklist finale</a></li>
+            </ul>
+        </div>
+        
+        <div class="content">
+            <!-- PRINCIPES CLÉS -->
+            <section id="principes-cles">
+                <h2>🎯 Principes clés de sécurité</h2>
+                
+                <div class="key-principles">
+                    <div class="principle">
+                        <div class="principle-title">🚫 Deny by Default</div>
+                        <p>Tout est interdit sauf ce qui est explicitement autorisé.</p>
+                    </div>
+                    
+                    <div class="principle">
+                        <div class="principle-title">🔑 Least Privilege</div>
+                        <p>Permissions minimales nécessaires pour accomplir la tâche.</p>
+                    </div>
+                    
+                    <div class="principle">
+                        <div class="principle-title">🛡️ Defense in Depth</div>
+                        <p>Plusieurs couches de sécurité indépendantes.</p>
+                    </div>
+                    
+                    <div class="principle">
+                        <div class="principle-title">⛔ Fail Secure</div>
+                        <p>En cas d'erreur, refuser l'accès plutôt que l'accorder.</p>
+                    </div>
+                    
+                    <div class="principle">
+                        <div class="principle-title">🔍 Never Trust User Input</div>
+                        <p>Valider et échapper TOUTES les données utilisateur.</p>
+                    </div>
+                    
+                    <div class="principle">
+                        <div class="principle-title">📋 Keep It Simple</div>
+                        <p>Code simple = plus facile à auditer et moins de bugs.</p>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- VALIDATION DES ENTRÉES -->
+            <section id="validation-entrees">
+                <h2>✅ Validation des entrées</h2>
+                
+                <h3>Whitelist vs Blacklist</h3>
+                
+                <div class="dos-donts">
+                    <div class="dont-box">
+                        <div class="dont-title">❌ Blacklist</div>
+                        <div class="dont-content">
+                            <ul>
+                                <li>Bloquer "&lt;script&gt;"</li>
+                                <li>Bloquer "DELETE"</li>
+                                <li>Problème: Contournements faciles</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="do-box">
+                        <div class="do-title">✅ Whitelist</div>
+                        <div class="do-content">
+                            <ul>
+                                <li>Accepter seulement [a-zA-Z0-9]</li>
+                                <li>Formats RFC validés</li>
+                                <li>Avantage: Contrôle total</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <h3>Exemple : Validation de nom d'utilisateur</h3>
+                
+                <div class="comparison-container">
+                    <div class="comparison-box">
+                        <div class="comparison-title bad-title">❌ Mauvaise approche</div>
+                        <div class="comparison-content">
+                            <div class="code-block code-bad">
+// Accepter tout sauf les < et >
+function validateUsername($input) {
+    return str_replace(['<', '>'], '', $input);
+}
+
+// Attaquant : "admin&lt;img src=x&gt;"
+// Résultat : "adminimg src=x" ☠️
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="comparison-box">
+                        <div class="comparison-title good-title">✅ Bonne approche</div>
+                        <div class="comparison-content">
+                            <div class="code-block code-good">
+// Accepter UNIQUEMENT autorisé
+function validateUsername($input) {
+    if (!preg_match('/^[a-zA-Z0-9_-]{3,20}$/', $input)) {
+        throw new ValidationException("Invalid");
+    }
+    return $input;
+}
+
+// Attaquant : "admin&lt;img src=x&gt;"
+// Résultat : Exception levée ✓
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <h3>Checklist de validation</h3>
+                <ul class="checklist">
+                    <li><strong>Type</strong> : Vérifier le type de donnée</li>
+                    <li><strong>Format</strong> : Pattern attendu ?</li>
+                    <li><strong>Longueur</strong> : Entre min et max ?</li>
+                    <li><strong>Valeur</strong> : Dans la plage ?</li>
+                    <li><strong>Whitelist</strong> : Seulement les valeurs autorisées</li>
+                    <li><strong>Rejeter plutôt que nettoyer</strong> : Zéro tolérance</li>
+                </ul>
+            </section>
+            
+            <!-- GESTION DES SECRETS -->
+            <section id="gestion-secrets">
+                <h2>🔑 Gestion des secrets et données sensibles</h2>
+                
+                <div class="card warning">
+                    <h4>⚠️ Règle d'or : JAMAIS commiter de secrets en Git</h4>
+                    <p>L'historique Git les gardera à jamais.</p>
+                </div>
+                
+                <h3>Les 3 niveaux de gestion</h3>
+                
+                <div class="feature-grid">
+                    <div class="feature-box">
+                        <div class="feature-icon">👨‍💻</div>
+                        <div class="feature-title">Développement</div>
+                        <p>User Secrets (.NET)</p>
+                        <p>Variables d'env</p>
+                        <p>.env (gitignore)</p>
+                    </div>
+                    
+                    <div class="feature-box">
+                        <div class="feature-icon">🔨</div>
+                        <div class="feature-title">CI/CD</div>
+                        <p>Secrets de pipeline</p>
+                        <p>GitHub Actions</p>
+                        <p>GitLab CI</p>
+                    </div>
+                    
+                    <div class="feature-box">
+                        <div class="feature-icon">🚀</div>
+                        <div class="feature-title">Production</div>
+                        <p>HashiCorp Vault</p>
+                        <p>AWS Secrets Manager</p>
+                        <p>Azure Key Vault</p>
+                    </div>
+                </div>
+                
+                <h3>Exemple 1 : Configuration d'API Key</h3>
+                
+                <div class="comparison-container">
+                    <div class="comparison-box">
+                        <div class="comparison-title bad-title">❌ Hardcodé</div>
+                        <div class="comparison-content">
+                            <div class="code-block code-bad">
+// ❌ JAMAIS !
+class ApiClient {
+    private const string API_KEY = 
+        "sk-1234567890abcdef";
+    
+    // Commit = compromission ☠️
+}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="comparison-box">
+                        <div class="comparison-title good-title">✅ Depuis configuration</div>
+                        <div class="comparison-content">
+                            <div class="code-block code-good">
+// ✅ Sécurisé
+class ApiClient {
+    private readonly IConfiguration _config;
+    
+    public ApiClient(IConfiguration config) {
+        _config = config;
+    }
+    
+    string apiKey = _config["ApiKeys:Service"];
+}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- AUTHENTIFICATION -->
+            <section id="authentification">
+                <h2>🔐 Authentification et gestion de session</h2>
+                
+                <h3>Hachage des mots de passe</h3>
+                
+                <div class="comparison-container">
+                    <div class="comparison-box">
+                        <div class="comparison-title bad-title">❌ En clair</div>
+                        <div class="comparison-content">
+                            <div class="code-block code-bad">
+// ❌ JAMAIS
+string password = "MyPassword123";
+db.Users.Add(new User { 
+    Password = password  // ☠️
+});
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="comparison-box">
+                        <div class="comparison-title good-title">✅ Bcrypt sécurisé</div>
+                        <div class="comparison-content">
+                            <div class="code-block code-good">
+// ✅ Bcrypt - Lent par design
+using BCrypt.Net;
+
+string hash = BCrypt.HashPassword(
+    password, 
+    workFactor: 12);  // ~250ms
+
+db.Users.Add(new User {
+    PasswordHash = hash
+});
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <h3>Sécurisation des cookies</h3>
+                <ul class="checklist">
+                    <li>HttpOnly = true (Pas accessible via JS)</li>
+                    <li>Secure = true (HTTPS uniquement)</li>
+                    <li>SameSite = Strict (CSRF protection)</li>
+                    <li>Expiration courte (15-30 min)</li>
+                    <li>Regenerate ID après login</li>
+                </ul>
+            </section>
+            
+            <!-- AUTORISATION -->
+            <section id="autorisation">
+                <h2>🔓 Autorisation et contrôle d'accès</h2>
+                
+                <div class="card info">
+                    <p><strong>Différence clé :</strong></p>
+                    <ul style="margin-left: 20px;">
+                        <li><strong>Authentification</strong> = "Qui êtes-vous ?" (login)</li>
+                        <li><strong>Autorisation</strong> = "Avez-vous le droit ?" (permissions)</li>
+                    </ul>
+                </div>
+                
+                <h3>Implémentation sécurisée</h3>
+                
+                <div class="comparison-container">
+                    <div class="comparison-box">
+                        <div class="comparison-title bad-title">❌ Vérification manquante</div>
+                        <div class="comparison-content">
+                            <div class="code-block code-bad">
+// ❌ Aucune vérification
+[HttpDelete("users/{id}")]
+public IActionResult DeleteUser(int id) {
+    var user = db.Users.Find(id);
+    db.Users.Remove(user);
+    db.SaveChanges();
+    return Ok();
+}
+
+// N'importe qui peut supprimer !
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="comparison-box">
+                        <div class="comparison-title good-title">✅ Vérification présente</div>
+                        <div class="comparison-content">
+                            <div class="code-block code-good">
+// ✅ Sécurisé
+[HttpDelete("users/{id}")]
+[Authorize(Roles = "Admin")]
+public IActionResult DeleteUser(int id) {
+    var current = GetCurrentUser();
+    
+    if (!current.HasPermission("users.delete")) {
+        return Forbid();
+    }
+    
+    var target = db.Users.Find(id);
+    db.Users.Remove(target);
+    db.SaveChanges();
+    return Ok();
+}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- CRYPTOGRAPHIE -->
+            <section id="cryptographie">
+                <h2>🔐 Cryptographie et chiffrement</h2>
+                
+                <div class="card critical">
+                    <h4>⚠️ Ne pas implémenter votre propre crypto</h4>
+                    <p>Utiliser des bibliothèques éprouvées.</p>
+                </div>
+                
+                <h3>Algorithmes recommandés</h3>
+                
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Type</th>
+                            <th>✅ Recommandé</th>
+                            <th>❌ À éviter</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Chiffrement</strong></td>
+                            <td>AES-256 GCM</td>
+                            <td>DES, 3DES</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Asymétrique</strong></td>
+                            <td>RSA 2048, ECDSA</td>
+                            <td>RSA 1024</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Hachage (données)</strong></td>
+                            <td>SHA-256, SHA-512</td>
+                            <td>MD5, SHA-1</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Mots de passe</strong></td>
+                            <td>bcrypt, Argon2</td>
+                            <td>SHA (sans salt)</td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                <h3>Types de cryptographie</h3>
+                
+                <div class="feature-grid">
+                    <div class="feature-box">
+                        <div class="feature-icon">🔒</div>
+                        <div class="feature-title">Symétrique</div>
+                        <p><strong>Même clé</strong> AES-256</p>
+                        <p>Rapide</p>
+                    </div>
+                    
+                    <div class="feature-box">
+                        <div class="feature-icon">🔑</div>
+                        <div class="feature-title">Asymétrique</div>
+                        <p><strong>Deux clés</strong> RSA, ECDSA</p>
+                        <p>Sûr, lent</p>
+                    </div>
+                    
+                    <div class="feature-box">
+                        <div class="feature-icon">✋</div>
+                        <div class="feature-title">Hachage</div>
+                        <p><strong>Sens unique</strong> bcrypt</p>
+                        <p>Mots de passe</p>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- GESTION D'ERREURS -->
+            <section id="gestion-erreurs">
+                <h2>⚠️ Gestion d'erreurs sécurisée</h2>
+                
+                <h3>Exemple : Gestion d'erreurs sécurisée</h3>
+                
+                <div class="comparison-container">
+                    <div class="comparison-box">
+                        <div class="comparison-title bad-title">❌ Trop détaillée</div>
+                        <div class="comparison-content">
+                            <div class="code-block code-bad">
+try {
+    var user = db.Users.Single(u => u.Id == userId);
+} catch (Exception ex) {
+    // ❌ Expose tout
+    return BadRequest(new {
+        error = ex.Message,
+        stackTrace = ex.StackTrace
+    });
+}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="comparison-box">
+                        <div class="comparison-title good-title">✅ Sécurisée</div>
+                        <div class="comparison-content">
+                            <div class="code-block code-good">
+try {
+    var user = db.Users.Single(u => u.Id == userId);
+} catch (Exception ex) {
+    // ✅ Log serveur
+    _logger.LogError(ex, "Error fetching user");
+    
+    // ✅ Réponse générique
+    return StatusCode(500, "An error occurred");
+}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <h3>Erreurs à éviter</h3>
+                <ul class="checklist warning">
+                    <li>⚠️ Exposer la structure BD</li>
+                    <li>⚠️ Révéler chemins de fichiers</li>
+                    <li>⚠️ Énumération d'utilisateurs</li>
+                    <li>⚠️ Timing attacks</li>
+                </ul>
+            </section>
+            
+            <!-- LOGGING -->
+            <section id="logging">
+                <h2>📋 Logging et monitoring sécurisé</h2>
+                
+                <h3>Que logger pour la sécurité ?</h3>
+                
+                <div class="feature-grid">
+                    <div class="feature-box">
+                        <div class="feature-icon">👤</div>
+                        <div class="feature-title">Authentification</div>
+                        <p>Tentatives de login</p>
+                        <p>Succès/Echecs</p>
+                        <p>IP source</p>
+                    </div>
+                    
+                    <div class="feature-box">
+                        <div class="feature-icon">🔑</div>
+                        <div class="feature-title">Autorisation</div>
+                        <p>Accès refusés</p>
+                        <p>Escalade tentée</p>
+                        <p>Qui, quand, quoi</p>
+                    </div>
+                    
+                    <div class="feature-box">
+                        <div class="feature-icon">🗑️</div>
+                        <div class="feature-title">Données</div>
+                        <p>Modifications</p>
+                        <p>Suppressions</p>
+                        <p>Exports</p>
+                    </div>
+                    
+                    <div class="feature-box">
+                        <div class="feature-icon">⚠️</div>
+                        <div class="feature-title">Anomalies</div>
+                        <p>Erreurs 4xx/5xx</p>
+                        <p>Patterns suspects</p>
+                        <p>DoS tentatives</p>
+                    </div>
+                </div>
+                
+                <h3>Données JAMAIS à logger</h3>
+                
+                <div class="card warning">
+                    <h4>⚠️ Jamais dans les logs</h4>
+                    <ul style="margin-left: 20px;">
+                        <li>❌ Mots de passe</li>
+                        <li>❌ Tokens d'authentification</li>
+                        <li>❌ Clés d'API</li>
+                        <li>❌ Numéros de carte bancaire</li>
+                        <li>❌ Données personnelles</li>
+                    </ul>
+                </div>
+                
+                <h3>Exemple : Logging d'authentification</h3>
+                
+                <div class="comparison-container">
+                    <div class="comparison-box">
+                        <div class="comparison-title bad-title">❌ Dangereux</div>
+                        <div class="comparison-content">
+                            <div class="code-block code-bad">
+try {
+    var user = Authenticate(username, password);
+    // ❌ JAMAIS logger le mot de passe
+    _logger.LogInformation(
+        $"Login: {username}/{password}");
+} catch {
+    _logger.LogError("Login failed");
+}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="comparison-box">
+                        <div class="comparison-title good-title">✅ Sécurisé</div>
+                        <div class="comparison-content">
+                            <div class="code-block code-good">
+try {
+    var user = Authenticate(username, password);
+    
+    _logger.LogInformation(
+        "Login OK: User={User}, IP={IP}",
+        username, remoteIpAddress);
+} catch {
+    _logger.LogWarning(
+        "Failed login: User={User}, Attempts={Count}",
+        username, loginAttempts);
+}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- GESTION DES DÉPENDANCES -->
+            <section id="gestion-dependances">
+                <h2>📦 Gestion des dépendances</h2>
+                
+                <p>60-80% des vulnérabilités viennent des dépendances, pas du code propriétaire.</p>
+                
+                <h3>Stratégie de gestion</h3>
+                
+                <div class="implementation-guide">
+                    <h4>🛡️ Processus de sécurisation</h4>
+                    <ol class="step-list">
+                        <li><strong>Audit initial</strong> : Vérifier toutes les dépendances<pre>npm audit
+composer audit
+dotnet list package --vulnerable</pre></li>
+                        <li><strong>Correction</strong> : Update immédiat des CVE critiques</li>
+                        <li><strong>CI/CD scanning</strong> : Bloquer les builds avec CVE</li>
+                        <li><strong>Maintenance</strong> : Updates mensuelles minimum</li>
+                        <li><strong>Monitoring</strong> : Alertes sur nouveaux CVE</li>
+                    </ol>
+                </div>
+                
+                <h3>Outils recommandés</h3>
+                
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Langage</th>
+                            <th>Natif</th>
+                            <th>Avancé</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Node.js</strong></td>
+                            <td><code>npm audit</code></td>
+                            <td>Snyk, Dependabot</td>
+                        </tr>
+                        <tr>
+                            <td><strong>.NET</strong></td>
+                            <td><code>dotnet list package --vulnerable</code></td>
+                            <td>Snyk, Safety</td>
+                        </tr>
+                        <tr>
+                            <td><strong>PHP</strong></td>
+                            <td><code>composer audit</code></td>
+                            <td>Snyk, Trivy</td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                <h3>Bonnes pratiques</h3>
+                
+                <div class="dos-donts">
+                    <div class="do-box">
+                        <div class="do-title">✅ À faire</div>
+                        <div class="do-content">
+                            <ul>
+                                <li>Versions fixées (1.2.3)</li>
+                                <li>Lock files en Git</li>
+                                <li>Updates automatiques</li>
+                                <li>Tests après update</li>
+                                <li>Auditer indirectes</li>
+                                <li>Supprimer inutiles</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="dont-box">
+                        <div class="dont-title">❌ À éviter</div>
+                        <div class="dont-content">
+                            <ul>
+                                <li>Wildcards (*)</li>
+                                <li>Ignorer warnings</li>
+                                <li>Jamais updater</li>
+                                <li>Pas de tests</li>
+                                <li>Sources inconnues</li>
+                                <li>Code copié-collé</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- ARCHITECTURE -->
+            <section id="architecture-securisee">
+                <h2>🏗️ Architecture sécurisée</h2>
+                
+                <h3>Defense in Depth - Couches de sécurité</h3>
+                
+                <div class="example">
+                    <div class="example-title">🛡️ Architecture en couches</div>
+                    <pre>┌─────────────────────────────┐
+│ 1. Infrastructure          │
+│ DDoS, WAF, Pare-feu       │
+└─────────────────────────────┘
+            ↓
+┌─────────────────────────────┐
+│ 2. Transport               │
+│ HTTPS/TLS 1.2+, OAuth2    │
+└─────────────────────────────┘
+            ↓
+┌─────────────────────────────┐
+│ 3. Application             │
+│ Validation, Encoding      │
+└─────────────────────────────┘
+            ↓
+┌─────────────────────────────┐
+│ 4. Données                 │
+│ Chiffrement, Hachage      │
+└─────────────────────────────┘</pre>
+                </div>
+                
+                <h3>Zero Trust Architecture</h3>
+                
+                <div class="card info">
+                    <p><strong>"Never trust, always verify"</strong></p>
+                    <p style="margin-top: 10px;">Principes :</p>
+                    <ul style="margin-left: 20px; margin-top: 10px;">
+                        <li>Chaque requête = authentification</li>
+                        <li>Vérifier à chaque accès</li>
+                        <li>Segmentation granulaire</li>
+                        <li>Logging et monitoring continu</li>
+                    </ul>
+                </div>
+            </section>
+            
+            <!-- REVUE DE CODE -->
+            <section id="revue-code">
+                <h2>👀 Revue de code de sécurité</h2>
+                
+                <h3>Checklist de revue</h3>
+                
+                <div class="feature-grid">
+                    <div class="feature-box">
+                        <div class="feature-icon">📝</div>
+                        <div class="feature-title">Entrées</div>
+                        <ul style="text-align: left; font-size: 0.9em;">
+                            <li>Validation présente ?</li>
+                            <li>Whitelist ou blacklist ?</li>
+                            <li>Taille vérifiée ?</li>
+                            <li>Format validé ?</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="feature-box">
+                        <div class="feature-icon">🔐</div>
+                        <div class="feature-title">Secrets</div>
+                        <ul style="text-align: left; font-size: 0.9em;">
+                            <li>Aucun en dur ?</li>
+                            <li>Configuration externalisée ?</li>
+                            <li>Mots de passe chiffrés ?</li>
+                            <li>Tokens sécurisés ?</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="feature-box">
+                        <div class="feature-icon">🔑</div>
+                        <div class="feature-title">Authentification</div>
+                        <ul style="text-align: left; font-size: 0.9em;">
+                            <li>@Authorize présent ?</li>
+                            <li>Sessions sécurisées ?</li>
+                            <li>Cookies bien configurés ?</li>
+                            <li>MFA considéré ?</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="feature-box">
+                        <div class="feature-icon">🚫</div>
+                        <div class="feature-title">Autorisation</div>
+                        <ul style="text-align: left; font-size: 0.9em;">
+                            <li>Permissions vérifiées ?</li>
+                            <li>Escalade impossible ?</li>
+                            <li>Roles séparés ?</li>
+                            <li>Cross-user protection ?</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="feature-box">
+                        <div class="feature-icon">⚠️</div>
+                        <div class="feature-title">Erreurs</div>
+                        <ul style="text-align: left; font-size: 0.9em;">
+                            <li>Messages génériques ?</li>
+                            <li>Stack traces masquées ?</li>
+                            <li>Logging pas secrets ?</li>
+                            <li>Audit trail ?</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="feature-box">
+                        <div class="feature-icon">📦</div>
+                        <div class="feature-title">Dépendances</div>
+                        <ul style="text-align: left; font-size: 0.9em;">
+                            <li>Versions fixées ?</li>
+                            <li>Audit effectué ?</li>
+                            <li>Connues/fiables ?</li>
+                            <li>À jour ?</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- DEVSECOPS -->
+            <section id="devsecops">
+                <h2>🔧 DevSecOps et intégration continue</h2>
+                
+                <h3>Pipeline de sécurité</h3>
+                
+                <div class="example">
+                    <div class="example-title">🚀 Pipeline sécurisé recommandé</div>
+                    <pre>1. PUSH CODE
+   ↓
+2. PRE-COMMIT HOOKS
+   ├─ git-secrets
+   ├─ SonarLint
+   └─ Lint checks
+   ↓
+3. PR CREATION
+   ├─ SonarQube analysis
+   ├─ Snyk dependency scan
+   └─ Code review
+   ↓
+4. SECURITY GATES
+   ├─ SAST: 0 critical
+   ├─ SCA: No high vulns
+   ├─ Secrets: 0 found
+   └─ Coverage: >= 80%
+   ↓
+5. BUILD & DEPLOY
+   ├─ Container scan
+   ├─ Tests
+   └─ Deployment</pre>
+                </div>
+            </section>
+            
+            <!-- CHECKLIST FINALE -->
+            <section id="checklist-finale">
+                <h2>✅ Checklist finale de sécurité</h2>
+                
+                <div class="card success">
+                    <h3>Avant chaque déploiement en production</h3>
+                    
+                    <h4 style="margin-top: 20px;">🔐 Code</h4>
+                    <ul class="checklist">
+                        <li>✓ SAST : 0 vulnérabilité CRITIQUE</li>
+                        <li>✓ SCA : Dépendances à jour</li>
+                        <li>✓ Secrets : Aucun commité</li>
+                        <li>✓ Code review : 2+ approbations</li>
+                        <li>✓ Tests : Couverture >= 80%</li>
+                    </ul>
+                    
+                    <h4 style="margin-top: 20px;">🔑 Secrets & Données</h4>
+                    <ul class="checklist">
+                        <li>✓ Configuration depuis vault</li>
+                        <li>✓ Mots de passe chiffrés</li>
+                        <li>✓ Clés en variables d'env</li>
+                        <li>✓ DB credentials sécurisés</li>
+                        <li>✓ Pas de secrets en logs</li>
+                    </ul>
+                    
+                    <h4 style="margin-top: 20px;">✅ Entrées & Validation</h4>
+                    <ul class="checklist">
+                        <li>✓ Whitelists en place</li>
+                        <li>✓ Validation de taille</li>
+                        <li>✓ Validation de format</li>
+                        <li>✓ Prepared statements</li>
+                        <li>✓ Escaping des sorties</li>
+                    </ul>
+                    
+                    <h4 style="margin-top: 20px;">🔐 Authentification & Autorisation</h4>
+                    <ul class="checklist">
+                        <li>✓ HTTPS/TLS 1.2+ activé</li>
+                        <li>✓ Cookies sécurisés</li>
+                        <li>✓ MFA pour comptes sensibles</li>
+                        <li>✓ Vérifications d'autorisation</li>
+                        <li>✓ Audit trail complet</li>
+                    </ul>
+                    
+                    <h4 style="margin-top: 20px;">⚠️ Gestion d'erreurs & Logging</h4>
+                    <ul class="checklist">
+                        <li>✓ Pas de stack traces en prod</li>
+                        <li>✓ Messages génériques</li>
+                        <li>✓ Logging de sécurité actif</li>
+                        <li>✓ Alertes configurées</li>
+                        <li>✓ Rétention >= 1 an</li>
+                    </ul>
+                </div>
+                
+                <div class="card warning">
+                    <h3>Points critiques : Zéro tolérance</h3>
+                    <ul class="checklist warning">
+                        <li>⚠️ Secrets commités en Git</li>
+                        <li>⚠️ Mots de passe en clair</li>
+                        <li>⚠️ SQL Injection possible</li>
+                        <li>⚠️ XSS non protégé</li>
+                        <li>⚠️ CSRF tokens manquants</li>
+                        <li>⚠️ HTTP au lieu de HTTPS</li>
+                        <li>⚠️ Dépendances obsolètes avec CVE</li>
+                        <li>⚠️ Pas de MFA pour admins</li>
+                    </ul>
+                </div>
+            </section>
+        </div>
+        
+        <footer>
+            <p>&copy; 2024 Guide Bonnes Pratiques de Programmation Sécurisée</p>
+            <p style="margin-top: 10px; font-size: 0.9em;">Document complet couvrant les principes, patterns et checklist de sécurité</p>
+            <p style="margin-top: 10px; font-size: 0.85em; color: #999;">Mis à jour : Décembre 2024</p>
+        </footer>
+    </div>
+</body>
+</html>

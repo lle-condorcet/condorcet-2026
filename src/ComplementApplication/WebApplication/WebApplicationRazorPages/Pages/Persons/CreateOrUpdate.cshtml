@@ -1,0 +1,47 @@
+﻿@page "{id}"
+@model WebApplicationRazorPages.Pages.Persons.CreateOrUpdate
+
+@section Scripts {
+    @{ await Html.RenderPartialAsync("Shared/_ValidationScriptsPartial"); }
+}
+
+<form method="post" class="row g-3">
+    <div asp-validation-summary="All" class="text-danger" role="alert"></div>
+    <input asp-for="Id" type="hidden" class="form-control">
+    
+    <div class="col-md-6">
+        <label asp-for="FullName" class="form-label">Nom et prénom</label>
+        <input asp-for="FullName" type="text" class="form-control">
+        <span asp-validation-for="FullName"></span>
+    </div>
+    <div class="col-md-6">
+        <label asp-for="Email" class="form-label">Adresse e-mail</label>
+        <input asp-for="Email" type="email" class="form-control">
+        <span asp-validation-for="Email"></span>
+    </div>
+
+    <div class="col-md-6">
+        <label asp-for="BirthDate" class="form-label">Date de naissance</label>
+        <input asp-for="BirthDate" type="date" class="form-control">
+        <span asp-validation-for="BirthDate"></span>
+    </div>
+    <div class="col-md-6">
+        <div class="form-check">
+            <input class="form-check-input" type="checkbox" asp-for="IsAlive">
+            <label class="form-check-label" asp-for="IsAlive">
+                Est-elle en vie ?
+            </label>
+        </div>
+        <span asp-validation-for="IsAlive"></span>
+    </div>
+    <div class="col-md-12">
+        <label asp-for="JobId" class="form-label">Profession</label>
+        <select asp-for="JobId" asp-items="Model.SliJobs" class="form-select">
+            <option selected>Veuillez choisir une profession...</option>
+        </select>
+        <span asp-validation-for="JobId"></span>
+    </div>
+    <div class="col-12">
+        <button type="submit" class="btn btn-primary">Créer</button>
+    </div>
+</form>

@@ -1,0 +1,222 @@
+:root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface-2: #242736;
+    --accent: #6c63ff;
+    --danger: #ff4757;
+    --success: #2ed573;
+    --warning: #ffa502;
+    --text: #e4e6eb;
+    --text-muted: #8b8fa3;
+    --border: #2e3142;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    padding: 2rem;
+    max-width: 960px;
+    margin: 0 auto;
+}
+
+header {
+    text-align: center;
+    padding: 2rem 0;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 2rem;
+}
+
+header h1 {
+    font-size: 2rem;
+    color: #fff;
+    margin-bottom: 0.3rem;
+}
+
+header p { color: var(--text-muted); }
+
+.status-bar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.status-badge {
+    padding: 0.3rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.status-badge.enforce {
+    background: rgba(46, 213, 115, 0.15);
+    color: var(--success);
+    border: 1px solid var(--success);
+}
+
+.status-badge.report-only {
+    background: rgba(255, 165, 2, 0.15);
+    color: var(--warning);
+    border: 1px solid var(--warning);
+}
+
+.status-badge.disabled {
+    background: rgba(255, 71, 87, 0.15);
+    color: var(--danger);
+    border: 1px solid var(--danger);
+}
+
+.mode-links {
+    margin-top: 0.8rem;
+    font-size: 0.85rem;
+}
+
+.mode-links a {
+    color: var(--accent);
+    text-decoration: none;
+    margin: 0 0.5rem;
+}
+
+.mode-links a:hover { text-decoration: underline; }
+
+/* Sections */
+section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+section h2 {
+    font-size: 1.2rem;
+    color: #fff;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid var(--accent);
+}
+
+section p {
+    color: var(--text-muted);
+    font-size: 0.92rem;
+    margin-bottom: 1rem;
+}
+
+/* Buttons */
+.btn-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.8rem;
+    margin-top: 1rem;
+}
+
+button {
+    padding: 0.6rem 1.2rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface-2);
+    color: var(--text);
+    font-size: 0.88rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+button:hover {
+    border-color: var(--accent);
+    background: rgba(108, 99, 255, 0.1);
+}
+
+button.danger {
+    border-color: var(--danger);
+    color: var(--danger);
+}
+
+button.danger:hover {
+    background: rgba(255, 71, 87, 0.15);
+}
+
+/* Console */
+.console {
+    background: #0a0b10;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-top: 1rem;
+    max-height: 350px;
+    overflow-y: auto;
+    font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+    font-size: 0.82rem;
+}
+
+.console-line {
+    padding: 0.15rem 0;
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+}
+
+.console-line.error { color: var(--danger); }
+.console-line.success { color: var(--success); }
+.console-line.warning { color: var(--warning); }
+.console-line.info { color: var(--accent); }
+
+/* XSS target */
+#xss-target {
+    background: var(--surface-2);
+    border: 1px dashed var(--border);
+    border-radius: 6px;
+    padding: 1rem;
+    margin-top: 0.5rem;
+    min-height: 50px;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}
+
+/* Violations table */
+#violations-list {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.82rem;
+    margin-top: 0.5rem;
+}
+
+#violations-list th,
+#violations-list td {
+    padding: 0.5rem;
+    text-align: left;
+    border: 1px solid var(--border);
+}
+
+#violations-list th {
+    background: var(--surface-2);
+    color: var(--accent);
+}
+
+/* Info box */
+.info-box {
+    background: rgba(108, 99, 255, 0.08);
+    border: 1px solid var(--accent);
+    border-radius: 8px;
+    padding: 1rem;
+    font-size: 0.88rem;
+    margin-top: 1rem;
+}
+
+.info-box code {
+    background: rgba(0,0,0,0.3);
+    padding: 0.1rem 0.4rem;
+    border-radius: 3px;
+    font-size: 0.82rem;
+    color: var(--accent);
+}
+
+footer {
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    padding: 1.5rem 0;
+}

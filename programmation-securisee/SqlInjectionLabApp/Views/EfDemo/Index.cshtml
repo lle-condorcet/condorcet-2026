@@ -1,0 +1,174 @@
+@{
+    ViewData["Title"] = "Entity Framework - Comparaison";
+}
+
+<div class="row justify-content-center mt-4">
+    <div class="col-md-10">
+        <div class="text-center mb-4">
+            <h1 class="display-6 fw-bold" style="color:#c084fc;">Entity Framework vs ADO.NET brut</h1>
+            <p class="lead text-muted">
+                Comparaison des approches d'acces aux donnees et leur impact sur la securite SQL.
+            </p>
+        </div>
+
+        <!-- Les 3 approches -->
+        <div class="row g-4 mb-4">
+            <div class="col-md-4">
+                <div class="card h-100 border-danger">
+                    <div class="card-header bg-danger text-white">1. FromSqlRaw (VULNERABLE)</div>
+                    <div class="card-body">
+<pre class="mb-3"><code>// DANGEREUX : concatenation dans du SQL brut
+context.Persons
+  .<span style="color:#ff4757">FromSqlRaw</span>(
+    <span style="color:#ff4757">$"SELECT * FROM Persons
+      WHERE Name LIKE '%{input}%'"</span>
+  ).ToList();</code></pre>
+                        <p class="small text-muted">
+                            <code>FromSqlRaw</code> envoie la chaine telle quelle au moteur SQL.
+                            Si on y concatene des inputs utilisateur, c'est exactement comme de l'ADO.NET vulnerable.
+                        </p>
+                        <a asp-action="FromSqlRawVulnerable" class="btn btn-outline-danger btn-sm w-100">Tester</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100 border-success">
+                    <div class="card-header bg-success text-white">2. LINQ (SECURISE)</div>
+                    <div class="card-body">
+<pre class="mb-3"><code>// SECURISE : EF genere le SQL parametre
+context.Persons
+  .<span style="color:#2ed573">Where</span>(p =>
+    p.LastName.<span style="color:#2ed573">Contains</span>(input)
+  ).ToList();
+
+// EF genere :
+// WHERE LastName LIKE @@__p_0
+// avec @@__p_0 = '%input%'</code></pre>
+                        <p class="small text-muted">
+                            LINQ ne touche jamais au SQL directement. EF Core genere automatiquement
+                            des requetes parametrees. C'est <strong>l'approche recommandee</strong>.
+                        </p>
+                        <a asp-action="Linq" class="btn btn-outline-success btn-sm w-100">Tester</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100 border-success">
+                    <div class="card-header bg-success text-white">3. FromSqlInterpolated (SECURISE)</div>
+                    <div class="card-body">
+<pre class="mb-3"><code>// SECURISE : l'interpolation C# est
+// convertie en parametre SQL
+context.Persons
+  .<span style="color:#2ed573">FromSqlInterpolated</span>(
+    $"SELECT * FROM Persons
+      WHERE Name LIKE <span style="color:#2ed573">{input}</span>"
+  ).ToList();
+
+// {input} devient @@p0 (parametre)</code></pre>
+                        <p class="small text-muted">
+                            Meme syntaxe <code>$"..."</code> qu'avec <code>FromSqlRaw</code>, mais EF transforme
+                            l'interpolation en parametres SQL. Le piege visuel est la : la syntaxe semble identique !
+                        </p>
+                        <a asp-action="FromSqlInterpolated" class="btn btn-outline-success btn-sm w-100">Tester</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tableau recapitulatif -->
+        <div class="card mb-4">
+            <div class="card-header bg-dark text-white">Recapitulatif</div>
+            <div class="card-body p-0">
+                <table class="table table-hover mb-0">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Methode</th>
+                            <th>SQL genere</th>
+                            <th>Injection possible ?</th>
+                            <th>Quand l'utiliser</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>.Where(p => ...)</code></td>
+                            <td>Parametre automatiquement</td>
+                            <td><span class="badge bg-success">NON</span></td>
+                            <td>Toujours (99% des cas)</td>
+                        </tr>
+                        <tr>
+                            <td><code>FromSqlInterpolated($"...")</code></td>
+                            <td>Convertit <code>{var}</code> en <code>@@p0</code></td>
+                            <td><span class="badge bg-success">NON</span></td>
+                            <td>SQL complexe non exprimable en LINQ</td>
+                        </tr>
+                        <tr>
+                            <td><code>FromSqlRaw("...param...")</code></td>
+                            <td>Parametre si on passe des SqlParameter</td>
+                            <td><span class="badge bg-warning text-dark">DEPEND</span></td>
+                            <td>SQL dynamique + parametres explicites</td>
+                        </tr>
+                        <tr class="table-danger">
+                            <td><code>FromSqlRaw($"...{input}...")</code></td>
+                            <td>Concatenation directe !</td>
+                            <td><span class="badge bg-danger">OUI</span></td>
+                            <td><strong>JAMAIS</strong></td>
+                        </tr>
+                        <tr class="table-danger">
+                            <td><code>context.Database.ExecuteSqlRaw($"...")</code></td>
+                            <td>Concatenation directe !</td>
+                            <td><span class="badge bg-danger">OUI</span></td>
+                            <td><strong>JAMAIS</strong> avec des inputs</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Piege FromSqlRaw vs FromSqlInterpolated -->
+        <div class="card border-warning mb-4">
+            <div class="card-header bg-warning text-dark">Le piege visuel : FromSqlRaw vs FromSqlInterpolated</div>
+            <div class="card-body">
+                <p>Ces deux lignes <strong>semblent identiques</strong> mais l'une est vulnerable :</p>
+<pre class="mb-0"><code><span style="color:#ff4757">// VULNERABLE : FromSqlRaw recoit une string deja interpolee par C#</span>
+context.Persons.FromSqlRaw(<span style="color:#ff4757">$"SELECT * FROM P WHERE Name = '{input}'"</span>);
+<span style="color:#5c6370">// C# interpole d'abord => FromSqlRaw recoit "SELECT * FROM P WHERE Name = 'payload'"</span>
+
+<span style="color:#2ed573">// SECURISE : FromSqlInterpolated recoit un FormattableString</span>
+context.Persons.FromSqlInterpolated(<span style="color:#2ed573">$"SELECT * FROM P WHERE Name = {input}"</span>);
+<span style="color:#5c6370">// EF intercepte l'interpolation => genere "SELECT * FROM P WHERE Name = @@p0"</span></code></pre>
+                <p class="mt-3 mb-0 small">
+                    <strong>Astuce</strong> : Le compilateur C# distingue les deux grace au type du parametre.
+                    <code>FromSqlRaw</code> attend un <code>string</code> (deja resolue),
+                    <code>FromSqlInterpolated</code> attend un <code>FormattableString</code> (non resolue).
+                </p>
+            </div>
+        </div>
+
+        <!-- Lien avec ADO.NET -->
+        <div class="card border-info mb-4">
+            <div class="card-header bg-info text-white">Parallele avec ADO.NET (labo precedent)</div>
+            <div class="card-body">
+                <table class="table table-sm mb-0">
+                    <thead><tr><th>ADO.NET</th><th>Entity Framework</th><th>Securise ?</th></tr></thead>
+                    <tbody>
+                        <tr>
+                            <td><code>$"SELECT ... {input}"</code></td>
+                            <td><code>FromSqlRaw($"SELECT ... {input}")</code></td>
+                            <td><span class="badge bg-danger">NON</span> (meme probleme)</td>
+                        </tr>
+                        <tr>
+                            <td><code>cmd.Parameters.AddWithValue()</code></td>
+                            <td><code>FromSqlInterpolated($"... {input}")</code></td>
+                            <td><span class="badge bg-success">OUI</span> (parametres)</td>
+                        </tr>
+                        <tr>
+                            <td>N/A</td>
+                            <td><code>.Where(p => p.Name.Contains(input))</code></td>
+                            <td><span class="badge bg-success">OUI</span> (abstraction LINQ)</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,112 @@
+@{
+    ViewData["Title"] = "Accueil";
+}
+
+<div class="row justify-content-center mt-4">
+    <div class="col-md-10">
+        <div class="text-center mb-5">
+            <h1 class="display-5 fw-bold">Labo XSS - Injection & Capture d'ecran</h1>
+            <p class="lead text-muted">
+                Ce laboratoire demontre comment une faille XSS (Cross-Site Scripting) peut etre exploitee
+                pour capturer une copie d'ecran de la page victime et l'exfiltrer vers un serveur attaquant.
+            </p>
+        </div>
+
+        <!-- Scenario d'attaque -->
+        <div class="card border-danger mb-4">
+            <div class="card-header bg-danger text-white fw-bold">Scenario d'attaque</div>
+            <div class="card-body">
+                <ol class="mb-0">
+                    <li class="mb-2">
+                        <strong>Reconnaissance</strong> : L'attaquant identifie un champ de saisie vulnerable
+                        (livre d'or, commentaire, profil...) qui ne filtre pas les entrees.
+                    </li>
+                    <li class="mb-2">
+                        <strong>Injection</strong> : Il soumet un commentaire contenant du JavaScript malveillant
+                        qui charge <code>html2canvas</code> pour capturer la page.
+                    </li>
+                    <li class="mb-2">
+                        <strong>Execution</strong> : Quand un autre utilisateur visite la page, le script s'execute
+                        dans son navigateur (Stored XSS).
+                    </li>
+                    <li class="mb-2">
+                        <strong>Exfiltration</strong> : Le script capture un screenshot de la page (incluant
+                        potentiellement des donnees sensibles) et l'envoie a l'API de l'attaquant.
+                    </li>
+                    <li>
+                        <strong>Exploitation</strong> : L'attaquant consulte son dashboard et voit les captures
+                        avec les cookies et informations de la victime.
+                    </li>
+                </ol>
+            </div>
+        </div>
+
+        <!-- Les 3 pages -->
+        <div class="row g-4 mb-4">
+            <div class="col-md-4">
+                <div class="card h-100 border-danger">
+                    <div class="card-body text-center">
+                        <h5 class="card-title text-danger">Page Vulnerable</h5>
+                        <p class="card-text">
+                            Livre d'or utilisant <code>Html.Raw()</code> pour afficher les commentaires.
+                            Aucun encodage, aucune protection.
+                        </p>
+                        <a asp-controller="Guestbook" asp-action="Vulnerable" class="btn btn-outline-danger">
+                            Ouvrir
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100 border-success">
+                    <div class="card-body text-center">
+                        <h5 class="card-title text-success">Page Securisee</h5>
+                        <p class="card-text">
+                            Meme livre d'or, mais les commentaires sont encodes par Razor.
+                            Le payload XSS s'affiche en texte brut.
+                        </p>
+                        <a asp-controller="Guestbook" asp-action="Secure" class="btn btn-outline-success">
+                            Ouvrir
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100 border-warning">
+                    <div class="card-body text-center">
+                        <h5 class="card-title text-warning">Dashboard Attaquant</h5>
+                        <p class="card-text">
+                            Visualisez les captures d'ecran exfiltrees par le script XSS
+                            et les donnees volees (cookies, URL, user-agent).
+                        </p>
+                        <a asp-controller="Attacker" asp-action="Dashboard" class="btn btn-outline-warning">
+                            Ouvrir
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Instructions -->
+        <div class="card border-info mb-4">
+            <div class="card-header bg-info text-white fw-bold">Comment tester</div>
+            <div class="card-body">
+                <ol class="mb-0">
+                    <li>Allez sur la <strong>page vulnerable</strong></li>
+                    <li>Copiez le payload XSS affiche en bas de page et collez-le dans le champ "Commentaire"</li>
+                    <li>Soumettez le commentaire</li>
+                    <li>La page se recharge : le script s'execute, capture l'ecran et envoie les donnees</li>
+                    <li>Allez sur le <strong>Dashboard Attaquant</strong> pour voir le screenshot capture</li>
+                    <li>Puis essayez la meme chose sur la <strong>page securisee</strong> pour voir la difference</li>
+                </ol>
+            </div>
+        </div>
+
+        <!-- Avertissement -->
+        <div class="alert alert-warning">
+            <strong>Usage educatif uniquement.</strong>
+            Ce laboratoire est concu pour l'apprentissage en environnement controle.
+            L'exploitation de failles XSS sur des systemes sans autorisation est illegale.
+        </div>
+    </div>
+</div>

@@ -1,0 +1,92 @@
+@model SqlInjectionLabApp.Models.LoginViewModel
+@{
+    ViewData["Title"] = "Login (SECURISE)";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="alert alert-success d-flex align-items-center">
+            <strong class="me-2">SECURISE</strong>
+            <span>Le login utilise des parametres : <code>cmd.Parameters.AddWithValue("$user", username)</code></span>
+        </div>
+
+        <h2>Connexion (securisee)</h2>
+
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card mb-4">
+                    <div class="card-header">Se connecter</div>
+                    <div class="card-body">
+                        <form asp-action="Secure" method="post">
+                            <div class="mb-3">
+                                <label for="username" class="form-label">Nom d'utilisateur</label>
+                                <input type="text" class="form-control" id="username" name="username"
+                                       value="@Model.Username" placeholder="Essayez : admin' --" autocomplete="off">
+                            </div>
+                            <div class="mb-3">
+                                <label for="password" class="form-label">Mot de passe</label>
+                                <input type="text" class="form-control" id="password" name="password"
+                                       value="@Model.Password" placeholder="password" autocomplete="off">
+                            </div>
+                            <button type="submit" class="btn btn-success w-100">Se connecter</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="card border-info mb-4">
+                    <div class="card-header bg-info text-white">Comptes valides (pour tester)</div>
+                    <div class="card-body">
+                        <table class="table table-sm mb-0">
+                            <thead><tr><th>Username</th><th>Password</th><th>Role</th></tr></thead>
+                            <tbody>
+                                <tr><td>admin</td><td>Admin@("@")2026!</td><td>admin</td></tr>
+                                <tr><td>jean.dupont</td><td>P@("@")ssword1</td><td>user</td></tr>
+                                <tr><td>marie.lecomte</td><td>Marie1990!</td><td>manager</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @if (Model.SuccessMessage != null)
+        {
+            <div class="alert alert-success"><strong>Connexion reussie !</strong> @Model.SuccessMessage</div>
+        }
+
+        @if (Model.ErrorMessage != null && Model.SuccessMessage == null)
+        {
+            <div class="alert alert-danger">@Model.ErrorMessage</div>
+        }
+
+        @if (Model.ExecutedQuery != null)
+        {
+            <div class="card mb-4">
+                <div class="card-header bg-dark text-white">Requete SQL executee (parametree)</div>
+                <div class="card-body p-0">
+                    <div class="sql-display m-3" style="color:#2ed573;">@Model.ExecutedQuery</div>
+                </div>
+            </div>
+        }
+
+        <div class="card border-success mb-4">
+            <div class="card-header bg-success text-white">Pourquoi le bypass ne fonctionne pas</div>
+            <div class="card-body">
+<pre class="mb-0"><code>// Input utilisateur :
+//   username = admin' --
+//   password = nimportequoi
+
+// Requete parametree :
+SELECT * FROM Users WHERE Username = <span style="color:#2ed573">@@user</span> AND Password = <span style="color:#2ed573">@@pass</span>
+
+// Le moteur SQL cherche LITERALEMENT :
+//   Username = "admin' --"    (avec l'apostrophe et les tirets !)
+//   Password = "nimportequoi"
+//
+// Aucun utilisateur ne s'appelle "admin' --", donc : ACCES REFUSE.</code></pre>
+            </div>
+        </div>
+    </div>
+</div>

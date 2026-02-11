@@ -1,0 +1,145 @@
+@{
+    ViewData["Title"] = "Console SQL";
+    var results = (List<Dictionary<string, object?>>)ViewBag.Results;
+    var error = (string?)ViewBag.Error;
+    var query = (string?)ViewBag.Query;
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-11">
+        <div class="alert alert-info d-flex align-items-center">
+            <strong class="me-2">CONSOLE SQL</strong>
+            <span>Executez des requetes directement sur la BDD pour explorer sa structure et ses donnees.</span>
+        </div>
+
+        @if (TempData["Message"] != null)
+        {
+            <div class="alert alert-success">@TempData["Message"]</div>
+        }
+
+        <div class="row">
+            <div class="col-md-8">
+                <!-- Console -->
+                <div class="card mb-4">
+                    <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+                        <span>Requete SQL</span>
+                        <form asp-action="ResetDatabase" method="post" class="d-inline">
+                            <button type="submit" class="btn btn-sm btn-outline-warning"
+                                    onclick="return confirm('Reinitialiser toute la base de donnees ?')">
+                                Reset BDD
+                            </button>
+                        </form>
+                    </div>
+                    <div class="card-body">
+                        <form asp-action="Console" method="post">
+                            <div class="mb-3">
+                                <textarea class="form-control font-monospace" name="sql" rows="4"
+                                          style="background:#1a1a2e; color:#e4e6eb; border-color:#333;"
+                                          placeholder="SELECT * FROM Persons LIMIT 5;">@query</textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Executer</button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Resultats -->
+                @if (error != null)
+                {
+                    <div class="alert alert-danger"><strong>Erreur :</strong> @error</div>
+                }
+
+                @if (results.Count > 0)
+                {
+                    <div class="card mb-4">
+                        <div class="card-header">Resultats (@results.Count lignes)</div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-striped table-hover table-results mb-0">
+                                    <thead>
+                                        <tr>
+                                            @foreach (var key in results[0].Keys)
+                                            {
+                                                <th>@key</th>
+                                            }
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var row in results)
+                                        {
+                                            <tr>
+                                                @foreach (var val in row.Values)
+                                                {
+                                                    <td>@(val?.ToString() ?? "NULL")</td>
+                                                }
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <!-- Requetes suggeres -->
+            <div class="col-md-4">
+                <div class="card mb-4">
+                    <div class="card-header">Requetes utiles</div>
+                    <div class="card-body small">
+                        <p class="fw-bold mb-1">Explorer la structure :</p>
+                        <code class="d-block mb-2" style="cursor:pointer; font-size:0.75rem;"
+                              onclick="document.querySelector('textarea[name=sql]').value = this.textContent">
+                            SELECT name FROM sqlite_master WHERE type='table';
+                        </code>
+                        <code class="d-block mb-3" style="cursor:pointer; font-size:0.75rem;"
+                              onclick="document.querySelector('textarea[name=sql]').value = this.textContent">
+                            PRAGMA table_info(Persons);
+                        </code>
+
+                        <p class="fw-bold mb-1">Voir les donnees :</p>
+                        <code class="d-block mb-2" style="cursor:pointer; font-size:0.75rem;"
+                              onclick="document.querySelector('textarea[name=sql]').value = this.textContent">
+                            SELECT * FROM Persons;
+                        </code>
+                        <code class="d-block mb-2" style="cursor:pointer; font-size:0.75rem;"
+                              onclick="document.querySelector('textarea[name=sql]').value = this.textContent">
+                            SELECT * FROM Users;
+                        </code>
+                        <code class="d-block mb-3" style="cursor:pointer; font-size:0.75rem;"
+                              onclick="document.querySelector('textarea[name=sql]').value = this.textContent">
+                            SELECT * FROM SecretConfig;
+                        </code>
+
+                        <p class="fw-bold mb-1">Requetes d'attaque (UNION) :</p>
+                        <code class="d-block mb-2" style="cursor:pointer; font-size:0.75rem;"
+                              onclick="document.querySelector('textarea[name=sql]').value = this.textContent">
+                            SELECT FirstName, LastName, Salary FROM Persons ORDER BY Salary DESC;
+                        </code>
+                        <code class="d-block mb-2" style="cursor:pointer; font-size:0.75rem;"
+                              onclick="document.querySelector('textarea[name=sql]').value = this.textContent">
+                            SELECT Username, Password, Role FROM Users;
+                        </code>
+                        <code class="d-block mb-2" style="cursor:pointer; font-size:0.75rem;"
+                              onclick="document.querySelector('textarea[name=sql]').value = this.textContent">
+                            SELECT Key, Value FROM SecretConfig;
+                        </code>
+                    </div>
+                </div>
+
+                <div class="card border-warning">
+                    <div class="card-header bg-warning text-dark">Schema de la BDD</div>
+                    <div class="card-body small">
+                        <p class="fw-bold text-primary mb-1">Persons</p>
+                        <p class="mb-2" style="font-size:0.75rem">Id, FirstName, LastName, Email, Phone, Address, City, NationalId, DateOfBirth, CreditCard, Iban, Salary, Department</p>
+
+                        <p class="fw-bold text-primary mb-1">Users</p>
+                        <p class="mb-2" style="font-size:0.75rem">Id, Username, Password, Role, Email</p>
+
+                        <p class="fw-bold text-primary mb-1">SecretConfig</p>
+                        <p class="mb-0" style="font-size:0.75rem">Key, Value</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

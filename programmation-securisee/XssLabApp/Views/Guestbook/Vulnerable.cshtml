@@ -1,0 +1,143 @@
+@model XssLabApp.Models.GuestbookViewModel
+@{
+    ViewData["Title"] = "Livre d'or (VULNERABLE)";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-10">
+        <div class="alert alert-danger d-flex align-items-center">
+            <strong class="me-2">PAGE VULNERABLE</strong>
+            <span>Les commentaires sont affiches avec <code>Html.Raw()</code> - aucun encodage !</span>
+        </div>
+
+        <h2>Livre d'or</h2>
+        <p class="text-muted">Laissez un message pour les visiteurs du site.</p>
+
+        <!-- Donnees sensibles simulees (visibles sur la capture d'ecran) -->
+        <div class="card bg-light mb-4">
+            <div class="card-body">
+                <h6 class="card-title">Informations du compte (simule)</h6>
+                <table class="table table-sm table-borderless mb-0">
+                    <tr><td class="fw-bold" style="width:150px">Utilisateur :</td><td>jean.dupont@condorcet.be</td></tr>
+                    <tr><td class="fw-bold">Solde :</td><td>12.450,00 EUR</td></tr>
+                    <tr><td class="fw-bold">IBAN :</td><td>BE68 5390 0754 7034</td></tr>
+                    <tr><td class="fw-bold">Session :</td><td><code>sid=a8f5f167f44f4964e6c998dee827110c</code></td></tr>
+                </table>
+            </div>
+        </div>
+
+        <!-- Liste des commentaires -->
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span>Commentaires (@Model.Comments.Count)</span>
+                <form asp-action="Reset" method="post" class="d-inline">
+                    <input type="hidden" name="returnTo" value="Vulnerable" />
+                    <button type="submit" class="btn btn-sm btn-outline-secondary">Reset</button>
+                </form>
+            </div>
+            <div class="card-body">
+                @if (Model.Comments.Count == 0)
+                {
+                    <p class="text-muted">Aucun commentaire pour le moment.</p>
+                }
+                @foreach (var comment in Model.Comments)
+                {
+                    <div class="border-bottom pb-3 mb-3">
+                        <div class="d-flex justify-content-between">
+                            <strong>@comment.Author</strong>
+                            <small class="text-muted">@comment.PostedAt.ToString("dd/MM/yyyy HH:mm")</small>
+                        </div>
+                        <div class="mt-1">
+                            @* =====================================================
+                               VULNERABLE : Html.Raw() n'encode PAS le contenu.
+                               Tout HTML/JS soumis par l'utilisateur est rendu tel quel.
+                               C'est LA faille XSS exploitee dans ce labo.
+                               ===================================================== *@
+                            @Html.Raw(comment.Content)
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Formulaire d'ajout -->
+        <div class="card mb-4">
+            <div class="card-header">Ajouter un commentaire</div>
+            <div class="card-body">
+                <form asp-action="AddComment" method="post">
+                    <input type="hidden" name="returnTo" value="Vulnerable" />
+                    <div class="mb-3">
+                        <label for="author" class="form-label">Nom</label>
+                        <input type="text" class="form-control" id="author" name="author" placeholder="Votre nom">
+                    </div>
+                    <div class="mb-3">
+                        <label for="content" class="form-label">Commentaire</label>
+                        <textarea class="form-control" id="content" name="content" rows="3"
+                                  placeholder="Votre message..."></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Publier</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Code vulnerable mis en evidence -->
+        <div class="card border-danger mb-4">
+            <div class="card-header bg-danger text-white">Code Razor vulnerable (dans cette page)</div>
+            <div class="card-body">
+<pre class="mb-0"><code>@("@")foreach (var comment in Model.Comments)
+{
+    &lt;div&gt;
+        <span class="text-danger fw-bold">@("@")Html.Raw(comment.Content)</span>  // DANGER : pas d'encodage !
+    &lt;/div&gt;
+}</code></pre>
+            </div>
+        </div>
+
+        <!-- Payload pret a copier -->
+        <div class="card border-warning mb-4">
+            <div class="card-header bg-warning text-dark fw-bold">Payload XSS (copier-coller dans le commentaire)</div>
+            <div class="card-body">
+                <p class="text-muted small">
+                    Ce payload charge <code>html2canvas</code>, capture la page entiere (y compris les donnees
+                    sensibles simulees ci-dessus), puis envoie le screenshot a l'API de l'attaquant.
+                </p>
+                <div class="bg-dark text-light p-3 rounded position-relative" style="font-family:monospace; font-size:0.78rem; word-break:break-all;">
+                    <button class="btn btn-sm btn-outline-light position-absolute top-0 end-0 m-2"
+                            onclick="navigator.clipboard.writeText(document.getElementById('payload-text').textContent)">
+                        Copier
+                    </button>
+                    <span id="payload-text">@Model.XssPayload</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Explication du payload -->
+        <div class="card border-info mb-4">
+            <div class="card-header bg-info text-white">Anatomie du payload</div>
+            <div class="card-body">
+                <ol>
+                    <li class="mb-2">
+                        <code>&lt;img src=x onerror="..."&gt;</code> - Utilise une image invalide pour declencher le handler <code>onerror</code>
+                    </li>
+                    <li class="mb-2">
+                        <strong>Garde anti-boucle</strong> : <code>if(window._xssRan) return; window._xssRan=true;</code> empeche les re-executions
+                    </li>
+                    <li class="mb-2">
+                        <strong>Auto-suppression</strong> : <code>this.remove()</code> retire le <code>&lt;img&gt;</code> du DOM
+                        avant la capture (sinon html2canvas re-clone l'image cassee et re-declenche <code>onerror</code> en boucle)
+                    </li>
+                    <li class="mb-2">
+                        <strong>Chargement dynamique</strong> de <code>html2canvas</code> via <code>document.createElement('script')</code>
+                    </li>
+                    <li class="mb-2">
+                        <strong>Capture d'ecran</strong> de <code>document.body</code> avec <code>html2canvas()</code>
+                    </li>
+                    <li class="mb-2">
+                        <strong>Exfiltration</strong> via <code>fetch()</code> vers <code>/api/exfiltration/capture</code>
+                        avec le screenshot en base64, l'URL, les cookies et le user-agent
+                    </li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>

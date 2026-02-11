@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - SQL Injection Lab</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body>
+    <header>
+        <nav class="navbar navbar-expand-sm navbar-dark bg-dark border-bottom mb-3">
+            <div class="container-fluid">
+                <a class="navbar-brand fw-bold" asp-controller="Home" asp-action="Index">
+                    <span class="text-warning">SQL</span> Injection Lab
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
+                    <ul class="navbar-nav flex-grow-1">
+                        <li class="nav-item">
+                            <a class="nav-link" asp-controller="Home" asp-action="Index">Accueil</a>
+                        </li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle text-danger" href="#" role="button" data-bs-toggle="dropdown">
+                                Vulnerable
+                            </a>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" asp-controller="Search" asp-action="Vulnerable">Recherche</a></li>
+                                <li><a class="dropdown-item" asp-controller="Login" asp-action="Vulnerable">Login</a></li>
+                            </ul>
+                        </li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle text-success" href="#" role="button" data-bs-toggle="dropdown">
+                                Securise
+                            </a>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" asp-controller="Search" asp-action="Secure">Recherche</a></li>
+                                <li><a class="dropdown-item" asp-controller="Login" asp-action="Secure">Login</a></li>
+                            </ul>
+                        </li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" style="color:#c084fc;">
+                                Entity Framework
+                            </a>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" asp-controller="EfDemo" asp-action="Index">Vue d'ensemble</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item text-danger" asp-controller="EfDemo" asp-action="FromSqlRawVulnerable">FromSqlRaw (Vulnerable)</a></li>
+                                <li><a class="dropdown-item text-success" asp-controller="EfDemo" asp-action="Linq">LINQ (Securise)</a></li>
+                                <li><a class="dropdown-item text-success" asp-controller="EfDemo" asp-action="FromSqlInterpolated">FromSqlInterpolated (Securise)</a></li>
+                            </ul>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-info" asp-controller="Admin" asp-action="Console">Console SQL</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+    </header>
+    <div class="container">
+        <main role="main" class="pb-3">
+            @RenderBody()
+        </main>
+    </div>
+
+    <footer class="border-top footer text-muted mt-5">
+        <div class="container text-center py-3">
+            Condorcet 2026 - Programmation Securisee - Labo SQL Injection
+        </div>
+    </footer>
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

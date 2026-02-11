@@ -1,0 +1,113 @@
+@model SqlInjectionLabApp.Models.EfDemoViewModel
+@{
+    ViewData["Title"] = "EF - LINQ (SECURISE)";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-11">
+        <div class="alert alert-success d-flex align-items-center">
+            <strong class="me-2">SECURISE</strong>
+            <span>Utilise <code>.Where(p => p.LastName.Contains(input))</code> : EF genere automatiquement des parametres SQL.</span>
+        </div>
+
+        <h2>Recherche via Entity Framework - LINQ</h2>
+
+        <form method="get" class="mb-4">
+            <div class="input-group input-group-lg">
+                <input type="text" class="form-control" name="q" value="@Model.SearchTerm"
+                       placeholder="Essayez : ' OR '1'='1 ...">
+                <button class="btn btn-success" type="submit">Rechercher</button>
+            </div>
+        </form>
+
+        <!-- Code source -->
+        <div class="card border-success mb-4">
+            <div class="card-header bg-success text-white">Code C# de cette page</div>
+            <div class="card-body">
+<pre class="mb-0"><code>public IActionResult Linq(string? q)
+{
+    // SECURISE : LINQ ne touche jamais au SQL directement
+    var results = _context.Persons
+        .<span style="color:#2ed573">Where</span>(p => p.LastName.<span style="color:#2ed573">Contains</span>(q) || p.City.<span style="color:#2ed573">Contains</span>(q))
+        .ToList();
+
+    // EF Core traduit ca en :
+    // SELECT * FROM EfPersons
+    // WHERE (LastName LIKE '%' || <span style="color:#2ed573">@@__q_0</span> || '%')
+    //    OR (City LIKE '%' || <span style="color:#2ed573">@@__q_0</span> || '%')
+    // avec @@__q_0 = "la valeur saisie" (PARAMETRE, pas concatenation)
+}</code></pre>
+            </div>
+        </div>
+
+        <!-- SQL genere par EF -->
+        @if (Model.GeneratedSql != null)
+        {
+            <div class="card mb-4">
+                <div class="card-header bg-dark text-white">SQL genere par EF Core (via <code>.ToQueryString()</code>)</div>
+                <div class="card-body p-0">
+                    <div class="sql-display m-3" style="color:#2ed573;">@Model.GeneratedSql</div>
+                </div>
+            </div>
+        }
+
+        @if (Model.ErrorMessage != null)
+        {
+            <div class="alert alert-danger"><strong>Erreur :</strong> @Model.ErrorMessage</div>
+        }
+
+        @if (Model.Results.Count > 0)
+        {
+            <div class="card mb-4">
+                <div class="card-header">Resultats (@Model.Results.Count)</div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover table-results mb-0">
+                            <thead><tr><th>ID</th><th>Nom</th><th>Email</th><th>Ville</th><th>Dept.</th></tr></thead>
+                            <tbody>
+                                @foreach (var p in Model.Results)
+                                {
+                                    <tr>
+                                        <td>@p.Id</td>
+                                        <td>@p.FirstName @p.LastName</td>
+                                        <td>@p.Email</td>
+                                        <td>@p.City</td>
+                                        <td>@p.Department</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        }
+        else if (Model.SearchTerm != null && Model.ErrorMessage == null)
+        {
+            <div class="alert alert-info">
+                Aucun resultat. L'injection <code>@Model.SearchTerm</code> est traitee comme du texte litteral.
+            </div>
+        }
+
+        <!-- Pourquoi c'est secure -->
+        <div class="card border-info mb-4">
+            <div class="card-header bg-info text-white">Pourquoi LINQ est sur par defaut</div>
+            <div class="card-body">
+                <ol class="mb-0">
+                    <li class="mb-2">
+                        Vous ecrivez du <strong>C#</strong>, pas du SQL. EF traduit les expressions lambda en SQL.
+                    </li>
+                    <li class="mb-2">
+                        Chaque variable C# (<code>q</code>) est automatiquement transformee en <strong>parametre SQL</strong> (<code>@@__q_0</code>).
+                    </li>
+                    <li class="mb-2">
+                        Il est <strong>physiquement impossible</strong> d'injecter du SQL via LINQ,
+                        car le code SQL est genere par EF, pas par l'utilisateur.
+                    </li>
+                    <li>
+                        Bonus : EF protege aussi contre les erreurs de type (pas de cast implicite string/int).
+                    </li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>

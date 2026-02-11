@@ -1,0 +1,109 @@
+@model SqlInjectionLabApp.Models.EfDemoViewModel
+@{
+    ViewData["Title"] = "EF - FromSqlRaw (VULNERABLE)";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-11">
+        <div class="alert alert-danger d-flex align-items-center">
+            <strong class="me-2">VULNERABLE</strong>
+            <span>Utilise <code>FromSqlRaw($"... {input} ...")</code> : la string interpolee est envoyee telle quelle au moteur SQL.</span>
+        </div>
+
+        <h2>Recherche via Entity Framework - FromSqlRaw</h2>
+
+        <form method="get" class="mb-4">
+            <div class="input-group input-group-lg">
+                <input type="text" class="form-control" name="q" value="@Model.SearchTerm"
+                       placeholder="Rechercher par nom ou ville..." id="search-input">
+                <button class="btn btn-primary" type="submit">Rechercher</button>
+            </div>
+        </form>
+
+        <!-- Payloads -->
+        <div class="card border-warning mb-4">
+            <div class="card-header bg-warning text-dark">Payloads (cliquez pour injecter)</div>
+            <div class="card-body">
+                <span class="payload-chip" onclick="document.getElementById('search-input').value = this.textContent;">' OR '1'='1</span>
+                <span class="payload-chip" onclick="document.getElementById('search-input').value = this.textContent;">' OR 1=1 --</span>
+                <span class="payload-chip" onclick="document.getElementById('search-input').value = this.textContent;">' UNION SELECT 1,Username,Password,Email,Role,'','','','','','',0,'' FROM EfUsers --</span>
+            </div>
+        </div>
+
+        <!-- Code source -->
+        <div class="card border-danger mb-4">
+            <div class="card-header bg-danger text-white">Code C# de cette page</div>
+            <div class="card-body">
+<pre class="mb-0"><code>public IActionResult FromSqlRawVulnerable(string? q)
+{
+    // DANGEREUX : string concatenation dans FromSqlRaw
+    var sql = <span style="color:#ff4757">$"SELECT * FROM EfPersons WHERE LastName LIKE '%{q}%' OR City LIKE '%{q}%'"</span>;
+
+    var results = _context.Persons
+        .<span style="color:#ff4757">FromSqlRaw</span>(sql)   // La string est deja interpolee par C# !
+        .ToList();               // EF l'envoie telle quelle a SQLite
+}</code></pre>
+            </div>
+        </div>
+
+        <!-- SQL genere -->
+        @if (Model.GeneratedSql != null)
+        {
+            <div class="card mb-4">
+                <div class="card-header bg-dark text-white">SQL envoye au moteur</div>
+                <div class="card-body p-0">
+                    <div class="sql-display m-3">@Model.GeneratedSql</div>
+                </div>
+            </div>
+        }
+
+        @if (Model.ErrorMessage != null)
+        {
+            <div class="alert alert-danger"><strong>Erreur :</strong> @Model.ErrorMessage</div>
+        }
+
+        <!-- Resultats -->
+        @if (Model.Results.Count > 0)
+        {
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between">
+                    <span>Resultats (@Model.Results.Count)</span>
+                    @if (Model.IsVulnerable)
+                    {
+                        <span class="badge bg-danger">Injection reussie via EF !</span>
+                    }
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover table-results mb-0">
+                            <thead>
+                                <tr><th>ID</th><th>Nom</th><th>Email</th><th>Ville</th><th>Num. National</th><th>IBAN</th><th>Salaire</th></tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var p in Model.Results)
+                                {
+                                    <tr>
+                                        <td>@p.Id</td>
+                                        <td>@p.FirstName @p.LastName</td>
+                                        <td>@p.Email</td>
+                                        <td>@p.City</td>
+                                        <td class="text-danger fw-bold">@p.NationalId</td>
+                                        <td class="text-danger">@p.Iban</td>
+                                        <td>@p.Salary.ToString("N2") EUR</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        }
+
+        <div class="alert alert-warning">
+            <strong>Lecon</strong> :
+            Utiliser un ORM ne protege <strong>pas automatiquement</strong> contre l'injection SQL.
+            Si on concatene des inputs dans <code>FromSqlRaw</code>, on a exactement le meme probleme
+            qu'avec ADO.NET brut.
+        </div>
+    </div>
+</div>

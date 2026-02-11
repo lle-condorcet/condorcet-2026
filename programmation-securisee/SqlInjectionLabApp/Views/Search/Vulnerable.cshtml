@@ -1,0 +1,124 @@
+@model SqlInjectionLabApp.Models.SearchViewModel
+@{
+    ViewData["Title"] = "Recherche (VULNERABLE)";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-11">
+        <div class="alert alert-danger d-flex align-items-center">
+            <strong class="me-2">VULNERABLE</strong>
+            <span>La recherche utilise la concatenation de chaines : <code>$"... WHERE LastName LIKE '%{searchTerm}%'"</code></span>
+        </div>
+
+        <h2>Recherche d'employes</h2>
+        <p class="text-muted">Recherchez par nom de famille ou ville dans la base de donnees RH.</p>
+
+        <!-- Formulaire de recherche -->
+        <form method="get" class="mb-4">
+            <div class="input-group input-group-lg">
+                <input type="text" class="form-control" name="q" value="@Model.SearchTerm"
+                       placeholder="Rechercher par nom ou ville..." id="search-input">
+                <button class="btn btn-primary" type="submit">Rechercher</button>
+            </div>
+        </form>
+
+        <!-- Payloads suggeres -->
+        <div class="card border-warning mb-4">
+            <div class="card-header bg-warning text-dark">Payloads a tester (cliquez pour injecter)</div>
+            <div class="card-body">
+                @foreach (var payload in Model.SuggestedPayloads)
+                {
+                    <span class="payload-chip" onclick="document.getElementById('search-input').value = this.textContent;">@payload</span>
+                }
+            </div>
+        </div>
+
+        <!-- Requete SQL executee -->
+        @if (Model.ExecutedQuery != null)
+        {
+            <div class="card mb-4">
+                <div class="card-header bg-dark text-white">Requete SQL executee</div>
+                <div class="card-body p-0">
+                    <div class="sql-display m-3">@Model.ExecutedQuery</div>
+                </div>
+            </div>
+        }
+
+        <!-- Erreur SQL -->
+        @if (Model.ErrorMessage != null)
+        {
+            <div class="alert alert-danger">
+                <strong>Erreur SQL :</strong> @Model.ErrorMessage
+            </div>
+        }
+
+        <!-- Resultats -->
+        @if (Model.Results.Count > 0)
+        {
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between">
+                    <span>Resultats (@Model.Results.Count enregistrements)</span>
+                    <span class="badge bg-danger">Donnees personnelles exposees !</span>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover table-results mb-0">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Nom</th>
+                                    <th>Email</th>
+                                    <th>Telephone</th>
+                                    <th>Ville</th>
+                                    <th>Num. National</th>
+                                    <th>Carte Credit</th>
+                                    <th>IBAN</th>
+                                    <th>Salaire</th>
+                                    <th>Dept.</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var p in Model.Results)
+                                {
+                                    <tr>
+                                        <td>@p.Id</td>
+                                        <td>@p.FirstName @p.LastName</td>
+                                        <td>@p.Email</td>
+                                        <td>@p.Phone</td>
+                                        <td>@p.City</td>
+                                        <td class="text-danger fw-bold">@p.NationalId</td>
+                                        <td class="text-danger">@p.CreditCard</td>
+                                        <td class="text-danger">@p.Iban</td>
+                                        <td>@p.Salary.ToString("N2") EUR</td>
+                                        <td>@p.Department</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        }
+        else if (Model.SearchTerm != null && Model.ErrorMessage == null)
+        {
+            <div class="alert alert-info">Aucun resultat pour "<strong>@Model.SearchTerm</strong>".</div>
+        }
+
+        <!-- Code vulnerable -->
+        <div class="card border-danger mb-4">
+            <div class="card-header bg-danger text-white">Code C# vulnerable (dans DatabaseService.cs)</div>
+            <div class="card-body">
+<pre class="mb-0"><code>public List&lt;Person&gt; SearchVulnerable(string searchTerm)
+{
+    // DANGEREUX : concatenation directe de l'input utilisateur
+    var sql = <span style="color:#e94560">$"SELECT * FROM Persons WHERE LastName LIKE '%{searchTerm}%'"</span>;
+
+    using var cmd = connection.CreateCommand();
+    cmd.CommandText = sql;   // Le searchTerm est injecte tel quel !
+    var reader = cmd.ExecuteReader();
+    ...
+}</code></pre>
+            </div>
+        </div>
+    </div>
+</div>

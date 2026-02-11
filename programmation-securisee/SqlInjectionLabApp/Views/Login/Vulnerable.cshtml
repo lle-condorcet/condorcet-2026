@@ -1,0 +1,110 @@
+@model SqlInjectionLabApp.Models.LoginViewModel
+@{
+    ViewData["Title"] = "Login (VULNERABLE)";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="alert alert-danger d-flex align-items-center">
+            <strong class="me-2">VULNERABLE</strong>
+            <span>Le login utilise : <code>$"... WHERE Username = '{username}' AND Password = '{password}'"</code></span>
+        </div>
+
+        <h2>Connexion</h2>
+
+        <div class="row">
+            <!-- Formulaire -->
+            <div class="col-md-6">
+                <div class="card mb-4">
+                    <div class="card-header">Se connecter</div>
+                    <div class="card-body">
+                        <form asp-action="Vulnerable" method="post">
+                            <div class="mb-3">
+                                <label for="username" class="form-label">Nom d'utilisateur</label>
+                                <input type="text" class="form-control" id="username" name="username"
+                                       value="@Model.Username" placeholder="admin" autocomplete="off">
+                            </div>
+                            <div class="mb-3">
+                                <label for="password" class="form-label">Mot de passe</label>
+                                <input type="text" class="form-control" id="password" name="password"
+                                       value="@Model.Password" placeholder="password" autocomplete="off">
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100">Se connecter</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Payloads -->
+            <div class="col-md-6">
+                <div class="card border-warning mb-4">
+                    <div class="card-header bg-warning text-dark">Payloads a tester</div>
+                    <div class="card-body">
+                        <p class="small text-muted">Cliquez sur un payload pour le placer dans le champ username :</p>
+                        @foreach (var payload in Model.SuggestedPayloads)
+                        {
+                            <div class="payload-chip mb-1" onclick="document.getElementById('username').value = this.textContent; document.getElementById('password').value = 'nimportequoi';">@payload</div>
+                            <br/>
+                        }
+                        <hr>
+                        <p class="small mb-0 text-muted">
+                            <strong>Astuce</strong> : Le payload <code>admin' --</code> dans le champ username
+                            commente le reste de la requete (y compris la verification du mot de passe).
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Resultat -->
+        @if (Model.SuccessMessage != null)
+        {
+            <div class="alert alert-success">
+                <strong>Connexion reussie !</strong> @Model.SuccessMessage
+                @if (Model.LoggedInUser != null)
+                {
+                    <hr>
+                    <p class="mb-0 small">
+                        Email : @Model.LoggedInUser.Email |
+                        Mot de passe en BDD : <code>@Model.LoggedInUser.Password</code>
+                    </p>
+                }
+            </div>
+        }
+
+        @if (Model.ErrorMessage != null && Model.SuccessMessage == null)
+        {
+            <div class="alert alert-danger">@Model.ErrorMessage</div>
+        }
+
+        <!-- Requete executee -->
+        @if (Model.ExecutedQuery != null)
+        {
+            <div class="card mb-4">
+                <div class="card-header bg-dark text-white">Requete SQL executee</div>
+                <div class="card-body p-0">
+                    <div class="sql-display m-3">@Model.ExecutedQuery</div>
+                </div>
+            </div>
+        }
+
+        <!-- Explication -->
+        <div class="card border-danger mb-4">
+            <div class="card-header bg-danger text-white">Comment fonctionne le bypass</div>
+            <div class="card-body">
+<pre class="mb-0"><code>// Input utilisateur :
+//   username = <span style="color:#e94560">admin' --</span>
+//   password = nimportequoi
+
+// Requete generee :
+SELECT * FROM Users
+WHERE Username = '<span style="color:#e94560">admin' --</span>' AND Password = 'nimportequoi'
+
+// Ce que le moteur SQL voit :
+// WHERE Username = 'admin'   (fin de la chaine)
+// --                         (tout le reste est un commentaire)
+// Le mot de passe n'est JAMAIS verifie !</code></pre>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,1598 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guide Complet - Programmation Sécurisée (OWASP, CWE, CVE, CVSS, SAST)</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px 20px;
+            text-align: center;
+        }
+        
+        header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        
+        header p {
+            font-size: 1.1em;
+            opacity: 0.95;
+        }
+        
+        .toc {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            margin: 20px;
+            border-radius: 5px;
+        }
+        
+        .toc h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+        
+        .toc ul {
+            list-style-position: inside;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 10px;
+        }
+        
+        .toc a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        
+        .toc a:hover {
+            text-decoration: underline;
+        }
+        
+        .content {
+            padding: 40px;
+        }
+        
+        section {
+            margin-bottom: 60px;
+            scroll-margin-top: 20px;
+        }
+        
+        h2 {
+            color: #667eea;
+            font-size: 2em;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #667eea;
+        }
+        
+        h3 {
+            color: #764ba2;
+            font-size: 1.5em;
+            margin: 30px 0 15px 0;
+        }
+        
+        h4 {
+            color: #555;
+            font-size: 1.1em;
+            margin: 20px 0 10px 0;
+        }
+        
+        .card {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        
+        .card.warning {
+            border-left-color: #ff6b6b;
+            background: #ffe0e0;
+        }
+        
+        .card.success {
+            border-left-color: #51cf66;
+            background: #e6fde6;
+        }
+        
+        .card.info {
+            border-left-color: #4dabf7;
+            background: #e0f2fe;
+        }
+        
+        .card h4 {
+            margin-top: 0;
+        }
+        
+        code {
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            color: #d63384;
+        }
+        
+        pre {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            margin: 15px 0;
+            line-height: 1.4;
+        }
+        
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        
+        .comparison-table thead {
+            background: #667eea;
+            color: white;
+        }
+        
+        .comparison-table th {
+            padding: 15px;
+            text-align: left;
+            font-weight: bold;
+        }
+        
+        .comparison-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .comparison-table tbody tr:hover {
+            background: #f8f9fa;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: bold;
+            margin: 5px 5px 5px 0;
+        }
+        
+        .badge-primary {
+            background: #667eea;
+            color: white;
+        }
+        
+        .badge-danger {
+            background: #ff6b6b;
+            color: white;
+        }
+        
+        .badge-success {
+            background: #51cf66;
+            color: white;
+        }
+        
+        .badge-warning {
+            background: #fcc419;
+            color: black;
+        }
+        
+        .example-box {
+            background: #f4f4f4;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        
+        .severity-critical {
+            background: #ff3333;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        
+        .severity-high {
+            background: #ff6b00;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        
+        .severity-medium {
+            background: #ffd700;
+            color: black;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        
+        .severity-low {
+            background: #90ee90;
+            color: black;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        
+        .feature-list {
+            list-style: none;
+            margin: 20px 0;
+        }
+        
+        .feature-list li {
+            padding: 10px;
+            margin: 10px 0;
+            background: #f8f9fa;
+            border-radius: 5px;
+            border-left: 3px solid #667eea;
+        }
+        
+        .feature-list li:before {
+            content: "✓ ";
+            color: #51cf66;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        
+        .timeline {
+            position: relative;
+            padding: 20px 0;
+        }
+        
+        .timeline-item {
+            padding-left: 50px;
+            margin: 30px 0;
+            position: relative;
+        }
+        
+        .timeline-item:before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 30px;
+            height: 30px;
+            background: #667eea;
+            border-radius: 50%;
+            border: 3px solid white;
+            box-shadow: 0 0 0 3px #667eea;
+        }
+        
+        .timeline-item h4 {
+            margin-top: 0;
+        }
+        
+        footer {
+            background: #f8f9fa;
+            padding: 20px;
+            text-align: center;
+            border-top: 1px solid #ddd;
+            color: #666;
+            margin-top: 40px;
+        }
+        
+        .cve-item {
+            background: #fff3cd;
+            border-left: 4px solid #ff9800;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+        
+        .cve-item h4 {
+            color: #ff9800;
+            margin-top: 0;
+        }
+        
+        .impact-score {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-weight: bold;
+            margin: 5px 5px 5px 0;
+        }
+        
+        @media print {
+            body {
+                background: white;
+            }
+            .container {
+                box-shadow: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🔒 Programmation Sécurisée</h1>
+            <p>Guide complet : OWASP, CWE, CVE, CVSS et SAST</p>
+        </header>
+        
+        <div class="toc">
+            <h2>📑 Table des matières</h2>
+            <ul>
+                <li><a href="#owasp">OWASP</a></li>
+                <li><a href="#cwe">CWE</a></li>
+                <li><a href="#cve">CVE</a></li>
+                <li><a href="#cvss">CVSS</a></li>
+                <li><a href="#sast">SAST</a></li>
+                <li><a href="#sonarqube">SonarQube</a></li>
+                <li><a href="#rider">Rider SAST</a></li>
+                <li><a href="#bonnes-pratiques">Bonnes pratiques</a></li>
+            </ul>
+        </div>
+        
+        <div class="content">
+            <!-- OWASP SECTION -->
+            <section id="owasp">
+                <h2>🎯 OWASP (Open Web Application Security Project)</h2>
+                
+                <h3>Définition</h3>
+                <div class="card info">
+                    <p><strong>OWASP</strong> est une organisation à but non lucratif qui se concentre sur l'amélioration de la sécurité logicielle. Elle fournit des ressources gratuites et ouvertes pour aider les organisations à développer, acheter et maintenir des logiciels et des applications sûrs.</p>
+                </div>
+                
+                <h3>Objectif principal</h3>
+                <ul class="feature-list">
+                    <li>Identifier et documenter les failles de sécurité les plus critiques des applications web</li>
+                    <li>Fournir des ressources éducatives et des outils de sensibilisation</li>
+                    <li>Promouvoir les meilleures pratiques de sécurité en matière de développement</li>
+                    <li>Créer une communauté mondiale d'experts en sécurité</li>
+                </ul>
+                
+                <h3>OWASP Top 10</h3>
+                <p>L'une des publications les plus populaires d'OWASP, mise à jour tous les 3-4 ans. La version 2021 identifie les 10 risques de sécurité les plus critiques pour les applications web.</p>
+                
+                <div class="grid-2">
+                    <div class="card warning">
+                        <h4>🔴 A01:2021 - Injection</h4>
+                        <p>Failles d'injection de code (SQL, LDAP, OS). Défaut de validation des données entrantes.</p>
+                    </div>
+                    <div class="card warning">
+                        <h4>🔴 A02:2021 - Broken Authentication</h4>
+                        <p>Mécanismes d'authentification cassés permettant une usurpation d'identité.</p>
+                    </div>
+                    <div class="card warning">
+                        <h4>🔴 A03:2021 - Broken Access Control</h4>
+                        <p>Défaut de vérification des autorisations. Accès non restreint aux ressources.</p>
+                    </div>
+                    <div class="card warning">
+                        <h4>🔴 A04:2021 - XML External Entity (XXE)</h4>
+                        <p>Exploitation de processeurs XML vulnérables.</p>
+                    </div>
+                    <div class="card warning">
+                        <h4>🔴 A05:2021 - Broken Access Control</h4>
+                        <p>Limitations insuffisantes des accès utilisateurs.</p>
+                    </div>
+                    <div class="card warning">
+                        <h4>🔴 A06:2021 - Vulnerable & Outdated Components</h4>
+                        <p>Utilisation de bibliothèques et frameworks obsolètes.</p>
+                    </div>
+                    <div class="card warning">
+                        <h4>🔴 A07:2021 - Identification & Authentication Failures</h4>
+                        <p>Gestion faible des sessions et des mots de passe.</p>
+                    </div>
+                    <div class="card warning">
+                        <h4>🔴 A08:2021 - Software & Data Integrity Failures</h4>
+                        <p>Absence de vérification d'intégrité des données.</p>
+                    </div>
+                    <div class="card warning">
+                        <h4>🔴 A09:2021 - Logging & Monitoring Failures</h4>
+                        <p>Absence de logs de sécurité et de surveillance.</p>
+                    </div>
+                    <div class="card warning">
+                        <h4>🔴 A10:2021 - Server-Side Request Forgery (SSRF)</h4>
+                        <p>Exploitation de requêtes serveur non validées.</p>
+                    </div>
+                </div>
+                
+                <h3>Utilisation pratique</h3>
+                <div class="card success">
+                    <h4>🎯 Cas d'usage</h4>
+                    <ul>
+                        <li><strong>Développeurs</strong> : Guide des pratiques de codage sécurisé</li>
+                        <li><strong>Testeurs de sécurité</strong> : Checklist de test de pénétration</li>
+                        <li><strong>Architectes</strong> : Design sécurisé d'applications</li>
+                        <li><strong>DevSecOps</strong> : Intégration de la sécurité dans CI/CD</li>
+                        <li><strong>Auditeurs</strong> : Évaluation des risques de sécurité</li>
+                    </ul>
+                </div>
+                
+                <h3>Exemple concret - Prévention d'injection SQL</h3>
+                <div class="example-box">
+                    <h4>❌ Code vulnérable (OWASP A01)</h4>
+                    <pre>// Mauvais : Construction de requête avec concaténation
+String query = "SELECT * FROM users WHERE username = '" + username + "'";
+ResultSet rs = statement.executeQuery(query);</pre>
+                    
+                    <h4>✅ Code sécurisé</h4>
+                    <pre>// Bon : Utilisation de prepared statements
+String query = "SELECT * FROM users WHERE username = ?";
+PreparedStatement stmt = connection.prepareStatement(query);
+stmt.setString(1, username);
+ResultSet rs = stmt.executeQuery();</pre>
+                </div>
+                
+                <h3>Applications concrètes</h3>
+                <p>OWASP fournit plusieurs ressources pratiques :</p>
+                <ul class="feature-list">
+                    <li><strong>OWASP Testing Guide</strong> : Méthodologie complète de test de sécurité</li>
+                    <li><strong>OWASP Code Review Guide</strong> : Guide pour les revues de code sécurisé</li>
+                    <li><strong>OWASP Top 10 Cheat Sheet Series</strong> : Fiches pratiques pour chaque risque</li>
+                    <li><strong>WebGoat</strong> : Application d'apprentissage pour pratiquer les attaques</li>
+                    <li><strong>OWASP ZAP</strong> : Outil automatisé de test de sécurité</li>
+                </ul>
+            </section>
+            
+            <!-- CWE SECTION -->
+            <section id="cwe">
+                <h2>🐛 CWE (Common Weakness Enumeration)</h2>
+                
+                <h3>Définition</h3>
+                <div class="card info">
+                    <p><strong>CWE</strong> est une liste complète et catégorisée des faiblesses de logiciel et de matériel communes qui peuvent mener à des vulnérabilités de sécurité. C'est une référence complète pour l'identification et la classification des faiblesses dans le code.</p>
+                </div>
+                
+                <h3>Objectif principal</h3>
+                <ul class="feature-list">
+                    <li>Créer une taxonomie standardisée des faiblesses logicielles</li>
+                    <li>Faciliter la communication entre les développeurs et les chercheurs en sécurité</li>
+                    <li>Automatiser la détection des faiblesses avec des outils</li>
+                    <li>Mesurer la couverture des tests de sécurité</li>
+                </ul>
+                
+                <h3>Relation OWASP vs CWE</h3>
+                <div class="card">
+                    <table class="comparison-table">
+                        <thead>
+                            <tr>
+                                <th>Aspect</th>
+                                <th>OWASP Top 10</th>
+                                <th>CWE</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Portée</strong></td>
+                                <td>Applications web uniquement</td>
+                                <td>Tous les types de logiciel</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Nombre d'items</strong></td>
+                                <td>10 risques</td>
+                                <td>900+ faiblesses</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Focus</strong></td>
+                                <td>Risques métier et impact</td>
+                                <td>Détails techniques des faiblesses</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Utilisation</strong></td>
+                                <td>Guide de haut niveau</td>
+                                <td>Détection automatisée</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <h3>CWE Top 25 (Édition 2023)</h3>
+                <p>Les 25 faiblesses logicielles les plus dangereuses et les plus utilisées par les attaquants :</p>
+                
+                <div class="timeline">
+                    <div class="timeline-item">
+                        <h4>CWE-787 : Out-of-bounds Write</h4>
+                        <p>Écriture au-delà des limites d'un buffer. Critique pour les dépassements de buffer.</p>
+                        <span class="badge badge-danger">CRITIQUE</span>
+                    </div>
+                    
+                    <div class="timeline-item">
+                        <h4>CWE-79 : Cross-site Scripting (XSS)</h4>
+                        <p>Injection de code JavaScript dans les pages web. Non-échappement des données.</p>
+                        <span class="badge badge-danger">CRITIQUE</span>
+                    </div>
+                    
+                    <div class="timeline-item">
+                        <h4>CWE-89 : SQL Injection</h4>
+                        <p>Injection de commandes SQL dans les requêtes de base de données.</p>
+                        <span class="badge badge-danger">CRITIQUE</span>
+                    </div>
+                    
+                    <div class="timeline-item">
+                        <h4>CWE-200 : Exposure of Sensitive Information</h4>
+                        <p>Exposition accidentelle de données sensibles (clés, tokens, mots de passe).</p>
+                        <span class="badge badge-warning">ÉLEVÉ</span>
+                    </div>
+                    
+                    <div class="timeline-item">
+                        <h4>CWE-416 : Use-After-Free</h4>
+                        <p>Utilisation de mémoire après sa libération. Peut causer des crashes ou RCE.</p>
+                        <span class="badge badge-danger">CRITIQUE</span>
+                    </div>
+                    
+                    <div class="timeline-item">
+                        <h4>CWE-22 : Path Traversal</h4>
+                        <p>Accès à des fichiers/répertoires en dehors du répertoire autorisé.</p>
+                        <span class="badge badge-warning">ÉLEVÉ</span>
+                    </div>
+                </div>
+                
+                <h3>Utilisation pratique</h3>
+                <div class="card success">
+                    <h4>🛠️ Applications</h4>
+                    <ul>
+                        <li><strong>SAST Tools</strong> : SonarQube, Checkmarx, Fortify utilisent CWE</li>
+                        <li><strong>Bug Bounty</strong> : Référence commune pour signaler les vulnérabilités</li>
+                        <li><strong>Code Review</strong> : Checklist standardisée de faiblesses</li>
+                        <li><strong>Métriques de sécurité</strong> : Mesurer le CWE density du code</li>
+                        <li><strong>Cartographie CVE</strong> : Chaque CVE est mappé à des CWE</li>
+                    </ul>
+                </div>
+                
+                <h3>Exemple concret - CWE-79 (XSS)</h3>
+                <div class="example-box">
+                    <h4>❌ Code vulnérable (CWE-79)</h4>
+                    <pre>// Affichage direct du paramètre utilisateur
+String comment = request.getParameter("comment");
+out.println("&lt;p&gt;" + comment + "&lt;/p&gt;");
+// Entrée malveillante : &lt;script&gt;alert('XSS')&lt;/script&gt;</pre>
+                    
+                    <h4>✅ Code sécurisé</h4>
+                    <pre>// Échappement HTML des données
+String comment = request.getParameter("comment");
+String escaped = escapeHtml(comment);
+out.println("&lt;p&gt;" + escaped + "&lt;/p&gt;");
+
+private String escapeHtml(String s) {
+    return s.replaceAll("&", "&amp;")
+            .replaceAll("&lt;", "&lt;")
+            .replaceAll("&gt;", "&gt;")
+            .replaceAll("\"", "&quot;");
+}</pre>
+                </div>
+                
+                <h3>Recherche CWE</h3>
+                <p>Ressource officielle : <code>https://cwe.mitre.org</code></p>
+                <div class="card">
+                    <p>Le site CWE permet de rechercher toutes les 900+ faiblesses, avec descriptions détaillées, exemples de code, et relations avec CVE.</p>
+                </div>
+            </section>
+            
+            <!-- CVE SECTION -->
+            <section id="cve">
+                <h2>⚠️ CVE (Common Vulnerabilities and Exposures)</h2>
+                
+                <h3>Définition</h3>
+                <div class="card info">
+                    <p><strong>CVE</strong> est un identifiant public unique pour chaque vulnérabilité de sécurité découverte. Chaque CVE a un identifiant au format CVE-ANNÉE-NUMÉRO (ex: CVE-2021-44228) et est lié à des faiblesses CWE.</p>
+                </div>
+                
+                <h3>Objectif principal</h3>
+                <ul class="feature-list">
+                    <li>Fournir un identifiant public et standardisé pour chaque vulnérabilité</li>
+                    <li>Faciliter le partage d'informations entre les organisations</li>
+                    <li>Permettre le tracking et la gestion des vulnérabilités</li>
+                    <li>Faciliter les recherches et la gestion des correctifs</li>
+                    <li>Prioriser les efforts de remédiation avec le scoring CVSS</li>
+                </ul>
+                
+                <h3>Failles critiques récentes</h3>
+                
+                <div class="cve-item">
+                    <h4>CVE-2021-44228 : Log4Shell (CRITICAL)</h4>
+                    <div class="impact-score">CVSS 10.0 - CRITIQUE</div>
+                    <p><strong>Description :</strong> Vulnérabilité d'injection de code dans la bibliothèque Apache Log4j 2 (versions &lt; 2.15.0). Permet l'exécution de code arbitraire à distance via JNDI injection.</p>
+                    <p><strong>Découverte :</strong> Décembre 2021</p>
+                    <p><strong>Impact :</strong> Vulnérabilité critique affectant des millions de serveurs Java dans le monde. Exploitation triviale via logs contenant des payloads LDAP/RMI.</p>
+                    <p><strong>Correction :</strong> Mise à jour vers Log4j 2.15.0 ou supérieur</p>
+                    <p><strong>Leçons :</strong> Importance de maintenir à jour les dépendances, nécessité de monitoring proactif</p>
+                </div>
+                
+                <div class="cve-item">
+                    <h4>CVE-2020-1938 : Apache Tomcat - AJP Ghostcat (HIGH)</h4>
+                    <div class="impact-score">CVSS 7.5 - ÉLEVÉ</div>
+                    <p><strong>Description :</strong> Le protocole AJP (Apache JServ Protocol) par défaut est exposé sur le port 8009, permettant la lecture de fichiers arbitraires et la révélation de code source.</p>
+                    <p><strong>Découverte :</strong> Février 2020</p>
+                    <p><strong>Impact :</strong> Exposition de données sensibles, révélation de secrets (clés d'API, tokens)</p>
+                    <p><strong>Correction :</strong> Mise à jour Tomcat 9.0.31+ ou configuration du pare-feu</p>
+                </div>
+                
+                <div class="cve-item">
+                    <h4>CVE-2017-10271 : Oracle WebLogic Server - Deserialization RCE (CRITICAL)</h4>
+                    <div class="impact-score">CVSS 9.8 - CRITIQUE</div>
+                    <p><strong>Description :</strong> Déserialisation non sécurisée d'objets Java dans WebLogic, permettant l'exécution de code à distance sans authentification.</p>
+                    <p><strong>Découverte :</strong> Avril 2017</p>
+                    <p><strong>Impact :</strong> Exploitation active par des botnets, compromission complète des serveurs</p>
+                    <p><strong>Leçons :</strong> Éviter la désérialisation d'objets non fiables</p>
+                </div>
+                
+                <div class="cve-item">
+                    <h4>CVE-2018-11776 : Apache Struts 2 RCE (CRITICAL)</h4>
+                    <div class="impact-score">CVSS 9.8 - CRITIQUE</div>
+                    <p><strong>Description :</strong> Vulnérabilité d'injection OGNL (Object-Graph Navigation Language) permettant l'exécution de code arbitraire.</p>
+                    <p><strong>Découverte :</strong> Août 2018</p>
+                    <p><strong>Impact :</strong> Exploitation massive de serveurs web, création de botnets</p>
+                </div>
+                
+                <div class="cve-item">
+                    <h4>CVE-2021-3129 : Laravel Framework RCE (CRITICAL)</h4>
+                    <div class="impact-score">CVSS 9.8 - CRITIQUE</div>
+                    <p><strong>Description :</strong> Vulnérabilité dans le gestionnaire d'exceptions de Laravel permettant l'exécution de code à distance en mode debug.</p>
+                    <p><strong>Découverte :</strong> Janvier 2021</p>
+                    <p><strong>Impact :</strong> Compromission totale des applications en production avec debug=true</p>
+                    <p><strong>Leçons :</strong> Jamais activer debug en production</p>
+                </div>
+                
+                <div class="cve-item">
+                    <h4>CVE-2021-21225 : Google Chrome V8 RCE (HIGH)</h4>
+                    <div class="impact-score">CVSS 8.8 - ÉLEVÉ</div>
+                    <p><strong>Description :</strong> Débordement de pointeur dans le moteur JavaScript V8 de Chrome.</p>
+                    <p><strong>Découverte :</strong> Mars 2021</p>
+                    <p><strong>Impact :</strong> Exploitation via pages web malveillantes, accès mémoire arbitraire</p>
+                </div>
+                
+                <div class="cve-item">
+                    <h4>CVE-2023-34362 : Progress MOVEit Transfer - RCE (CRITICAL)</h4>
+                    <div class="impact-score">CVSS 9.8 - CRITIQUE</div>
+                    <p><strong>Description :</strong> Vulnérabilité d'injection SQL via SQLServer permettant l'exécution de code arbitraire dans MOVEit.</p>
+                    <p><strong>Découverte :</strong> Juin 2023</p>
+                    <p><strong>Impact :</strong> Exploitation massive, fuite de données sensibles chez Fortune 500</p>
+                    <p><strong>Leçons :</strong> Importance des correctifs de sécurité immédiats</p>
+                </div>
+                
+                <h3>Historique des vulnérabilités critiques par année</h3>
+                <table class="comparison-table">
+                    <thead>
+                        <tr>
+                            <th>Année</th>
+                            <th>CVE Majeur</th>
+                            <th>Produit Affecté</th>
+                            <th>Sévérité</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>2021</td>
+                            <td>CVE-2021-44228</td>
+                            <td>Apache Log4j 2</td>
+                            <td><span class="severity-critical">CRITICAL</span></td>
+                        </tr>
+                        <tr>
+                            <td>2020</td>
+                            <td>CVE-2020-1938</td>
+                            <td>Apache Tomcat</td>
+                            <td><span class="severity-high">HIGH</span></td>
+                        </tr>
+                        <tr>
+                            <td>2018</td>
+                            <td>CVE-2018-11776</td>
+                            <td>Apache Struts 2</td>
+                            <td><span class="severity-critical">CRITICAL</span></td>
+                        </tr>
+                        <tr>
+                            <td>2017</td>
+                            <td>CVE-2017-10271</td>
+                            <td>Oracle WebLogic</td>
+                            <td><span class="severity-critical">CRITICAL</span></td>
+                        </tr>
+                        <tr>
+                            <td>2023</td>
+                            <td>CVE-2023-34362</td>
+                            <td>Progress MOVEit</td>
+                            <td><span class="severity-critical">CRITICAL</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                <h3>Utilisation pratique</h3>
+                <div class="card success">
+                    <h4>🔍 Vérification des vulnérabilités</h4>
+                    <ul>
+                        <li>Rechercher : <code>https://nvd.nist.gov/vuln/</code></li>
+                        <li>Vérifier les dépendances : <code>npm audit</code>, <code>composer audit</code></li>
+                        <li>Monitoring : Services comme Dependabot, Snyk</li>
+                        <li>Alertes : S'abonner aux flux CVE pour ses dépendances</li>
+                    </ul>
+                </div>
+            </section>
+            
+            <!-- CVSS SECTION -->
+            <section id="cvss">
+                <h2>📊 CVSS (Common Vulnerability Scoring System)</h2>
+                
+                <h3>Définition</h3>
+                <div class="card info">
+                    <p><strong>CVSS</strong> est un framework standardisé pour évaluer la sévérité des vulnérabilités de sécurité. Il produit un score entre 0 et 10, où 10 est le plus critique.</p>
+                </div>
+                
+                <h3>Objectif principal</h3>
+                <ul class="feature-list">
+                    <li>Fournir une évaluation standardisée et reproductible de la sévérité</li>
+                    <li>Permettre une priorisation cohérente des corrections</li>
+                    <li>Faciliter la communication entre organisations sur les risques</li>
+                    <li>Aider à l'allocation des ressources de sécurité</li>
+                </ul>
+                
+                <h3>Versions de CVSS</h3>
+                <div class="grid-2">
+                    <div class="card">
+                        <h4>CVSS v2</h4>
+                        <p>Métrique de base avec :</p>
+                        <ul>
+                            <li>Access Vector (AV)</li>
+                            <li>Access Complexity (AC)</li>
+                            <li>Authentication (Au)</li>
+                            <li>Confidentiality (C)</li>
+                            <li>Integrity (I)</li>
+                            <li>Availability (A)</li>
+                        </ul>
+                        <p style="color: #666; font-size: 0.9em; margin-top: 10px;"><em>Remplacée, mais encore utilisée</em></p>
+                    </div>
+                    
+                    <div class="card success">
+                        <h4>CVSS v3.1 (Actuelle)</h4>
+                        <p>Amélioration avec :</p>
+                        <ul>
+                            <li>Attack Vector</li>
+                            <li>Attack Complexity</li>
+                            <li>Privileges Required</li>
+                            <li>User Interaction</li>
+                            <li>Scope</li>
+                            <li>Confidentiality/Integrity/Availability</li>
+                        </ul>
+                        <p style="color: #666; font-size: 0.9em; margin-top: 10px;"><em>Standard actuel (2019-)</em></p>
+                    </div>
+                </div>
+                
+                <h3>Échelle de sévérité CVSS</h3>
+                <div class="card">
+                    <table class="comparison-table">
+                        <thead>
+                            <tr>
+                                <th>Score CVSS</th>
+                                <th>Notation</th>
+                                <th>Sévérité</th>
+                                <th>Réponse</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>0.0</td>
+                                <td>None</td>
+                                <td><span class="badge badge-success">NONE</span></td>
+                                <td>Pas de vulnérabilité</td>
+                            </tr>
+                            <tr>
+                                <td>0.1 - 3.9</td>
+                                <td>Low</td>
+                                <td><span class="severity-low">LOW</span></td>
+                                <td>À corriger selon les calendriers réguliers</td>
+                            </tr>
+                            <tr>
+                                <td>4.0 - 6.9</td>
+                                <td>Medium</td>
+                                <td><span class="severity-medium">MEDIUM</span></td>
+                                <td>À corriger dans les semaines</td>
+                            </tr>
+                            <tr>
+                                <td>7.0 - 8.9</td>
+                                <td>High</td>
+                                <td><span class="severity-high">HIGH</span></td>
+                                <td>Correction prioritaire (jours)</td>
+                            </tr>
+                            <tr>
+                                <td>9.0 - 10.0</td>
+                                <td>Critical</td>
+                                <td><span class="severity-critical">CRITICAL</span></td>
+                                <td>Correction immédiate (heures)</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <h3>Composantes de calcul CVSS v3.1</h3>
+                
+                <h4>Score de base (Base Score)</h4>
+                <div class="card">
+                    <p><strong>Attack Vector (AV)</strong></p>
+                    <ul style="margin-left: 20px;">
+                        <li><code>NETWORK</code> - Requiert une connexion réseau (plus grave)</li>
+                        <li><code>ADJACENT</code> - Même réseau local</li>
+                        <li><code>LOCAL</code> - Accès local au système</li>
+                        <li><code>PHYSICAL</code> - Accès physique requis</li>
+                    </ul>
+                    
+                    <p style="margin-top: 15px;"><strong>Attack Complexity (AC)</strong></p>
+                    <ul style="margin-left: 20px;">
+                        <li><code>LOW</code> - Exploitation triviale</li>
+                        <li><code>HIGH</code> - Conditions spéciales requises</li>
+                    </ul>
+                    
+                    <p style="margin-top: 15px;"><strong>Privileges Required (PR)</strong></p>
+                    <ul style="margin-left: 20px;">
+                        <li><code>NONE</code> - Aucun privilège (plus grave)</li>
+                        <li><code>LOW</code> - Droits utilisateur basic</li>
+                        <li><code>HIGH</code> - Droits administrateur</li>
+                    </ul>
+                    
+                    <p style="margin-top: 15px;"><strong>User Interaction (UI)</strong></p>
+                    <ul style="margin-left: 20px;">
+                        <li><code>NONE</code> - Pas d'interaction requise</li>
+                        <li><code>REQUIRED</code> - L'utilisateur doit accepter/cliquer</li>
+                    </ul>
+                </div>
+                
+                <h3>Exemple de calcul CVSS</h3>
+                <div class="example-box">
+                    <h4>Log4Shell (CVE-2021-44228) - CVSS v3.1: 10.0</h4>
+                    <p>
+                        CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H
+                    </p>
+                    <ul style="margin-left: 20px; margin-top: 10px;">
+                        <li><strong>AV:N</strong> - Vulnérable via le réseau</li>
+                        <li><strong>AC:L</strong> - Exploitation facile</li>
+                        <li><strong>PR:N</strong> - Aucun privilège requis</li>
+                        <li><strong>UI:N</strong> - Pas d'interaction utilisateur</li>
+                        <li><strong>S:U</strong> - Scope inchangé</li>
+                        <li><strong>C:H</strong> - Confidentialité complètement compromise</li>
+                        <li><strong>I:H</strong> - Intégrité complètement compromise</li>
+                        <li><strong>A:H</strong> - Disponibilité complètement compromise</li>
+                    </ul>
+                    <p style="margin-top: 15px; color: #d63384; font-weight: bold;">Résultat : 10.0 (CRITIQUE) - Exploitation immédiate sur millions de serveurs</p>
+                </div>
+                
+                <h3>Calculateur CVSS</h3>
+                <div class="card success">
+                    <p><strong>Utilisation pratique :</strong></p>
+                    <ul>
+                        <li>Calculateur officiel : <code>https://www.first.org/cvss/calculator/3.1</code></li>
+                        <li>Nombreux CVE inclus dans la base NVD avec leur score</li>
+                        <li>Les outils SAST affichent généralement le CVSS des dépendances</li>
+                    </ul>
+                </div>
+            </section>
+            
+            <!-- SAST SECTION -->
+            <section id="sast">
+                <h2>🔧 SAST (Static Application Security Testing)</h2>
+                
+                <h3>Définition</h3>
+                <div class="card info">
+                    <p><strong>SAST</strong> est une technique d'analyse automatisée du code source ou compilé pour identifier les vulnérabilités de sécurité. Les outils SAST analysent le code <strong>sans l'exécuter</strong> pour détecter les patterns dangereux.</p>
+                </div>
+                
+                <h3>Objectif principal</h3>
+                <ul class="feature-list">
+                    <li>Identifier les vulnérabilités au plus tôt (lors du développement)</li>
+                    <li>Détecter les patterns dangereux de codage</li>
+                    <li>Mapper les problèmes aux CWE et OWASP Top 10</li>
+                    <li>Intégrer la sécurité dans le CI/CD</li>
+                    <li>Réduire le coût de correction (plus tôt = moins cher)</li>
+                </ul>
+                
+                <h3>Types de vulnérabilités détectées par SAST</h3>
+                <div class="grid-2">
+                    <div class="card warning">
+                        <h4>🔴 Injection d'entrée</h4>
+                        <ul style="margin-left: 20px;">
+                            <li>SQL Injection</li>
+                            <li>XSS (Cross-Site Scripting)</li>
+                            <li>Command Injection</li>
+                            <li>LDAP Injection</li>
+                            <li>Path Traversal</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="card warning">
+                        <h4>🔴 Gestion d'authentification</h4>
+                        <ul style="margin-left: 20px;">
+                            <li>Mots de passe en clair</li>
+                            <li>Secrets commitées</li>
+                            <li>Algorithmes faibles</li>
+                            <li>Stockage non sécurisé</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="card warning">
+                        <h4>🔴 Gestion de contrôle d'accès</h4>
+                        <ul style="margin-left: 20px;">
+                            <li>Vérifications manquantes</li>
+                            <li>Escalade de privilèges</li>
+                            <li>Accès non restreint aux ressources</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="card warning">
+                        <h4>🔴 Qualité du code</h4>
+                        <ul style="margin-left: 20px;">
+                            <li>Null pointer dereferences</li>
+                            <li>Buffer overflows</li>
+                            <li>Use-after-free</li>
+                            <li>Race conditions</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <h3>Avantages du SAST</h3>
+                <div class="card success">
+                    <ul class="feature-list">
+                        <li>Détection rapide et précoce</li>
+                        <li>Analyse complète du code source</li>
+                        <li>Peu ou pas de faux négatifs</li>
+                        <li>Intégration facile en CI/CD</li>
+                        <li>Pas d'accès à l'infrastructure requise</li>
+                        <li>Scalable à de grands projets</li>
+                        <li>Très rentable (coût par bug bas)</li>
+                    </ul>
+                </div>
+                
+                <h3>Inconvénients du SAST</h3>
+                <div class="card warning">
+                    <ul style="margin-left: 20px;">
+                        <li>Faux positifs élevés (nécessite triage)</li>
+                        <li>Ne détecte pas les problèmes de configuration</li>
+                        <li>Ne teste pas les dépendances (voir DAST/SCA)</li>
+                        <li>Courbe d'apprentissage</li>
+                        <li>Temps d'analyse peut être long</li>
+                    </ul>
+                </div>
+                
+                <h3>Outils SAST populaires</h3>
+                <table class="comparison-table">
+                    <thead>
+                        <tr>
+                            <th>Outil</th>
+                            <th>Langages</th>
+                            <th>Modèle</th>
+                            <th>CI/CD</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>SonarQube</strong></td>
+                            <td>27+ langages</td>
+                            <td>Open Source + Commercial</td>
+                            <td>✓ Excellent</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Checkmarx SAST</strong></td>
+                            <td>20+ langages</td>
+                            <td>Commercial</td>
+                            <td>✓ Très bon</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Fortify SAST</strong></td>
+                            <td>25+ langages</td>
+                            <td>Commercial</td>
+                            <td>✓ Très bon</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Veracode</strong></td>
+                            <td>20+ langages</td>
+                            <td>SaaS</td>
+                            <td>✓ Bon</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Semgrep</strong></td>
+                            <td>17+ langages</td>
+                            <td>Open Source</td>
+                            <td>✓ Très bon</td>
+                        </tr>
+                        <tr>
+                            <td><strong>JetBrains Rider</strong></td>
+                            <td>C#, VB.NET, C++</td>
+                            <td>IDE + Commercial</td>
+                            <td>✓ Intégré</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+            
+            <!-- SONARQUBE SECTION -->
+            <section id="sonarqube">
+                <h2>🎯 SonarQube - Analyse SAST complète</h2>
+                
+                <h3>Introduction</h3>
+                <div class="card info">
+                    <p><strong>SonarQube</strong> est la plateforme SAST la plus populaire pour l'analyse de qualité et de sécurité du code. Elle supporte 27+ langages et s'intègre parfaitement dans les pipelines CI/CD.</p>
+                </div>
+                
+                <h3>Fonctionnalités principales</h3>
+                <div class="grid-2">
+                    <div class="card">
+                        <h4>📊 Analyse de qualité</h4>
+                        <ul style="margin-left: 20px;">
+                            <li>Code smells</li>
+                            <li>Duplication de code</li>
+                            <li>Couverture de tests</li>
+                            <li>Complexité cyclomatique</li>
+                            <li>Maintainability</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="card">
+                        <h4>🔒 Analyse de sécurité</h4>
+                        <ul style="margin-left: 20px;">
+                            <li>Vulnérabilités OWASP</li>
+                            <li>Mapping CWE automatique</li>
+                            <li>Secrets exposés</li>
+                            <li>Dépendances outdated</li>
+                            <li>Gestion des risques</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <h3>Installation et configuration</h3>
+                <div class="example-box">
+                    <h4>🔧 Installation avec Docker (rapide)</h4>
+                    <pre>docker run -d \
+  --name sonarqube \
+  -e SONAR_JDBC_URL=jdbc:postgresql://db:5432/sonar \
+  -p 9000:9000 \
+  sonarqube:lts</pre>
+                    
+                    <h4>Configuration du projet</h4>
+                    <pre># sonar-project.properties
+sonar.projectKey=mon-projet
+sonar.projectName=Mon Projet
+sonar.projectVersion=1.0
+sonar.sources=src
+sonar.exclusions=**/test/**
+sonar.coverage.exclusions=**/test/**
+sonar.host.url=http://localhost:9000
+sonar.login=votre_token</pre>
+                </div>
+                
+                <h3>Intégration dans CI/CD</h3>
+                <div class="example-box">
+                    <h4>🚀 GitHub Actions</h4>
+                    <pre>name: SonarQube Analysis
+
+on: [push, pull_request]
+
+jobs:
+  sonarqube:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      
+      - name: SonarQube Scan
+        uses: SonarSource/sonarqube-scan-action@master
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}</pre>
+                    
+                    <h4>🚀 GitLab CI</h4>
+                    <pre>sonarqube:
+  stage: quality
+  image: sonarsource/sonar-scanner-cli:latest
+  script:
+    - sonar-scanner \
+        -Dsonar.projectKey=mon-projet \
+        -Dsonar.sources=src \
+        -Dsonar.host.url=$SONAR_HOST_URL \
+        -Dsonar.login=$SONAR_TOKEN
+  only:
+    - merge_requests
+    - main</pre>
+                </div>
+                
+                <h3>Règles de sécurité SonarQube</h3>
+                <div class="card">
+                    <p>SonarQube inclut des centaines de règles de sécurité préconisées, incluant :</p>
+                    <div style="margin: 15px 0; padding: 15px; background: #f8f9fa; border-radius: 5px;">
+                        <h4 style="margin-top: 0;">Exemples de règles (Java)</h4>
+                        <ul style="margin-left: 20px;">
+                            <li><code>java:S2076</code> - OS command injection</li>
+                            <li><code>java:S3649</code> - SQL injection (prepared statements)</li>
+                            <li><code>java:S2078</code> - Weak PRNG</li>
+                            <li><code>java:S3330</code> - Insecure temporary files</li>
+                            <li><code>java:S5542</code> - Weak encryption</li>
+                            <li><code>java:S4502</code> - CORS misconfiguration</li>
+                            <li><code>java:S5320</code> - HTTP to HTTPS redirect missing</li>
+                            <li><code>java:S5131</code> - Unsafe HttpClient SSL context</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <h3>Exemple de rapport SonarQube</h3>
+                <div class="card">
+                    <h4>📋 Résumé du rapport (Interface Web)</h4>
+                    <p style="color: #666; font-style: italic; margin-bottom: 15px;">
+                        [Dashboard SonarQube montrant :]
+                    </p>
+                    <ul style="margin-left: 20px;">
+                        <li><strong>Vue d'ensemble :</strong> Qualité globale du projet (A-E)</li>
+                        <li><strong>Sécurité :</strong> Nombre de vulnérabilités par sévérité</li>
+                        <li><strong>Fiabilité :</strong> Bugs et issues de fiabilité</li>
+                        <li><strong>Maintenabilité :</strong> Code smells et dette technique</li>
+                        <li><strong>Couverture :</strong> Pourcentage de tests</li>
+                        <li><strong>Duplication :</strong> Code en double</li>
+                    </ul>
+                </div>
+                
+                <h3>Configuration des quality gates</h3>
+                <div class="example-box">
+                    <h4>⚙️ Conditions de passage (Quality Gates)</h4>
+                    <p>Configuration recommandée pour bloquer les PRs non conformes :</p>
+                    <pre>Security Rating: A
+Reliability Rating: A
+Maintainability Rating: A
+Coverage: >= 80%
+Duplications: <= 3%
+Vulnerabilities: 0
+Blocker Issues: 0
+Critical Issues: 0</pre>
+                    
+                    <p style="margin-top: 15px; color: #666;">Ces conditions garantissent que tout code non sécurisé est bloqué avant la fusion.</p>
+                </div>
+                
+                <h3>Metriques de sécurité SonarQube</h3>
+                <table class="comparison-table">
+                    <thead>
+                        <tr>
+                            <th>Métrique</th>
+                            <th>Description</th>
+                            <th>Cible</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Vulnerabilities</strong></td>
+                            <td>Nombre de vulnérabilités OWASP détectées</td>
+                            <td>0</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Security Hotspots</strong></td>
+                            <td>Code à revoir manuellement pour sécurité</td>
+                            <td>100% revu</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Security Rating</strong></td>
+                            <td>Note globale de sécurité (A-E)</td>
+                            <td>A</td>
+                        </tr>
+                        <tr>
+                            <td><strong>OWASP Top 10 Coverage</strong></td>
+                            <td>% des risques OWASP couverts</td>
+                            <td>100%</td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                <h3>Utilisations pratiques</h3>
+                <div class="card success">
+                    <h4>💡 Cas d'usage courants</h4>
+                    <ul class="feature-list">
+                        <li>Gating des pull requests (bloquage si vulnérabilité)</li>
+                        <li>Monitoring continu de la qualité et sécurité</li>
+                        <li>Rapports d'audit et conformité</li>
+                        <li>Identification des hotspots de sécurité</li>
+                        <li>Formation des développeurs via feedback immédiat</li>
+                    </ul>
+                </div>
+            </section>
+            
+            <!-- RIDER SAST SECTION -->
+            <section id="rider">
+                <h2>⚡ JetBrains Rider - SAST intégré pour C#/.NET</h2>
+                
+                <h3>Introduction</h3>
+                <div class="card info">
+                    <p><strong>JetBrains Rider</strong> est un IDE commercial pour C# et .NET avec analyse de sécurité SAST intégrée en temps réel. Il détecte les vulnérabilités au fur et à mesure que vous tapez.</p>
+                </div>
+                
+                <h3>Avantages de Rider pour la sécurité</h3>
+                <ul class="feature-list">
+                    <li>Analyse SAST en temps réel (live)</li>
+                    <li>Détection des vulnérabilités CWE/OWASP</li>
+                    <li>Suggestions de correction automatiques (quick fixes)</li>
+                    <li>Analyse des dépendances NuGet</li>
+                    <li>Soutien pour C#, F#, VB.NET</li>
+                    <li>Intégration avec plugins de sécurité</li>
+                </ul>
+                
+                <h3>Configuration de Rider pour SAST</h3>
+                <div class="example-box">
+                    <h4>🔧 Installation des plugins de sécurité</h4>
+                    <p>Rider → Preferences → Plugins → Marketplace</p>
+                    <p>Installer :</p>
+                    <ul style="margin-left: 20px; margin-top: 10px;">
+                        <li><strong>Snyk Security</strong> - Détection des vulnérabilités dans les dépendances</li>
+                        <li><strong>SonarLint</strong> - Intégration SonarQube en temps réel</li>
+                        <li><strong>Security Code Scan</strong> - Analyse de sécurité C#/.NET</li>
+                    </ul>
+                </div>
+                
+                <h3>Types d'avertissements de sécurité dans Rider</h3>
+                <div class="grid-2">
+                    <div class="card warning">
+                        <h4>🔴 Injection</h4>
+                        <ul style="margin-left: 20px;">
+                            <li>SQL Injection</li>
+                            <li>XSS/HTML Injection</li>
+                            <li>LDAP Injection</li>
+                            <li>OS Command Injection</li>
+                            <li>XPath Injection</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="card warning">
+                        <h4>🔴 Cryptographie</h4>
+                        <ul style="margin-left: 20px;">
+                            <li>Algorithmes faibles (MD5, SHA1)</li>
+                            <li>Initialisation non sécurisée (IV/Salt)</li>
+                            <li>Aléatoire insuffisant</li>
+                            <li>Hardcoding de clés</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="card warning">
+                        <h4>🔴 Authentification</h4>
+                        <ul style="margin-left: 20px;">
+                            <li>Mots de passe en clair</li>
+                            <li>Secrets dans le code source</li>
+                            <li>Stockage non sécurisé</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="card warning">
+                        <h4>🔴 Contrôle d'accès</h4>
+                        <ul style="margin-left: 20px;">
+                            <li>Vérifications manquantes</li>
+                            <li>Validation insuffisante</li>
+                            <li>Path traversal</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <h3>Exemples d'avertissements Rider</h3>
+                
+                <div class="example-box">
+                    <h4>❌ SQL Injection - Avertissement Rider</h4>
+                    <pre>// Rider affiche : "Possible SQL injection"
+string userId = GetUserId();
+string query = $"SELECT * FROM Users WHERE Id = {userId}";
+// Quick Fix : "Use parameterized query"</pre>
+                    
+                    <h4>✅ Correction suggérée</h4>
+                    <pre>using (SqlCommand cmd = new SqlCommand("SELECT * FROM Users WHERE Id = @id", connection))
+{
+    cmd.Parameters.AddWithValue("@id", userId);
+    SqlDataReader reader = cmd.ExecuteReader();
+}</pre>
+                </div>
+                
+                <div class="example-box">
+                    <h4>❌ Weak Hashing - Avertissement Rider</h4>
+                    <pre>// Rider affiche : "Use of weak cryptographic algorithm MD5"
+using (MD5 md5 = MD5.Create())
+{
+    byte[] hash = md5.ComputeHash(Encoding.UTF8.GetBytes(password));
+}
+// Quick Fix : "Replace with SHA256"</pre>
+                    
+                    <h4>✅ Correction suggérée</h4>
+                    <pre>using (SHA256 sha256 = SHA256.Create())
+{
+    byte[] hash = sha256.ComputeHash(Encoding.UTF8.GetBytes(password));
+}
+
+// Meilleure approche avec salt
+using (var deriveBytes = new Rfc2898DeriveBytes(password, 16))
+{
+    byte[] salt = deriveBytes.Salt;
+    byte[] key = deriveBytes.GetBytes(32);
+}</pre>
+                </div>
+                
+                <div class="example-box">
+                    <h4>❌ Hardcoded Secret - Avertissement Rider</h4>
+                    <pre>// Rider affiche : "Possible hardcoded secret"
+private const string ApiKey = "sk-1234567890abcdef";
+var client = new HttpClient();
+client.DefaultRequestHeaders.Add("Authorization", $"Bearer {ApiKey}");</pre>
+                    
+                    <h4>✅ Correction suggérée</h4>
+                    <pre>// Configuration depuis les secrets ou variables d'environnement
+var apiKey = Environment.GetEnvironmentVariable("API_KEY");
+// OU utiliser User Secrets en développement
+var config = new ConfigurationBuilder()
+    .AddUserSecrets<Program>()
+    .Build();
+string apiKey = config["ApiKey"];</pre>
+                </div>
+                
+                <h3>Configuration des inspections de sécurité</h3>
+                <div class="card">
+                    <h4>⚙️ Rider → Preferences → Editor → Inspections</h4>
+                    <p>Filtrer par "Security" pour voir toutes les vérifications :</p>
+                    <ul style="margin-left: 20px; margin-top: 10px;">
+                        <li><strong>SQL Injection</strong> - Severity: Error ✓</li>
+                        <li><strong>XPath Injection</strong> - Severity: Error ✓</li>
+                        <li><strong>LDAP Injection</strong> - Severity: Error ✓</li>
+                        <li><strong>Weak Cryptographic Algorithm</strong> - Severity: Warning ✓</li>
+                        <li><strong>Hardcoded Secret</strong> - Severity: Warning ✓</li>
+                        <li><strong>Insecure Deserialization</strong> - Severity: Error ✓</li>
+                        <li><strong>CSRF Token Missing</strong> - Severity: Warning ✓</li>
+                        <li><strong>XXE Injection</strong> - Severity: Error ✓</li>
+                    </ul>
+                </div>
+                
+                <h3>Code Cleanup avec Rider</h3>
+                <div class="example-box">
+                    <h4>🧹 Exécuter les corrections automatiques</h4>
+                    <p>Code → Run Inspection by Name → "Security" → OK</p>
+                    <p>Rider peut corriger automatiquement les problèmes simples.</p>
+                </div>
+                
+                <h3>Intégration avec SonarLint dans Rider</h3>
+                <div class="card success">
+                    <h4>🔌 Installation de SonarLint</h4>
+                    <p>Rider → Preferences → Plugins → Marketplace → SonarLint</p>
+                    <p>Une fois installé, il ajoute des contrôles supplémentaires compatibles avec SonarQube :</p>
+                    <ul style="margin-left: 20px; margin-top: 10px;">
+                        <li>Même règles que SonarQube</li>
+                        <li>Synchronisation avec un serveur SonarQube optionnel</li>
+                        <li>Feedback en temps réel</li>
+                    </ul>
+                </div>
+                
+                <h3>Bonnes pratiques avec Rider</h3>
+                <ul class="feature-list">
+                    <li>Activer l'analyse de sécurité pour tous les projets</li>
+                    <li>Traiter les avertissements de sécurité comme des erreurs</li>
+                    <li>Utiliser les quick fixes automatiques</li>
+                    <li>Trier les résultats par sévérité (Errors d'abord)</li>
+                    <li>Configurer les inspections au niveau du projet</li>
+                    <li>Combiner avec des outils externes (SonarQube, Snyk)</li>
+                </ul>
+            </section>
+            
+            <!-- BONNES PRATIQUES -->
+            <section id="bonnes-pratiques">
+                <h2>✅ Bonnes pratiques de programmation sécurisée</h2>
+                
+                <h3>1. Validation des entrées</h3>
+                <div class="card success">
+                    <h4>Whitelist Approach</h4>
+                    <p>Toujours utiliser une whitelist plutôt qu'une blacklist :</p>
+                    <pre>// ❌ Mauvais : Blacklist
+String safe = input.replace("<script>", "")
+                    .replace("<iframe>", "");
+
+// ✅ Bon : Whitelist
+Pattern pattern = Pattern.compile("^[a-zA-Z0-9_-]{1,50}$");
+if (!pattern.matcher(username).matches()) {
+    throw new IllegalArgumentException("Invalid username");
+}</pre>
+                </div>
+                
+                <h3>2. Gestion des secrets</h3>
+                <div class="card success">
+                    <h4>Secrets Management</h4>
+                    <ul style="margin-left: 20px;">
+                        <li><strong>Ne jamais</strong> commiter les secrets en Git</li>
+                        <li>Utiliser des vaults : HashiCorp Vault, AWS Secrets Manager</li>
+                        <li>Variables d'environnement en production</li>
+                        <li>User Secrets en développement (dotnet user-secrets)</li>
+                        <li>Rotation régulière des secrets</li>
+                    </ul>
+                </div>
+                
+                <h3>3. Authentification et autorisation</h3>
+                <div class="card success">
+                    <h4>Principes SOLID pour la sécurité</h4>
+                    <pre>// ✅ Bon pattern : Séparation des responsabilités
+public interface IAuthenticationService {
+    bool Authenticate(string username, string password);
+}
+
+public interface IAuthorizationService {
+    bool IsAuthorized(User user, string resource);
+}
+
+public class SecureController : Controller {
+    [Authorize]  // Authentification requise
+    [Authorize(Roles = "Admin")]  // Rôle requis
+    public ActionResult DeleteUser(int id) { }
+}</pre>
+                </div>
+                
+                <h3>4. Utilisation de dépendances sécurisées</h3>
+                <div class="card success">
+                    <h4>Dependency Management</h4>
+                    <ul style="margin-left: 20px;">
+                        <li>Auditer toutes les dépendances : <code>npm audit</code>, <code>composer audit</code></li>
+                        <li>Mettre à jour régulièrement les packages</li>
+                        <li>Vérifier les CVE avant d'ajouter une dépendance</li>
+                        <li>Utiliser des versions fixées, pas `*`</li>
+                        <li>Préférer les bibliothèques bien maintenues et reconnues</li>
+                    </ul>
+                </div>
+                
+                <h3>5. Logging et monitoring sécurisé</h3>
+                <div class="card success">
+                    <h4>OWASP A09 - Logging & Monitoring</h4>
+                    <pre>// ✅ Logging sécurisé
+private readonly ILogger _logger;
+
+public ActionResult Login(string username) {
+    _logger.LogInformation($"Login attempt for user: {username}");
+    
+    // ❌ JAMAIS logger les mots de passe
+    // ❌ JAMAIS logger les tokens
+    
+    // ✅ Logger les événements de sécurité
+    if (failedAttempts > 5) {
+        _logger.LogWarning($"Multiple failed logins for {username}");
+        // Alerter l'équipe de sécurité
+    }
+}</pre>
+                </div>
+                
+                <h3>6. Chiffrement des données</h3>
+                <div class="card success">
+                    <h4>En transit et au repos</h4>
+                    <ul style="margin-left: 20px;">
+                        <li><strong>En transit :</strong> HTTPS/TLS 1.2+ obligatoire</li>
+                        <li><strong>Au repos :</strong> AES-256 minimum (jamais DES/MD5)</li>
+                        <li><strong>Hachage :</strong> bcrypt/Argon2 pour les mots de passe</li>
+                        <li><strong>IV/Salt :</strong> Aléatoire pour chaque opération</li>
+                    </ul>
+                </div>
+                
+                <h3>7. Gestion des erreurs</h3>
+                <div class="card success">
+                    <h4>Erreurs sécurisées</h4>
+                    <pre>// ❌ Mauvais : Expose trop d'informations
+try {
+    var user = db.Users.Single(u => u.Id == userId);
+} catch (Exception ex) {
+    return BadRequest(ex.Message);  // Stack trace exposée!
+}
+
+// ✅ Bon : Messages génériques
+try {
+    var user = db.Users.Single(u => u.Id == userId);
+} catch (Exception ex) {
+    _logger.LogError(ex, "Database error");  // Log serveur
+    return BadRequest("An error occurred");  // Réponse utilisateur
+}</pre>
+                </div>
+                
+                <h3>8. Revue de code de sécurité</h3>
+                <div class="card success">
+                    <h4>Checklist de revue</h4>
+                    <ul class="feature-list">
+                        <li>Validation de toutes les entrées</li>
+                        <li>Pas de secrets en dur</li>
+                        <li>Authentification et autorisation</li>
+                        <li>Chiffrement approprié</li>
+                        <li>Gestion d'erreurs sécurisée</li>
+                        <li>Logging sans données sensibles</li>
+                        <li>Dépendances à jour</li>
+                        <li>Tests de sécurité automatisés</li>
+                    </ul>
+                </div>
+                
+                <h3>9. Sécurité par défaut</h3>
+                <div class="card success">
+                    <h4>Security by Default</h4>
+                    <ul style="margin-left: 20px;">
+                        <li><strong>Deny by default :</strong> Refuser par défaut, autoriser explicitement</li>
+                        <li><strong>Least privilege :</strong> Droits minimaux nécessaires</li>
+                        <li><strong>Defense in depth :</strong> Plusieurs couches de sécurité</li>
+                        <li><strong>Fail secure :</strong> Fermer en cas d'erreur, pas d'accès par défaut</li>
+                    </ul>
+                </div>
+                
+                <h3>10. Infrastructure sécurisée</h3>
+                <div class="card success">
+                    <h4>DevSecOps</h4>
+                    <ul style="margin-left: 20px;">
+                        <li>SAST en CI/CD (SonarQube, Checkmarx)</li>
+                        <li>DAST en staging (OWASP ZAP, Burp)</li>
+                        <li>SCA pour les dépendances (Snyk, Black Duck)</li>
+                        <li>Container scanning (Trivy, Clair)</li>
+                        <li>Infrastructure as Code scanning (Checkov)</li>
+                        <li>Secrets scanning (TruffleHog, git-secrets)</li>
+                    </ul>
+                </div>
+            </section>
+            
+            <!-- CONCLUSION -->
+            <section>
+                <h2>🎓 Conclusion</h2>
+                <div class="card success">
+                    <h3>La sécurité du code en résumé :</h3>
+                    <ul class="feature-list">
+                        <li><strong>OWASP Top 10</strong> : Guide des principaux risques web</li>
+                        <li><strong>CWE</strong> : Taxonomie technique des faiblesses logicielles</li>
+                        <li><strong>CVE</strong> : Identifiants publics des vulnérabilités découvertes</li>
+                        <li><strong>CVSS</strong> : Score standardisé de sévérité (0-10)</li>
+                        <li><strong>SAST</strong> : Analyse automatisée du code source pour détecter les vulnérabilités</li>
+                        <li><strong>SonarQube</strong> : Plateforme SAST leader pour la qualité et sécurité</li>
+                        <li><strong>Rider</strong> : IDE avec SAST intégré pour les développeurs C#/.NET</li>
+                    </ul>
+                </div>
+                
+                <div class="card info">
+                    <h3>🎯 Points clés à retenir :</h3>
+                    <ol style="margin-left: 20px;">
+                        <li><strong>Sécurité dès le départ :</strong> Intégrer SAST dès le développement</li>
+                        <li><strong>Automatiser :</strong> SAST dans CI/CD, pas de manuelle checking</li>
+                        <li><strong>Éduquer :</strong> Former les développeurs aux vulnérabilités courantes</li>
+                        <li><strong>Mettre à jour :</strong> Maintenir les dépendances à jour (CVE/SCA)</li>
+                        <li><strong>Surveiller :</strong> Logging, monitoring et alertes de sécurité</li>
+                        <li><strong>Prioriser :</strong> Utiliser CVSS pour prioriser les corrections</li>
+                        <li><strong>Tester :</strong> Tests de sécurité + tests fonctionnels</li>
+                    </ol>
+                </div>
+                
+                <div class="card">
+                    <h3>📚 Ressources et références :</h3>
+                    <ul style="margin-left: 20px;">
+                        <li><strong>OWASP</strong> : https://owasp.org</li>
+                        <li><strong>CWE</strong> : https://cwe.mitre.org</li>
+                        <li><strong>CVE/NVD</strong> : https://nvd.nist.gov</li>
+                        <li><strong>CVSS</strong> : https://www.first.org/cvss/calculator/3.1</li>
+                        <li><strong>SonarQube</strong> : https://www.sonarqube.org</li>
+                        <li><strong>Rider Security</strong> : https://www.jetbrains.com/help/rider/</li>
+                        <li><strong>CWE Top 25</strong> : https://cwe.mitre.org/top25/</li>
+                    </ul>
+                </div>
+            </section>
+        </div>
+        
+        <footer>
+            <p>&copy; 2024 Guide Programmation Sécurisée | OWASP • CWE • CVE • CVSS • SAST</p>
+            <p style="margin-top: 10px; font-size: 0.9em;">Mis à jour : Décembre 2024</p>
+        </footer>
+    </div>
+</body>
+</html>

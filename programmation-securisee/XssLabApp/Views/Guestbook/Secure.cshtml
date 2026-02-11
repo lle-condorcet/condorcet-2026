@@ -1,0 +1,118 @@
+@model XssLabApp.Models.GuestbookViewModel
+@{
+    ViewData["Title"] = "Livre d'or (SECURISE)";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-10">
+        <div class="alert alert-success d-flex align-items-center">
+            <strong class="me-2">PAGE SECURISEE</strong>
+            <span>Les commentaires sont encodes automatiquement par Razor - le XSS est neutralise.</span>
+        </div>
+
+        <h2>Livre d'or</h2>
+        <p class="text-muted">Meme page, meme contenu, mais avec un encodage correct.</p>
+
+        <!-- Donnees sensibles simulees -->
+        <div class="card bg-light mb-4">
+            <div class="card-body">
+                <h6 class="card-title">Informations du compte (simule)</h6>
+                <table class="table table-sm table-borderless mb-0">
+                    <tr><td class="fw-bold" style="width:150px">Utilisateur :</td><td>jean.dupont@condorcet.be</td></tr>
+                    <tr><td class="fw-bold">Solde :</td><td>12.450,00 EUR</td></tr>
+                    <tr><td class="fw-bold">IBAN :</td><td>BE68 5390 0754 7034</td></tr>
+                    <tr><td class="fw-bold">Session :</td><td><code>sid=a8f5f167f44f4964e6c998dee827110c</code></td></tr>
+                </table>
+            </div>
+        </div>
+
+        <!-- Liste des commentaires -->
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span>Commentaires (@Model.Comments.Count)</span>
+                <form asp-action="Reset" method="post" class="d-inline">
+                    <input type="hidden" name="returnTo" value="Secure" />
+                    <button type="submit" class="btn btn-sm btn-outline-secondary">Reset</button>
+                </form>
+            </div>
+            <div class="card-body">
+                @if (Model.Comments.Count == 0)
+                {
+                    <p class="text-muted">Aucun commentaire pour le moment.</p>
+                }
+                @foreach (var comment in Model.Comments)
+                {
+                    <div class="border-bottom pb-3 mb-3">
+                        <div class="d-flex justify-content-between">
+                            <strong>@comment.Author</strong>
+                            <small class="text-muted">@comment.PostedAt.ToString("dd/MM/yyyy HH:mm")</small>
+                        </div>
+                        <div class="mt-1">
+                            @* =====================================================
+                               SECURISE : Razor encode automatiquement avec @@variable.
+                               Le HTML/JS est converti en texte visible mais inoffensif.
+                               <script> devient &lt;script&gt; dans le HTML rendu.
+                               ===================================================== *@
+                            @comment.Content
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Formulaire d'ajout -->
+        <div class="card mb-4">
+            <div class="card-header">Ajouter un commentaire</div>
+            <div class="card-body">
+                <form asp-action="AddComment" method="post">
+                    <input type="hidden" name="returnTo" value="Secure" />
+                    <div class="mb-3">
+                        <label for="author" class="form-label">Nom</label>
+                        <input type="text" class="form-control" id="author" name="author" placeholder="Votre nom">
+                    </div>
+                    <div class="mb-3">
+                        <label for="content" class="form-label">Commentaire</label>
+                        <textarea class="form-control" id="content" name="content" rows="3"
+                                  placeholder="Essayez de coller le payload XSS ici..."></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Publier</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Comparaison de code -->
+        <div class="card border-success mb-4">
+            <div class="card-header bg-success text-white">Code Razor securise (dans cette page)</div>
+            <div class="card-body">
+<pre class="mb-0"><code>@("@")foreach (var comment in Model.Comments)
+{
+    &lt;div&gt;
+        <span class="text-success fw-bold">@("@")comment.Content</span>  // Razor encode automatiquement !
+    &lt;/div&gt;
+}</code></pre>
+            </div>
+        </div>
+
+        <!-- Explication -->
+        <div class="card border-info mb-4">
+            <div class="card-header bg-info text-white">Pourquoi ca marche ?</div>
+            <div class="card-body">
+                <p>Quand Razor affiche <code>@("@")comment.Content</code>, il encode automatiquement les caracteres HTML :</p>
+                <table class="table table-sm">
+                    <thead><tr><th>Caractere</th><th>Encode en</th></tr></thead>
+                    <tbody>
+                        <tr><td><code>&lt;</code></td><td><code>&amp;lt;</code></td></tr>
+                        <tr><td><code>&gt;</code></td><td><code>&amp;gt;</code></td></tr>
+                        <tr><td><code>"</code></td><td><code>&amp;quot;</code></td></tr>
+                        <tr><td><code>'</code></td><td><code>&amp;#x27;</code></td></tr>
+                        <tr><td><code>&amp;</code></td><td><code>&amp;amp;</code></td></tr>
+                    </tbody>
+                </table>
+                <p class="mb-0">
+                    Le payload <code>&lt;script&gt;...&lt;/script&gt;</code> devient du texte visible
+                    <code>&amp;lt;script&amp;gt;...&amp;lt;/script&amp;gt;</code> et <strong>ne s'execute jamais</strong>.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
