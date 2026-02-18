@@ -1,0 +1,145 @@
+@model XssLabApp.Models.PhishingViewModel
+@{
+    ViewData["Title"] = "Mon Espace Client (Securise)";
+}
+
+<div class="row justify-content-center mt-4">
+    <div class="col-md-10">
+
+        <div class="alert alert-success text-center fw-bold fs-5">
+            PAGE SECURISEE - XSS REFLECHI BLOQUE
+        </div>
+
+        <!-- Fake Bank Header -->
+        <div class="text-center mb-4">
+            <h2 class="text-primary fw-bold">MA BANQUE SECURE</h2>
+            <p class="text-muted">Espace Client</p>
+        </div>
+
+        <!-- Welcome message - SAFE: Razor auto-encodes -->
+        <div class="card border-primary mb-4">
+            <div class="card-header bg-primary text-white fw-bold">
+                Bienvenue
+            </div>
+            <div class="card-body">
+                <h4>Bonjour, @Model.Name !</h4>
+                <p class="text-muted">Derniere connexion : @DateTime.Now.AddDays(-1).ToString("dd/MM/yyyy HH:mm") depuis 192.168.1.42</p>
+            </div>
+        </div>
+
+        <!-- Fake Account Data -->
+        <div class="row g-4 mb-4">
+            <div class="col-md-6">
+                <div class="card bg-light">
+                    <div class="card-body">
+                        <h6 class="text-muted">Compte courant</h6>
+                        <h3 class="text-success fw-bold">12 450,00 EUR</h3>
+                        <p class="text-muted small mb-0">IBAN : BE68 5390 0754 7034</p>
+                        <p class="text-muted small mb-0">BIC : BMPBBEBB</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card bg-light">
+                    <div class="card-body">
+                        <h6 class="text-muted">Compte epargne</h6>
+                        <h3 class="text-success fw-bold">45 230,50 EUR</h3>
+                        <p class="text-muted small mb-0">IBAN : BE71 5390 0754 8891</p>
+                        <p class="text-muted small mb-0">Taux : 1,25% annuel</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header fw-bold">Dernieres operations</div>
+            <div class="card-body p-0">
+                <table class="table table-striped mb-0">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Date</th>
+                            <th>Description</th>
+                            <th class="text-end">Montant</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>@DateTime.Now.AddDays(-1).ToString("dd/MM")</td>
+                            <td>Virement - Salaire</td>
+                            <td class="text-end text-success">+ 3 200,00 EUR</td>
+                        </tr>
+                        <tr>
+                            <td>@DateTime.Now.AddDays(-2).ToString("dd/MM")</td>
+                            <td>Paiement CB - Carrefour</td>
+                            <td class="text-end text-danger">- 87,45 EUR</td>
+                        </tr>
+                        <tr>
+                            <td>@DateTime.Now.AddDays(-3).ToString("dd/MM")</td>
+                            <td>Prelevement - Loyer</td>
+                            <td class="text-end text-danger">- 850,00 EUR</td>
+                        </tr>
+                        <tr>
+                            <td>@DateTime.Now.AddDays(-5).ToString("dd/MM")</td>
+                            <td>Virement recu - Pierre D.</td>
+                            <td class="text-end text-success">+ 150,00 EUR</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="card mb-4 bg-light">
+            <div class="card-body">
+                <h6 class="text-muted">Informations personnelles</h6>
+                <p class="mb-1"><strong>Nom :</strong> Dupont Jean-Pierre</p>
+                <p class="mb-1"><strong>Email :</strong> jp.dupont@email.com</p>
+                <p class="mb-1"><strong>Telephone :</strong> +32 475 12 34 56</p>
+                <p class="mb-0"><strong>Adresse :</strong> Rue de la Loi 42, 1000 Bruxelles</p>
+            </div>
+        </div>
+
+        <!-- Security Explanation -->
+        <div class="card border-success mb-4">
+            <div class="card-header bg-success text-white fw-bold">
+                Code securise
+            </div>
+            <div class="card-body">
+                <p>Le message de bienvenue utilise l'encodage Razor par defaut :</p>
+                <div class="bg-dark text-light p-3 rounded" style="font-family: monospace;">
+                    <span class="text-success">Bonjour, @@Model.Name !</span>
+                </div>
+                <p class="mt-3">
+                    Razor encode automatiquement les caracteres speciaux HTML :
+                </p>
+                <table class="table table-bordered table-sm">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Caractere</th>
+                            <th>Encodage HTML</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><code>&lt;</code></td><td><code>&amp;lt;</code></td></tr>
+                        <tr><td><code>&gt;</code></td><td><code>&amp;gt;</code></td></tr>
+                        <tr><td><code>"</code></td><td><code>&amp;quot;</code></td></tr>
+                        <tr><td><code>'</code></td><td><code>&amp;#x27;</code></td></tr>
+                        <tr><td><code>&amp;</code></td><td><code>&amp;amp;</code></td></tr>
+                    </tbody>
+                </table>
+                <p class="mb-0">
+                    Le payload XSS s'affiche donc en <strong>texte brut</strong> au lieu d'etre execute comme du code.
+                </p>
+            </div>
+        </div>
+
+        <div class="text-center mb-4">
+            <a asp-action="Account" asp-route-name="@Model.Name" class="btn btn-outline-danger me-2">
+                Voir la version vulnerable
+            </a>
+            <a asp-action="Email" class="btn btn-outline-info">
+                Retour a l'email de phishing
+            </a>
+        </div>
+
+    </div>
+</div>

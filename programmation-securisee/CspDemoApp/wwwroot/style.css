@@ -214,6 +214,67 @@ button.danger:hover {
     color: var(--accent);
 }
 
+/* Image demo grid */
+.img-demo-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin: 1rem 0;
+}
+
+.img-demo-card {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.2rem;
+    text-align: center;
+}
+
+.img-demo-card h3 {
+    font-size: 0.95rem;
+    color: #fff;
+    margin-bottom: 0.8rem;
+}
+
+.img-demo-card img {
+    display: block;
+    margin: 0 auto;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+}
+
+.img-status {
+    margin-top: 0.8rem;
+    font-size: 0.82rem;
+    padding: 0.4rem 0.6rem;
+    border-radius: 6px;
+}
+
+.img-status.success {
+    background: rgba(46, 213, 115, 0.12);
+    color: var(--success);
+}
+
+.img-status.blocked {
+    background: rgba(255, 71, 87, 0.12);
+    color: var(--danger);
+}
+
+.btn-allow {
+    display: inline-block;
+    padding: 0.4rem 1rem;
+    background: rgba(46, 213, 115, 0.12);
+    color: var(--success);
+    border: 1px solid var(--success);
+    border-radius: 6px;
+    text-decoration: none;
+    font-size: 0.85rem;
+    transition: all 0.2s;
+}
+
+.btn-allow:hover {
+    background: rgba(46, 213, 115, 0.25);
+}
+
 footer {
     text-align: center;
     color: var(--text-muted);

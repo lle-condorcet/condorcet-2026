@@ -41,12 +41,12 @@
             </div>
         </div>
 
-        <!-- Les 3 pages -->
+        <!-- Les 4 pages -->
         <div class="row g-4 mb-4">
-            <div class="col-md-4">
+            <div class="col-md-6 col-lg-3">
                 <div class="card h-100 border-danger">
                     <div class="card-body text-center">
-                        <h5 class="card-title text-danger">Page Vulnerable</h5>
+                        <h5 class="card-title text-danger">XSS Stocke</h5>
                         <p class="card-text">
                             Livre d'or utilisant <code>Html.Raw()</code> pour afficher les commentaires.
                             Aucun encodage, aucune protection.
@@ -57,10 +57,10 @@
                     </div>
                 </div>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-6 col-lg-3">
                 <div class="card h-100 border-success">
                     <div class="card-body text-center">
-                        <h5 class="card-title text-success">Page Securisee</h5>
+                        <h5 class="card-title text-success">XSS Stocke (Securise)</h5>
                         <p class="card-text">
                             Meme livre d'or, mais les commentaires sont encodes par Razor.
                             Le payload XSS s'affiche en texte brut.
@@ -71,7 +71,21 @@
                     </div>
                 </div>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-6 col-lg-3">
+                <div class="card h-100 border-info">
+                    <div class="card-body text-center">
+                        <h5 class="card-title text-info">Phishing + XSS Reflechi</h5>
+                        <p class="card-text">
+                            Faux email de phishing contenant un lien piege.
+                            Le XSS reflechi s'execute via l'URL au clic.
+                        </p>
+                        <a asp-controller="Phishing" asp-action="Email" class="btn btn-outline-info">
+                            Ouvrir
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3">
                 <div class="card h-100 border-warning">
                     <div class="card-body text-center">
                         <h5 class="card-title text-warning">Dashboard Attaquant</h5>

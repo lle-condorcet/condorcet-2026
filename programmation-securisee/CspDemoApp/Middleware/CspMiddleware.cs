@@ -28,12 +28,20 @@ public class CspMiddleware
         // Verifier si on est en mode report-only (via query string ?report-only=true)
         var reportOnly = context.Request.Query.ContainsKey("report-only");
 
+        // Verifier si on autorise le CDN externe (via query string ?allow-cdn)
+        var allowCdn = context.Request.Query.ContainsKey("allow-cdn");
+
+        // Construire la directive img-src selon le mode
+        var imgSrc = allowCdn
+            ? $"img-src 'self' data: https://cdn.pixabay.com"
+            : $"img-src 'self' data:";
+
         // Construire la politique CSP
         var policy = string.Join("; ",
             $"default-src 'none'",
             $"script-src 'self' 'nonce-{nonce}'",
             $"style-src 'self' 'nonce-{nonce}'",
-            $"img-src 'self' data:",
+            imgSrc,
             $"font-src 'self'",
             $"connect-src 'self'",
             $"frame-ancestors 'none'",

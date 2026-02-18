@@ -1,0 +1,202 @@
+@model XssLabApp.Models.PhishingViewModel
+@{
+    ViewData["Title"] = "Phishing Email - XSS Reflechi";
+    var payload = Model.XssPayload ?? "";
+    var maliciousLink = $"/Phishing/Account?name={System.Net.WebUtility.UrlEncode(payload)}";
+}
+
+<div class="row justify-content-center mt-4">
+    <div class="col-md-10">
+
+        <div class="alert alert-info text-center fw-bold fs-5">
+            <i class="bi bi-envelope-exclamation"></i> LABO : PHISHING EMAIL + XSS REFLECHI
+        </div>
+
+        <p class="lead text-center mb-4">
+            Cette page simule un <strong>email de phishing</strong> contenant un lien piege.
+            En cliquant sur le lien, la victime declenche un <strong>XSS reflechi</strong> sur la page cible.
+        </p>
+
+        <!-- Simulated Email Client -->
+        <div class="card border-secondary mb-4 shadow">
+            <div class="card-header bg-secondary text-white d-flex align-items-center">
+                <span class="fw-bold me-auto">Boite de reception - WebMail</span>
+                <span class="badge bg-danger">1 nouveau</span>
+            </div>
+            <div class="card-body p-0">
+                <!-- Email Header -->
+                <div class="bg-light border-bottom p-3">
+                    <div class="row mb-1">
+                        <div class="col-auto fw-bold text-muted" style="width: 80px;">De :</div>
+                        <div class="col">
+                            <span class="text-danger fw-bold">service-client@ma-banque-secure.com</span>
+                            <span class="text-muted small ms-2">&lt;attacker@evil.com&gt;</span>
+                        </div>
+                    </div>
+                    <div class="row mb-1">
+                        <div class="col-auto fw-bold text-muted" style="width: 80px;">A :</div>
+                        <div class="col">victime@email.com</div>
+                    </div>
+                    <div class="row mb-1">
+                        <div class="col-auto fw-bold text-muted" style="width: 80px;">Objet :</div>
+                        <div class="col fw-bold text-dark">
+                            <span class="text-danger">&#9888;</span> Activite suspecte sur votre compte - Action requise immediatement
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-auto fw-bold text-muted" style="width: 80px;">Date :</div>
+                        <div class="col text-muted">@DateTime.Now.ToString("dd/MM/yyyy HH:mm")</div>
+                    </div>
+                </div>
+
+                <!-- Email Body -->
+                <div class="p-4" style="font-family: Arial, sans-serif; line-height: 1.8;">
+                    <div class="text-center mb-4">
+                        <h3 class="text-primary fw-bold">MA BANQUE SECURE</h3>
+                        <hr style="border-color: #0d6efd; border-width: 2px;">
+                    </div>
+
+                    <p>Cher(e) client(e),</p>
+
+                    <p>
+                        Nous avons detecte une <strong class="text-danger">activite inhabituelle</strong> sur votre compte bancaire.
+                        Pour votre securite, nous avons temporairement limite certaines fonctionnalites de votre espace client.
+                    </p>
+
+                    <div class="alert alert-danger">
+                        <strong>&#9888; Alerte de securite :</strong> Une tentative de connexion depuis un appareil non reconnu
+                        a ete detectee le @DateTime.Now.AddHours(-2).ToString("dd/MM/yyyy") a @DateTime.Now.AddHours(-2).ToString("HH:mm")
+                        depuis l'adresse IP <code>185.234.72.xxx</code> (Localisation : Moscou, Russie).
+                    </div>
+
+                    <p>
+                        Pour verifier que votre compte n'a pas ete compromis et retablir l'acces complet,
+                        veuillez vous connecter a votre espace client en cliquant sur le bouton ci-dessous :
+                    </p>
+
+                    <div class="text-center my-4">
+                        <a href="@maliciousLink" class="btn btn-primary btn-lg px-5 py-3 fw-bold shadow">
+                            Acceder a mon compte
+                        </a>
+                    </div>
+
+                    <p class="text-muted small">
+                        Si vous ne reagissez pas dans les <strong>24 heures</strong>, votre compte sera automatiquement suspendu
+                        pour des raisons de securite.
+                    </p>
+
+                    <hr>
+
+                    <p class="text-muted small mb-0">
+                        Cordialement,<br>
+                        Le Service Securite<br>
+                        Ma Banque Secure<br>
+                        <em>Ce message est automatique, merci de ne pas y repondre.</em>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pedagogical Section -->
+        <div class="card border-warning mb-4">
+            <div class="card-header bg-warning text-dark fw-bold">
+                Comment identifier cet email de phishing ?
+            </div>
+            <div class="card-body">
+                <ol>
+                    <li>
+                        <strong>L'adresse de l'expediteur est trompeuse</strong> : Le nom affiche est "service-client@ma-banque-secure.com"
+                        mais l'adresse reelle est <code>attacker@evil.com</code>. Toujours verifier l'adresse reelle.
+                    </li>
+                    <li>
+                        <strong>Ton alarmiste et urgence artificielle</strong> : "Action requise immediatement",
+                        "24 heures avant suspension"... Le phishing joue sur la peur et l'urgence.
+                    </li>
+                    <li>
+                        <strong>Lien suspect</strong> : En survolant le bouton, on voit que l'URL contient du code malveillant
+                        dans le parametre <code>name</code> au lieu d'un simple identifiant.
+                    </li>
+                    <li>
+                        <strong>Demande de connexion</strong> : Une vraie banque ne vous demandera jamais de vous connecter
+                        via un lien dans un email.
+                    </li>
+                </ol>
+            </div>
+        </div>
+
+        <div class="card border-danger mb-4">
+            <div class="card-header bg-danger text-white fw-bold">
+                Comment fonctionne le XSS reflechi dans l'URL ?
+            </div>
+            <div class="card-body">
+                <ol>
+                    <li>
+                        <strong>L'attaquant construit une URL malveillante</strong> : Il ajoute un payload XSS dans un parametre
+                        de l'URL (ici <code>?name=&lt;img src=x onerror="..."&gt;</code>).
+                    </li>
+                    <li>
+                        <strong>La victime clique sur le lien</strong> dans l'email de phishing.
+                        Elle fait confiance au lien car il pointe vers le vrai site.
+                    </li>
+                    <li>
+                        <strong>Le serveur reflete le parametre</strong> : La page "Mon compte" affiche le parametre <code>name</code>
+                        directement dans le HTML via <code>Html.Raw()</code> sans encodage.
+                    </li>
+                    <li>
+                        <strong>Le navigateur execute le code</strong> : Le payload injecte un script qui capture une copie de la page
+                        (avec les donnees bancaires affichees) et l'envoie a l'attaquant.
+                    </li>
+                    <li>
+                        <strong>L'attaquant recupere les donnees</strong> : Le screenshot et les cookies sont visibles
+                        sur le <a href="/Attacker/Dashboard" class="text-warning">Dashboard Attaquant</a>.
+                    </li>
+                </ol>
+
+                <h6 class="mt-3">Difference entre XSS stocke et XSS reflechi :</h6>
+                <table class="table table-bordered table-sm">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>XSS Stocke (Livre d'or)</th>
+                            <th>XSS Reflechi (Phishing)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Le payload est sauvegarde en base/memoire</td>
+                            <td>Le payload est dans l'URL, jamais stocke</td>
+                        </tr>
+                        <tr>
+                            <td>Toute personne visitant la page est touchee</td>
+                            <td>Seuls ceux qui cliquent sur le lien piege sont touches</td>
+                        </tr>
+                        <tr>
+                            <td>Plus dangereux car persistant</td>
+                            <td>Necessite de l'ingenierie sociale (phishing)</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="card border-info mb-4">
+            <div class="card-header bg-info text-white fw-bold">
+                Le payload utilise
+            </div>
+            <div class="card-body">
+                <div class="bg-dark text-light p-3 rounded" style="font-family: monospace; font-size: 0.85rem; word-break: break-all;">
+                    <span id="payload-text">@payload</span>
+                </div>
+                <button class="btn btn-outline-info btn-sm mt-2" onclick="navigator.clipboard.writeText(document.getElementById('payload-text').textContent)">
+                    Copier le payload
+                </button>
+            </div>
+        </div>
+
+        <div class="text-center mb-4">
+            <a asp-action="AccountSecure" asp-route-name="Test" class="btn btn-outline-success btn-lg">
+                Voir la version securisee de la page compte
+            </a>
+        </div>
+
+    </div>
+</div>
