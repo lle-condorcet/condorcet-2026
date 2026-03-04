@@ -1,0 +1,73 @@
+@{
+    ViewData["Title"] = "Accueil";
+}
+
+<div class="row justify-content-center mt-4">
+    <div class="col-md-10">
+        <div class="text-center mb-5">
+            <h1 class="display-5 fw-bold">Labo Data Protection</h1>
+            <p class="lead text-muted">
+                Apprenez a proteger les secrets de configuration et a chiffrer les donnees sensibles
+                avec les outils integres de .NET : <strong>User Secrets</strong> et <strong>Data Protection API</strong>.
+            </p>
+        </div>
+
+        <div class="card border-info mb-4">
+            <div class="card-header bg-info text-white fw-bold">Objectifs du laboratoire</div>
+            <div class="card-body">
+                <ul class="mb-0">
+                    <li>Comprendre pourquoi stocker des secrets dans <code>appsettings.json</code> est dangereux</li>
+                    <li>Utiliser <strong>User Secrets</strong> pour securiser la configuration locale</li>
+                    <li>Chiffrer et dechiffrer des donnees sensibles avec l'<strong>API Data Protection</strong></li>
+                    <li>Comparer les approches vulnerables vs securisees</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="row g-4 mb-4">
+            <div class="col-md-6 col-lg-3">
+                <div class="card h-100 border-danger">
+                    <div class="card-body text-center">
+                        <h5 class="card-title text-danger">Secrets en clair</h5>
+                        <p class="card-text">Secrets stockes directement dans <code>appsettings.json</code>, visibles par tous.</p>
+                        <a asp-controller="Secrets" asp-action="Vulnerable" class="btn btn-outline-danger">Ouvrir</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <div class="card h-100 border-success">
+                    <div class="card-body text-center">
+                        <h5 class="card-title text-success">User Secrets</h5>
+                        <p class="card-text">Secrets securises hors du code source via <code>dotnet user-secrets</code>.</p>
+                        <a asp-controller="Secrets" asp-action="Secure" class="btn btn-outline-success">Ouvrir</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <div class="card h-100 border-danger">
+                    <div class="card-body text-center">
+                        <h5 class="card-title text-danger">Donnees non chiffrees</h5>
+                        <p class="card-text">Donnees sensibles stockees en clair, exposees en cas de fuite.</p>
+                        <a asp-controller="Encryption" asp-action="Vulnerable" class="btn btn-outline-danger">Ouvrir</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <div class="card h-100 border-success">
+                    <div class="card-body text-center">
+                        <h5 class="card-title text-success">Data Protection API</h5>
+                        <p class="card-text">Chiffrement/dechiffrement avec l'API Data Protection de .NET.</p>
+                        <a asp-controller="Encryption" asp-action="Secure" class="btn btn-outline-success">Ouvrir</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="alert alert-warning">
+            <strong>Usage educatif uniquement.</strong>
+            Ce laboratoire est concu pour l'apprentissage en environnement controle.
+            Les secrets affiches sont de faux secrets a des fins de demonstration.
+            Ne jamais stocker de vrais secrets dans le code source d'un projet.
+        </div>
+    </div>
+</div>

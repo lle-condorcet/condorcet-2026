@@ -1,0 +1,75 @@
+@model EncryptionViewModel
+@{
+    ViewData["Title"] = "Chiffrement Vulnerable";
+}
+
+<div class="row justify-content-center mt-4">
+    <div class="col-md-10">
+        <h2 class="text-danger fw-bold mb-3">Donnees sensibles stockees en clair</h2>
+        <p class="text-muted">
+            Cette page simule un stockage en memoire (ou base de donnees) contenant
+            des donnees sensibles <strong>sans aucun chiffrement</strong>.
+        </p>
+
+        <div class="alert alert-danger">
+            <strong>DANGER :</strong> Toutes les donnees sensibles sont visibles en clair.
+            En cas de compromission de la base de donnees, de dump memoire ou d'acces aux logs,
+            toutes les informations sont directement exploitables.
+        </div>
+
+        <div class="card border-danger mb-4">
+            <div class="card-header bg-danger text-white fw-bold">Donnees en clair (simulation base de donnees)</div>
+            <div class="card-body">
+                <table class="table table-sm table-striped mb-0">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Label</th>
+                            <th>Valeur (en clair)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var record in Model.Records)
+                        {
+                            <tr>
+                                <td>@record.Id</td>
+                                <td>@record.Label</td>
+                                <td><span class="text-danger fw-bold">@record.Value</span></td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="card border-warning mb-4">
+            <div class="card-header bg-warning text-dark fw-bold">Risques identifies</div>
+            <div class="card-body">
+                <ul class="mb-0">
+                    <li><strong>Compromission de la base de donnees :</strong> Une injection SQL ou un acces non autorise expose toutes les donnees</li>
+                    <li><strong>Dump memoire :</strong> Un attaquant avec acces au serveur peut lire les donnees en memoire</li>
+                    <li><strong>Logs et backups :</strong> Les donnees en clair apparaissent dans les logs et sauvegardes</li>
+                    <li><strong>Non-conformite RGPD :</strong> Le stockage en clair de donnees personnelles viole les principes de protection des donnees</li>
+                    <li><strong>Mouvement lateral :</strong> Des identifiants en clair permettent d'acceder a d'autres systemes</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="card border-danger mb-4">
+            <div class="card-header bg-danger text-white fw-bold">Simulation : dump SQL</div>
+            <div class="card-body p-0">
+                <pre class="mb-0"><code>-- Resultat d'une injection SQL ou d'un acces non autorise :
+SELECT * FROM SensitiveData;
+
++----+---------------------------+----------------------+
+| Id | Label                     | Value                |
++----+---------------------------+----------------------+
+@foreach (var record in Model.Records)
+{
+@:| @record.Id.ToString().PadRight(2) | @record.Label.PadRight(25) | @record.Value.PadRight(20) |
+}+----+---------------------------+----------------------+
+-- Toutes les donnees sont directement lisibles !</code></pre>
+            </div>
+        </div>
+    </div>
+</div>

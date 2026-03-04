@@ -1,0 +1,140 @@
+@model EncryptionViewModel
+@{
+    ViewData["Title"] = "Chiffrement Secure";
+}
+
+<div class="row justify-content-center mt-4">
+    <div class="col-md-10">
+        <h2 class="text-success fw-bold mb-3">Data Protection API</h2>
+        <p class="text-muted">
+            Cette page utilise l'<strong>API Data Protection</strong> de .NET pour chiffrer les donnees
+            sensibles avant stockage et les dechiffrer a la volee pour l'affichage.
+        </p>
+
+        <div class="alert alert-success">
+            <strong>SECURISE :</strong> Les donnees sont chiffrees avec l'API Data Protection.
+            Meme en cas de compromission du stockage, les donnees restent illisibles sans la cle.
+        </div>
+
+        <div class="card border-success mb-4">
+            <div class="card-header bg-success text-white fw-bold">Donnees chiffrees (simulation base de donnees)</div>
+            <div class="card-body">
+                <table class="table table-sm table-striped mb-0">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Label</th>
+                            <th>Valeur chiffree (stockee)</th>
+                            <th>Valeur dechiffree (a la volee)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var record in Model.Records)
+                        {
+                            <tr>
+                                <td>@record.Id</td>
+                                <td>@record.Label</td>
+                                <td><small class="text-muted text-break" style="font-family: monospace; font-size: 0.7rem;">@record.EncryptedValue</small></td>
+                                <td><span class="text-success fw-bold">@record.Value</span></td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="card border-info mb-4">
+            <div class="card-header bg-info text-white fw-bold">Chiffrement interactif</div>
+            <div class="card-body">
+                <p>Saisissez un texte pour le chiffrer avec l'API Data Protection :</p>
+                <form asp-controller="Encryption" asp-action="Encrypt" method="post" class="mb-3">
+                    <div class="input-group">
+                        <input type="text" name="plainText" class="form-control" placeholder="Texte a chiffrer..."
+                               value="@Model.PlainText" />
+                        <button type="submit" class="btn btn-success">Chiffrer</button>
+                    </div>
+                </form>
+
+                @if (Model.CipherText != null)
+                {
+                    <div class="alert alert-info">
+                        <strong>Texte original :</strong> @Model.PlainText<br />
+                        <strong>Texte chiffre :</strong>
+                        <span class="text-break" style="font-family: monospace; font-size: 0.8rem;">@Model.CipherText</span>
+                    </div>
+                    <p class="text-muted small">
+                        Rechiffrez le meme texte : vous obtiendrez un resultat different a chaque fois
+                        (nonce unique par operation).
+                    </p>
+                }
+            </div>
+        </div>
+
+        <div class="card border-warning mb-4">
+            <div class="card-header bg-warning text-dark fw-bold">Chiffrement avec expiration</div>
+            <div class="card-body">
+                <p>L'API Data Protection permet de creer des jetons a duree de vie limitee :</p>
+                <form asp-controller="Encryption" asp-action="EncryptTimeLimited" method="post" class="mb-3">
+                    <div class="row g-2">
+                        <div class="col-md-6">
+                            <input type="text" name="plainText" class="form-control" placeholder="Texte a chiffrer..."
+                                   value="@Model.PlainText" />
+                        </div>
+                        <div class="col-md-3">
+                            <div class="input-group">
+                                <input type="number" name="lifetimeSeconds" class="form-control" value="30" min="5" max="300" />
+                                <span class="input-group-text">sec</span>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <button type="submit" class="btn btn-warning w-100">Chiffrer (expire)</button>
+                        </div>
+                    </div>
+                </form>
+
+                @if (Model.TimeLimitedCipher != null)
+                {
+                    <div class="alert alert-warning">
+                        <strong>Texte original :</strong> @Model.PlainText<br />
+                        <strong>Chiffre (expire) :</strong>
+                        <span class="text-break" style="font-family: monospace; font-size: 0.8rem;">@Model.TimeLimitedCipher</span><br />
+                        <strong>Expiration :</strong> @Model.Expiration?.ToString("HH:mm:ss dd/MM/yyyy")
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div class="card border-info mb-4">
+            <div class="card-header bg-info text-white fw-bold">Comment ca fonctionne</div>
+            <div class="card-body">
+                <pre><code>// Program.cs — enregistrer le service
+builder.Services.AddDataProtection();
+
+// Controller — injecter et utiliser
+public class MyController : Controller
+{
+    private readonly IDataProtector _protector;
+
+    public MyController(IDataProtectionProvider provider)
+    {
+        _protector = provider.CreateProtector("MonApp.Purpose");
+    }
+
+    public string Protect(string data)
+    {
+        return _protector.Protect(data);    // chiffrement
+    }
+
+    public string Unprotect(string cipher)
+    {
+        return _protector.Unprotect(cipher); // dechiffrement
+    }
+}
+
+// Chiffrement avec expiration
+var timeLimited = _protector.ToTimeLimitedDataProtector();
+var cipher = timeLimited.Protect(data, TimeSpan.FromMinutes(30));</code></pre>
+            </div>
+        </div>
+    </div>
+</div>

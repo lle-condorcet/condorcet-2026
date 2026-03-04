@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Labo Data Protection - Guide</title>
+    <style>
+        :root {
+            --bg: #0f1117;
+            --surface: #1a1d27;
+            --surface-2: #242736;
+            --accent: #17a2b8;
+            --accent-light: #45b7ca;
+            --danger: #ff4757;
+            --success: #2ed573;
+            --warning: #ffa502;
+            --info: #1e90ff;
+            --text: #e4e6eb;
+            --text-muted: #8b8fa3;
+            --border: #2e3142;
+            --code-bg: #12131a;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+        }
+
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 260px;
+            height: 100vh;
+            background: var(--surface);
+            border-right: 1px solid var(--border);
+            padding: 2rem 1.5rem;
+            overflow-y: auto;
+            z-index: 100;
+        }
+
+        nav .logo {
+            font-size: 1.4rem;
+            font-weight: 800;
+            margin-bottom: 2rem;
+        }
+
+        nav .logo span { color: var(--accent); }
+
+        nav .section-title {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--text-muted);
+            margin: 1.5rem 0 0.5rem;
+        }
+
+        nav a {
+            display: block;
+            color: var(--text-muted);
+            text-decoration: none;
+            padding: 0.3rem 0;
+            font-size: 0.9rem;
+            transition: color 0.2s;
+        }
+
+        nav a:hover { color: var(--accent); }
+
+        main {
+            margin-left: 260px;
+            max-width: 900px;
+            padding: 3rem 4rem;
+        }
+
+        h1 {
+            font-size: 2.2rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+        }
+
+        h1 span { color: var(--accent); }
+
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            margin-bottom: 3rem;
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin: 3rem 0 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--accent);
+        }
+
+        h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            margin: 2rem 0 0.8rem;
+            color: var(--accent-light);
+        }
+
+        p { margin-bottom: 1rem; }
+
+        code {
+            background: var(--code-bg);
+            padding: 0.15rem 0.4rem;
+            border-radius: 4px;
+            font-size: 0.88em;
+            color: var(--accent-light);
+        }
+
+        pre {
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.2rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-size: 0.88rem;
+            line-height: 1.6;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            color: var(--text);
+        }
+
+        .kw { color: #c678dd; }
+        .str { color: #98c379; }
+        .cmt { color: #5c6370; }
+        .fn { color: #61afef; }
+        .val { color: #d19a66; }
+        .danger-hl { color: #ff4757; }
+        .success-hl { color: #2ed573; }
+
+        .alert {
+            padding: 1rem 1.2rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            border-left: 4px solid;
+        }
+
+        .alert-danger { background: rgba(255, 71, 87, 0.1); border-color: var(--danger); }
+        .alert-success { background: rgba(46, 213, 115, 0.1); border-color: var(--success); }
+        .alert-warning { background: rgba(255, 165, 2, 0.1); border-color: var(--warning); }
+        .alert-info { background: rgba(30, 144, 255, 0.1); border-color: var(--info); }
+
+        .comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.5rem;
+        }
+
+        .card.bad { border-color: var(--danger); }
+        .card.good { border-color: var(--success); }
+
+        .card h4 {
+            font-size: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .card.bad h4 { color: var(--danger); }
+        .card.good h4 { color: var(--success); }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+
+        th, td {
+            padding: 0.6rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th {
+            background: var(--surface-2);
+            font-weight: 600;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        ul, ol {
+            margin: 0.5rem 0 1rem 1.5rem;
+        }
+
+        li { margin-bottom: 0.3rem; }
+
+        strong { color: var(--text); }
+
+        footer {
+            margin-left: 260px;
+            padding: 2rem 4rem;
+            border-top: 1px solid var(--border);
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        @media (max-width: 768px) {
+            nav { display: none; }
+            main, footer { margin-left: 0; padding: 1.5rem; }
+        }
+    </style>
+</head>
+<body>
+
+<nav>
+    <div class="logo"><span>Data</span> Protection Lab</div>
+    <div class="section-title">Introduction</div>
+    <a href="#objectifs">Objectifs</a>
+    <a href="#prerequis">Prerequis</a>
+    <a href="#lancer">Lancer le labo</a>
+    <div class="section-title">User Secrets</div>
+    <a href="#secrets-probleme">Le probleme</a>
+    <a href="#secrets-vulnerable">Demo vulnerable</a>
+    <a href="#secrets-secure">Solution securisee</a>
+    <a href="#secrets-commandes">Commandes CLI</a>
+    <div class="section-title">Data Protection API</div>
+    <a href="#dp-probleme">Le probleme</a>
+    <a href="#dp-vulnerable">Demo vulnerable</a>
+    <a href="#dp-secure">Solution securisee</a>
+    <a href="#dp-expiration">Chiffrement a expiration</a>
+    <div class="section-title">Reference</div>
+    <a href="#hierarchie">Hierarchie de config</a>
+    <a href="#bonnes-pratiques">Bonnes pratiques</a>
+    <a href="#ressources">Ressources</a>
+</nav>
+
+<main>
+    <h1><span>Data</span> Protection Lab</h1>
+    <p class="subtitle">Protection des secrets de configuration et chiffrement des donnees sensibles avec .NET</p>
+
+    <h2 id="objectifs">Objectifs du laboratoire</h2>
+    <ul>
+        <li>Comprendre pourquoi stocker des secrets dans <code>appsettings.json</code> est dangereux</li>
+        <li>Apprendre a utiliser <strong>User Secrets</strong> pour le developpement local</li>
+        <li>Maitriser l'<strong>API Data Protection</strong> pour chiffrer/dechiffrer des donnees</li>
+        <li>Comparer les approches vulnerables et securisees</li>
+    </ul>
+
+    <h2 id="prerequis">Prerequis</h2>
+    <ul>
+        <li>.NET 10 SDK installe</li>
+        <li>Un editeur de code (VS Code, Visual Studio, Rider)</li>
+        <li>Connaissances de base en ASP.NET MVC</li>
+    </ul>
+
+    <h2 id="lancer">Lancer le laboratoire</h2>
+    <pre><code><span class="cmt"># Cloner le depot et naviguer vers le projet</span>
+<span class="kw">cd</span> DataProtectionLabApp
+<span class="kw">dotnet</span> run</code></pre>
+    <p>L'application demarre sur <code>http://localhost:5400</code>.</p>
+
+    <h2 id="secrets-probleme">User Secrets : le probleme</h2>
+    <p>
+        De nombreux developpeurs stockent leurs secrets (mots de passe, cles API, chaines de connexion)
+        directement dans <code>appsettings.json</code>. Ce fichier est commite dans Git et visible par
+        tous les contributeurs du projet.
+    </p>
+
+    <div class="alert alert-danger">
+        <strong>Risque :</strong> Meme apres suppression, les secrets restent dans l'historique Git.
+        Des outils comme <code>git log</code>, <code>truffleHog</code> ou <code>git-secrets</code>
+        peuvent les retrouver.
+    </div>
+
+    <h2 id="secrets-vulnerable">Demo : secrets en clair</h2>
+    <p>Dans le labo, la page <strong>Secrets Vulnerable</strong> montre :</p>
+    <ul>
+        <li>Les secrets lus depuis <code>appsettings.json</code> via <code>IConfiguration</code></li>
+        <li>Le contenu brut du fichier de configuration</li>
+        <li>Une simulation d'historique Git revelant les secrets</li>
+    </ul>
+
+    <div class="comparison">
+        <div class="card bad">
+            <h4>appsettings.json (dangereux)</h4>
+            <pre><code>{
+  <span class="str">"ConnectionStrings"</span>: {
+    <span class="str">"DefaultConnection"</span>: <span class="danger-hl">"Server=prod;Password=Secret123!"</span>
+  },
+  <span class="str">"ApiKeys"</span>: {
+    <span class="str">"PaymentGateway"</span>: <span class="danger-hl">"sk_live_4242..."</span>
+  }
+}</code></pre>
+        </div>
+        <div class="card good">
+            <h4>appsettings.json (securise)</h4>
+            <pre><code>{
+  <span class="str">"ConnectionStrings"</span>: {
+    <span class="str">"DefaultConnection"</span>: <span class="success-hl">""</span>
+  },
+  <span class="str">"ApiKeys"</span>: {
+    <span class="str">"PaymentGateway"</span>: <span class="success-hl">""</span>
+  }
+}
+<span class="cmt">// Vrais secrets dans User Secrets</span></code></pre>
+        </div>
+    </div>
+
+    <h2 id="secrets-secure">Solution : User Secrets</h2>
+    <p>
+        <strong>User Secrets</strong> est un mecanisme integre a .NET qui stocke les secrets
+        en dehors du projet, dans le profil utilisateur. Ces secrets ne sont jamais commites dans Git.
+    </p>
+
+    <h3>Ou sont stockes les secrets ?</h3>
+    <table>
+        <tr>
+            <th>Systeme</th>
+            <th>Chemin</th>
+        </tr>
+        <tr>
+            <td>Windows</td>
+            <td><code>%APPDATA%\Microsoft\UserSecrets\&lt;UserSecretsId&gt;\secrets.json</code></td>
+        </tr>
+        <tr>
+            <td>Linux / macOS</td>
+            <td><code>~/.microsoft/usersecrets/&lt;UserSecretsId&gt;/secrets.json</code></td>
+        </tr>
+    </table>
+
+    <h2 id="secrets-commandes">Commandes CLI</h2>
+    <pre><code><span class="cmt"># Initialiser User Secrets dans le projet</span>
+<span class="kw">dotnet</span> user-secrets init
+
+<span class="cmt"># Ajouter un secret</span>
+<span class="kw">dotnet</span> user-secrets set <span class="str">"ConnectionStrings:DefaultConnection"</span> <span class="str">"Server=localhost;Database=DevDB"</span>
+
+<span class="cmt"># Lister les secrets</span>
+<span class="kw">dotnet</span> user-secrets list
+
+<span class="cmt"># Supprimer un secret</span>
+<span class="kw">dotnet</span> user-secrets remove <span class="str">"ApiKeys:PaymentGateway"</span>
+
+<span class="cmt"># Supprimer tous les secrets</span>
+<span class="kw">dotnet</span> user-secrets clear</code></pre>
+
+    <h2 id="dp-probleme">Data Protection API : le probleme</h2>
+    <p>
+        Meme avec des secrets bien geres, les <strong>donnees sensibles</strong> (numeros de carte,
+        IBAN, mots de passe) sont souvent stockees en clair dans la base de donnees.
+        En cas de compromission, toutes les donnees sont directement exploitables.
+    </p>
+
+    <h2 id="dp-vulnerable">Demo : donnees en clair</h2>
+    <p>La page <strong>Chiffrement Vulnerable</strong> simule une base de donnees contenant :</p>
+    <ul>
+        <li>Numeros de cartes bancaires</li>
+        <li>IBAN</li>
+        <li>Mots de passe</li>
+        <li>Numeros nationaux</li>
+    </ul>
+    <p>Toutes ces donnees sont stockees et affichees en clair.</p>
+
+    <h2 id="dp-secure">Solution : Data Protection API</h2>
+    <p>
+        L'<strong>API Data Protection</strong> de .NET fournit un mecanisme de chiffrement simple et securise.
+    </p>
+
+    <h3>Configuration</h3>
+    <pre><code><span class="cmt">// Program.cs</span>
+<span class="kw">var</span> builder = WebApplication.<span class="fn">CreateBuilder</span>(args);
+builder.Services.<span class="fn">AddDataProtection</span>(); <span class="cmt">// Enregistrer le service</span></code></pre>
+
+    <h3>Utilisation dans un controleur</h3>
+    <pre><code><span class="kw">public class</span> <span class="fn">EncryptionController</span> : Controller
+{
+    <span class="kw">private readonly</span> IDataProtector <span class="val">_protector</span>;
+
+    <span class="kw">public</span> <span class="fn">EncryptionController</span>(IDataProtectionProvider provider)
+    {
+        <span class="val">_protector</span> = provider.<span class="fn">CreateProtector</span>(<span class="str">"MonApp.Purpose"</span>);
+    }
+
+    <span class="kw">public string</span> <span class="fn">Chiffrer</span>(<span class="kw">string</span> data)
+    {
+        <span class="kw">return</span> <span class="val">_protector</span>.<span class="fn">Protect</span>(data);
+    }
+
+    <span class="kw">public string</span> <span class="fn">Dechiffrer</span>(<span class="kw">string</span> cipher)
+    {
+        <span class="kw">return</span> <span class="val">_protector</span>.<span class="fn">Unprotect</span>(cipher);
+    }
+}</code></pre>
+
+    <div class="alert alert-info">
+        <strong>Note :</strong> Le parametre <code>purpose</code> dans <code>CreateProtector("purpose")</code>
+        isole les cles. Un protecteur cree avec un purpose different ne peut pas dechiffrer les donnees d'un autre.
+    </div>
+
+    <h2 id="dp-expiration">Chiffrement a expiration</h2>
+    <p>
+        L'API permet de creer des jetons chiffres avec une duree de vie limitee,
+        utile pour les tokens de reinitialisation de mot de passe ou les liens temporaires.
+    </p>
+
+    <pre><code><span class="kw">var</span> timeLimited = <span class="val">_protector</span>.<span class="fn">ToTimeLimitedDataProtector</span>();
+
+<span class="cmt">// Chiffrer avec expiration de 30 minutes</span>
+<span class="kw">var</span> cipher = timeLimited.<span class="fn">Protect</span>(data, TimeSpan.<span class="fn">FromMinutes</span>(<span class="val">30</span>));
+
+<span class="cmt">// Dechiffrer (echoue si expire)</span>
+<span class="kw">try</span>
+{
+    <span class="kw">var</span> plain = timeLimited.<span class="fn">Unprotect</span>(cipher);
+}
+<span class="kw">catch</span> (CryptographicException)
+{
+    <span class="cmt">// Le jeton a expire !</span>
+}</code></pre>
+
+    <h2 id="hierarchie">Hierarchie de configuration .NET</h2>
+    <table>
+        <tr>
+            <th>Priorite</th>
+            <th>Source</th>
+            <th>Usage</th>
+        </tr>
+        <tr>
+            <td>1 (basse)</td>
+            <td><code>appsettings.json</code></td>
+            <td>Valeurs par defaut (pas de secrets)</td>
+        </tr>
+        <tr>
+            <td>2</td>
+            <td><code>appsettings.{Env}.json</code></td>
+            <td>Surcharges par environnement</td>
+        </tr>
+        <tr>
+            <td>3</td>
+            <td>User Secrets</td>
+            <td>Developpement local</td>
+        </tr>
+        <tr>
+            <td>4</td>
+            <td>Variables d'environnement</td>
+            <td>Production (Azure, Docker)</td>
+        </tr>
+        <tr>
+            <td>5 (haute)</td>
+            <td>Arguments CLI</td>
+            <td>Surcharges ponctuelles</td>
+        </tr>
+    </table>
+
+    <h2 id="bonnes-pratiques">Bonnes pratiques</h2>
+    <ul>
+        <li><strong>Jamais de secrets dans le code source</strong> — utiliser User Secrets ou des variables d'environnement</li>
+        <li><strong>Ajouter <code>appsettings.*.json</code> au <code>.gitignore</code></strong> si necessaire</li>
+        <li><strong>Utiliser un coffre-fort de secrets en production</strong> — Azure Key Vault, AWS Secrets Manager, HashiCorp Vault</li>
+        <li><strong>Chiffrer les donnees sensibles au repos</strong> — Data Protection API, chiffrement de colonne SQL</li>
+        <li><strong>Rotation reguliere des secrets</strong> — changer les cles API et mots de passe periodiquement</li>
+        <li><strong>Principe du moindre privilege</strong> — chaque service n'accede qu'aux secrets dont il a besoin</li>
+        <li><strong>Scanner l'historique Git</strong> — utiliser des outils comme <code>truffleHog</code> ou <code>git-secrets</code></li>
+    </ul>
+
+    <h2 id="ressources">Ressources</h2>
+    <ul>
+        <li><a href="https://learn.microsoft.com/aspnet/core/security/app-secrets" style="color: var(--accent);">Documentation officielle — User Secrets</a></li>
+        <li><a href="https://learn.microsoft.com/aspnet/core/security/data-protection/introduction" style="color: var(--accent);">Documentation officielle — Data Protection API</a></li>
+        <li><a href="https://cheatsheetseries.owasp.org/cheatsheets/Secrets_Management_Cheat_Sheet.html" style="color: var(--accent);">OWASP — Secrets Management Cheat Sheet</a></li>
+    </ul>
+</main>
+
+<footer>
+    Condorcet 2026 - BAC Cyber Securite - Programmation Securisee - Labo 5 : Data Protection
+</footer>
+
+</body>
+</html>
