@@ -1,0 +1,285 @@
+@{
+    ViewData["Title"] = "Always Encrypted";
+}
+
+<div class="row justify-content-center mt-3">
+    <div class="col-lg-11">
+        <h2 class="fw-bold text-warning mb-3">Pattern 4 : Always Encrypted (SQL Server)</h2>
+
+        <div class="alert alert-warning">
+            <strong>FONCTIONNALITE NATIVE SQL SERVER :</strong> Always Encrypted est une fonctionnalite de SQL Server
+            qui chiffre les donnees cote client (dans le driver ADO.NET). Le moteur SQL Server ne voit <strong>jamais</strong>
+            les donnees en clair, meme en memoire.
+        </div>
+
+        <!-- Architecture -->
+        <div class="card border-warning mb-4">
+            <div class="card-header bg-warning text-dark fw-bold">Architecture Always Encrypted</div>
+            <div class="card-body">
+<pre class="bg-dark text-light p-3 rounded mb-3"><code>
+   ┌──────────────────────┐         ┌──────────────────────────┐
+   │   APPLICATION .NET   │         │      SQL SERVER           │
+   │                      │         │                          │
+   │  Code C# manipule    │         │  Donnees TOUJOURS        │
+   │  des donnees en      │         │  chiffrees en memoire    │
+   │  CLAIR               │         │  et sur disque           │
+   │         │            │         │         ▲                │
+   │    ┌────▼────┐       │         │         │                │
+   │    │ ADO.NET │       │ ──────► │    Stockage chiffre      │
+   │    │ Driver  │       │         │                          │
+   │    │         │       │         │  Le DBA ne peut PAS      │
+   │    │ Chiffre │       │ ◄────── │  lire les donnees        │
+   │    │   ici   │       │         │                          │
+   │    └─────────┘       │         └──────────────────────────┘
+   │         │            │
+   │    ┌────▼────┐       │
+   │    │ Column  │       │   CMK = Column Master Key
+   │    │ Master  │       │   (stockee dans Windows Certificate Store,
+   │    │  Key    │       │    Azure Key Vault, ou HSM)
+   │    └─────────┘       │
+   └──────────────────────┘
+</code></pre>
+            </div>
+        </div>
+
+        <!-- Two types -->
+        <div class="row g-4 mb-4">
+            <div class="col-md-6">
+                <div class="card border-info h-100">
+                    <div class="card-header bg-info text-white fw-bold">Chiffrement deterministe</div>
+                    <div class="card-body">
+                        <p>La meme valeur produit <strong>toujours le meme texte chiffre</strong>.</p>
+                        <h6 class="text-success">Avantages :</h6>
+                        <ul class="small">
+                            <li>Permet les requetes <code>WHERE colonne = @@valeur</code></li>
+                            <li>Permet les <code>JOIN</code> sur colonnes chiffrees</li>
+                            <li>Permet le <code>GROUP BY</code> et <code>DISTINCT</code></li>
+                        </ul>
+                        <h6 class="text-danger">Inconvenients :</h6>
+                        <ul class="small">
+                            <li>Un attaquant peut deduire des patterns (memes valeurs = meme chiffre)</li>
+                            <li>Vulnerable aux attaques par frequence</li>
+                        </ul>
+                        <p class="small text-muted">Usage : colonnes de recherche (email, SSN pour lookup)</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card border-success h-100">
+                    <div class="card-header bg-success text-white fw-bold">Chiffrement aleatoire</div>
+                    <div class="card-body">
+                        <p>La meme valeur produit un texte chiffre <strong>different a chaque fois</strong>.</p>
+                        <h6 class="text-success">Avantages :</h6>
+                        <ul class="small">
+                            <li>Plus securise (pas de pattern deductible)</li>
+                            <li>Resistant aux attaques par frequence</li>
+                        </ul>
+                        <h6 class="text-danger">Inconvenients :</h6>
+                        <ul class="small">
+                            <li>Pas de <code>WHERE</code>, <code>JOIN</code>, <code>GROUP BY</code></li>
+                            <li>Uniquement lecture et ecriture</li>
+                        </ul>
+                        <p class="small text-muted">Usage : donnees hautement sensibles (notes medicales, salaires)</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Setup steps -->
+        <div class="card border-secondary mb-4">
+            <div class="card-header bg-secondary text-white fw-bold">Mise en place avec SQL Server et EF Core</div>
+            <div class="card-body">
+                <h6>Etape 1 : Creer la Column Master Key (CMK)</h6>
+<pre class="bg-dark text-light p-3 rounded mb-3"><code><span class="text-muted">-- Dans SQL Server Management Studio (SSMS)</span>
+<span class="text-info">CREATE COLUMN MASTER KEY</span> CMK_Auto
+<span class="text-info">WITH</span> (
+    KEY_STORE_PROVIDER_NAME = <span class="text-warning">'MSSQL_CERTIFICATE_STORE'</span>,
+    KEY_PATH = <span class="text-warning">'CurrentUser/My/&lt;thumbprint&gt;'</span>
+);
+
+<span class="text-muted">-- Ou via SSMS : clic droit sur "Always Encrypted Keys" → "New Column Master Key"</span></code></pre>
+
+                <h6>Etape 2 : Creer la Column Encryption Key (CEK)</h6>
+<pre class="bg-dark text-light p-3 rounded mb-3"><code><span class="text-info">CREATE COLUMN ENCRYPTION KEY</span> CEK_Auto
+<span class="text-info">WITH VALUES</span> (
+    COLUMN_MASTER_KEY = CMK_Auto,
+    ALGORITHM = <span class="text-warning">'RSA_OAEP'</span>,
+    ENCRYPTED_VALUE = <span class="text-warning">0x...</span>  <span class="text-muted">-- Genere par SSMS</span>
+);
+
+<span class="text-muted">-- Plus simple : utiliser l'assistant SSMS "Encrypt Columns"</span></code></pre>
+
+                <h6>Etape 3 : Creer la table avec colonnes chiffrees</h6>
+<pre class="bg-dark text-light p-3 rounded mb-3"><code><span class="text-info">CREATE TABLE</span> EmployesAlwaysEncrypted (
+    Id <span class="text-primary">INT</span> IDENTITY(1,1) PRIMARY KEY,
+    Nom <span class="text-primary">NVARCHAR</span>(100),
+    Prenom <span class="text-primary">NVARCHAR</span>(100),
+    NumeroNational <span class="text-primary">NVARCHAR</span>(20)
+        <span class="text-info">ENCRYPTED WITH</span> (
+            COLUMN_ENCRYPTION_KEY = CEK_Auto,
+            ENCRYPTION_TYPE = <span class="text-warning">DETERMINISTIC</span>,
+            ALGORITHM = <span class="text-warning">'AEAD_AES_256_CBC_HMAC_SHA_256'</span>
+        ),
+    Salaire <span class="text-primary">NVARCHAR</span>(50)
+        <span class="text-info">ENCRYPTED WITH</span> (
+            COLUMN_ENCRYPTION_KEY = CEK_Auto,
+            ENCRYPTION_TYPE = <span class="text-warning">RANDOMIZED</span>,
+            ALGORITHM = <span class="text-warning">'AEAD_AES_256_CBC_HMAC_SHA_256'</span>
+        ),
+    CompteBancaire <span class="text-primary">NVARCHAR</span>(50)
+        <span class="text-info">ENCRYPTED WITH</span> (
+            COLUMN_ENCRYPTION_KEY = CEK_Auto,
+            ENCRYPTION_TYPE = <span class="text-warning">RANDOMIZED</span>,
+            ALGORITHM = <span class="text-warning">'AEAD_AES_256_CBC_HMAC_SHA_256'</span>
+        ),
+    Email <span class="text-primary">NVARCHAR</span>(200)
+);</code></pre>
+
+                <h6>Etape 4 : Configurer la connexion .NET</h6>
+<pre class="bg-dark text-light p-3 rounded mb-3"><code><span class="text-muted">// appsettings.json</span>
+{
+  <span class="text-warning">"ConnectionStrings"</span>: {
+    <span class="text-warning">"DefaultConnection"</span>: <span class="text-warning">"Server=(localdb)\\mssqllocaldb;Database=MyDb;Column Encryption Setting=Enabled;Trusted_Connection=True;"</span>
+  }
+}
+
+<span class="text-muted">// Le parametre "Column Encryption Setting=Enabled" active le chiffrement/dechiffrement</span>
+<span class="text-muted">// automatique dans le driver ADO.NET</span></code></pre>
+
+                <h6>Etape 5 : Utiliser avec EF Core (aucun changement dans le code !)</h6>
+<pre class="bg-dark text-light p-3 rounded mb-0"><code><span class="text-muted">// Le code EF Core reste IDENTIQUE - pas de Value Converter necessaire</span>
+<span class="text-primary">var</span> employes = <span class="text-primary">await</span> _db.Employes.ToListAsync();
+
+<span class="text-muted">// Le driver ADO.NET gere automatiquement :</span>
+<span class="text-muted">// - Le chiffrement des parametres avant envoi au serveur</span>
+<span class="text-muted">// - Le dechiffrement des resultats apres reception</span>
+
+<span class="text-muted">// Pour les requetes parametrees (deterministe uniquement) :</span>
+<span class="text-primary">var</span> result = <span class="text-primary">await</span> _db.Employes
+    .Where(e => e.NumeroNational == searchValue)  <span class="text-muted">// Fonctionne !</span>
+    .ToListAsync();</code></pre>
+            </div>
+        </div>
+
+        <!-- Comparison table -->
+        <div class="card border-secondary mb-4">
+            <div class="card-header bg-secondary text-white fw-bold">Comparaison des 4 patterns</div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-dark table-striped mb-0">
+                        <thead>
+                            <tr>
+                                <th>Critere</th>
+                                <th class="text-danger">En Clair</th>
+                                <th class="text-success">Value Converter</th>
+                                <th class="text-info">AES-256 Manuel</th>
+                                <th class="text-warning">Always Encrypted</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Donnees protegees en DB</td>
+                                <td class="text-danger">Non</td>
+                                <td class="text-success">Oui</td>
+                                <td class="text-success">Oui</td>
+                                <td class="text-success">Oui</td>
+                            </tr>
+                            <tr>
+                                <td>Protection contre DBA</td>
+                                <td class="text-danger">Non</td>
+                                <td class="text-danger">Non (cles sur le serveur app)</td>
+                                <td class="text-danger">Non (cles sur le serveur app)</td>
+                                <td class="text-success">Oui (cles cote client)</td>
+                            </tr>
+                            <tr>
+                                <td>Requetes WHERE</td>
+                                <td class="text-success">Oui</td>
+                                <td class="text-danger">Non</td>
+                                <td class="text-danger">Non</td>
+                                <td class="text-warning">Deterministe seulement</td>
+                            </tr>
+                            <tr>
+                                <td>Transparent pour le code</td>
+                                <td class="text-success">Oui</td>
+                                <td class="text-success">Oui</td>
+                                <td class="text-success">Oui (via Value Converter)</td>
+                                <td class="text-success">Oui (via driver)</td>
+                            </tr>
+                            <tr>
+                                <td>Gestion des cles</td>
+                                <td>N/A</td>
+                                <td>Automatique (Data Protection)</td>
+                                <td>Manuelle</td>
+                                <td>CMK dans certificat/Key Vault</td>
+                            </tr>
+                            <tr>
+                                <td>Portabilite</td>
+                                <td class="text-success">Toute DB</td>
+                                <td class="text-success">Toute DB avec EF Core</td>
+                                <td class="text-success">Toute plateforme</td>
+                                <td class="text-danger">SQL Server uniquement</td>
+                            </tr>
+                            <tr>
+                                <td>Complexite</td>
+                                <td class="text-success">Aucune</td>
+                                <td class="text-success">Faible</td>
+                                <td class="text-warning">Moyenne</td>
+                                <td class="text-warning">Moyenne (config initiale)</td>
+                            </tr>
+                            <tr>
+                                <td>RGPD / Compliance</td>
+                                <td class="text-danger">Non conforme</td>
+                                <td class="text-warning">Acceptable</td>
+                                <td class="text-warning">Acceptable</td>
+                                <td class="text-success">Recommande</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- TDE bonus -->
+        <div class="card border-secondary mb-4">
+            <div class="card-header bg-dark text-light fw-bold">Bonus : TDE (Transparent Data Encryption)</div>
+            <div class="card-body">
+                <p>TDE chiffre l'<strong>integralite de la base de donnees</strong> au niveau du fichier (MDF/LDF).
+                C'est du chiffrement "at rest" — les donnees sont chiffrees sur le disque mais en clair en memoire.</p>
+
+<pre class="bg-dark text-light p-3 rounded mb-3"><code><span class="text-muted">-- Activer TDE (requiert SQL Server Enterprise ou Developer)</span>
+<span class="text-info">CREATE DATABASE ENCRYPTION KEY</span>
+<span class="text-info">WITH ALGORITHM</span> = AES_256
+<span class="text-info">ENCRYPTION BY SERVER CERTIFICATE</span> MyServerCert;
+
+<span class="text-info">ALTER DATABASE</span> MaBaseDeDonnees
+<span class="text-info">SET ENCRYPTION ON</span>;</code></pre>
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <h6 class="text-success">Avantages TDE</h6>
+                        <ul class="small">
+                            <li>Zero changement dans l'application</li>
+                            <li>Protege les fichiers .mdf, .ldf et backups</li>
+                            <li>Aucun impact sur les requetes</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-danger">Limites TDE</h6>
+                        <ul class="small">
+                            <li>Ne protege PAS contre un DBA</li>
+                            <li>Donnees en clair en memoire</li>
+                            <li>Requiert Enterprise edition</li>
+                            <li>Leger overhead I/O (3-5%)</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="alert alert-info">
+            <strong>Recommandation :</strong> En production, combinez les approches :
+            <strong>TDE</strong> (protection des fichiers) + <strong>Always Encrypted</strong> (protection des colonnes sensibles)
+            + <strong>Row-Level Security</strong> (controle d'acces par ligne).
+        </div>
+    </div>
+</div>

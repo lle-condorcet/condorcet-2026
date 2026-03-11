@@ -237,6 +237,12 @@
     <a href="#dp-vulnerable">Demo vulnerable</a>
     <a href="#dp-secure">Solution securisee</a>
     <a href="#dp-expiration">Chiffrement a expiration</a>
+    <div class="section-title">Chiffrement en DB</div>
+    <a href="#efcore-principe">Principe</a>
+    <a href="#efcore-value-converter">Value Converter</a>
+    <a href="#efcore-dbcontext">DbContext</a>
+    <a href="#efcore-demo">Demo visuelle</a>
+    <a href="#efcore-limites">Limitations</a>
     <div class="section-title">Reference</div>
     <a href="#hierarchie">Hierarchie de config</a>
     <a href="#bonnes-pratiques">Bonnes pratiques</a>
@@ -253,6 +259,7 @@
         <li>Apprendre a utiliser <strong>User Secrets</strong> pour le developpement local</li>
         <li>Maitriser l'<strong>API Data Protection</strong> pour chiffrer/dechiffrer des donnees</li>
         <li>Comparer les approches vulnerables et securisees</li>
+        <li>Visualiser le <strong>chiffrement transparent en base de donnees</strong> via EF Core Value Converters</li>
     </ul>
 
     <h2 id="prerequis">Prerequis</h2>
@@ -427,6 +434,185 @@ builder.Services.<span class="fn">AddDataProtection</span>(); <span class="cmt">
     <span class="cmt">// Le jeton a expire !</span>
 }</code></pre>
 
+    <h2 id="efcore-principe">Chiffrement en base de donnees avec EF Core</h2>
+    <p>
+        Au-dela du chiffrement manuel via <code>Protect()</code>/<code>Unprotect()</code>,
+        on peut rendre le chiffrement <strong>totalement transparent</strong> grace aux
+        <strong>Value Converters</strong> d'Entity Framework Core. L'application manipule des
+        donnees en clair, mais la base de donnees ne stocke que du texte chiffre.
+    </p>
+
+    <div class="alert alert-info">
+        <strong>Cas d'usage :</strong> Donnees medicales (RGPD/GDPR), numeros nationaux,
+        informations financieres — tout ce qui doit etre protege en cas de compromission
+        de la base de donnees.
+    </div>
+
+    <h2 id="efcore-value-converter">Le Value Converter</h2>
+    <p>
+        Un <code>ValueConverter&lt;string, string&gt;</code> definit deux fonctions :
+        une pour la <strong>serialisation</strong> (ecriture en DB → chiffrement) et une pour la
+        <strong>deserialisation</strong> (lecture depuis la DB → dechiffrement).
+    </p>
+
+    <pre><code><span class="kw">var</span> encryptedConverter = <span class="kw">new</span> <span class="fn">ValueConverter</span>&lt;<span class="kw">string</span>, <span class="kw">string</span>&gt;(
+    v =&gt; _protector.<span class="fn">Protect</span>(v),       <span class="cmt">// INSERT/UPDATE → chiffrer</span>
+    v =&gt; _protector.<span class="fn">Unprotect</span>(v)      <span class="cmt">// SELECT        → dechiffrer</span>
+);</code></pre>
+
+    <h2 id="efcore-dbcontext">Configuration du DbContext</h2>
+    <p>
+        On applique le converter aux proprietes sensibles dans <code>OnModelCreating</code>.
+        Les colonnes non sensibles (nom, prenom) restent en clair.
+    </p>
+
+    <pre><code><span class="kw">public class</span> <span class="fn">EncryptedDbContext</span> : DbContext
+{
+    <span class="kw">private readonly</span> IDataProtector <span class="val">_protector</span>;
+
+    <span class="kw">public</span> DbSet&lt;Patient&gt; Patients =&gt; <span class="fn">Set</span>&lt;Patient&gt;();
+
+    <span class="kw">public</span> <span class="fn">EncryptedDbContext</span>(
+        DbContextOptions&lt;EncryptedDbContext&gt; options,
+        IDataProtectionProvider provider) : <span class="kw">base</span>(options)
+    {
+        <span class="val">_protector</span> = provider.<span class="fn">CreateProtector</span>(<span class="str">"DataProtectionLab.EFCore.Encryption"</span>);
+    }
+
+    <span class="kw">protected override void</span> <span class="fn">OnModelCreating</span>(ModelBuilder modelBuilder)
+    {
+        <span class="kw">var</span> converter = <span class="kw">new</span> ValueConverter&lt;<span class="kw">string</span>, <span class="kw">string</span>&gt;(
+            v =&gt; <span class="val">_protector</span>.<span class="fn">Protect</span>(v),
+            v =&gt; <span class="val">_protector</span>.<span class="fn">Unprotect</span>(v)
+        );
+
+        modelBuilder.Entity&lt;Patient&gt;(entity =&gt;
+        {
+            <span class="cmt">// Seules les colonnes sensibles sont chiffrees</span>
+            entity.Property(p =&gt; p.NumeroNational).<span class="fn">HasConversion</span>(converter);
+            entity.Property(p =&gt; p.Diagnostic).<span class="fn">HasConversion</span>(converter);
+            entity.Property(p =&gt; p.NoteMedicale).<span class="fn">HasConversion</span>(converter);
+        });
+    }
+}</code></pre>
+
+    <h3>Enregistrement dans Program.cs</h3>
+    <pre><code><span class="cmt">// Ajouter EF Core avec SQLite</span>
+builder.Services.<span class="fn">AddDbContext</span>&lt;EncryptedDbContext&gt;(options =&gt;
+    options.<span class="fn">UseSqlite</span>(<span class="str">"Data Source=dataprotection_lab.db"</span>));
+
+<span class="cmt">// Seed au demarrage</span>
+<span class="kw">using</span> (<span class="kw">var</span> scope = app.Services.<span class="fn">CreateScope</span>())
+{
+    <span class="kw">var</span> db = scope.ServiceProvider.<span class="fn">GetRequiredService</span>&lt;EncryptedDbContext&gt;();
+    db.Database.<span class="fn">EnsureCreated</span>();
+
+    <span class="kw">if</span> (!db.Patients.<span class="fn">Any</span>())
+    {
+        db.Patients.<span class="fn">AddRange</span>(
+            <span class="kw">new</span> Patient { Nom = <span class="str">"Dupont"</span>, Prenom = <span class="str">"Alice"</span>,
+                NumeroNational = <span class="str">"85.07.15-123.45"</span>,
+                Diagnostic = <span class="str">"Hypertension arterielle"</span>,
+                NoteMedicale = <span class="str">"Traitement: Amlodipine 5mg/jour"</span> },
+            <span class="cmt">// ... autres patients</span>
+        );
+        db.<span class="fn">SaveChanges</span>();
+    }
+}</code></pre>
+
+    <h2 id="efcore-demo">Demo visuelle : ce que voit la DB</h2>
+    <p>
+        La page <strong>Chiffrement DB</strong> du labo montre cote a cote :
+    </p>
+
+    <div class="comparison">
+        <div class="card good">
+            <h4>Vue Application (via EF Core)</h4>
+            <table>
+                <tr><th>Nom</th><th>NumeroNational</th><th>Diagnostic</th></tr>
+                <tr>
+                    <td>Dupont</td>
+                    <td><span class="success-hl">85.07.15-123.45</span></td>
+                    <td><span class="success-hl">Hypertension arterielle</span></td>
+                </tr>
+                <tr>
+                    <td>Martin</td>
+                    <td><span class="success-hl">90.03.22-456.78</span></td>
+                    <td><span class="success-hl">Diabete de type 2</span></td>
+                </tr>
+            </table>
+        </div>
+        <div class="card bad">
+            <h4>Vue Base de Donnees (requete SQL directe)</h4>
+            <table>
+                <tr><th>Nom</th><th>NumeroNational</th><th>Diagnostic</th></tr>
+                <tr>
+                    <td>Dupont</td>
+                    <td><span class="danger-hl" style="font-size:0.7em;word-break:break-all;">CfDJ8N2k7x...</span></td>
+                    <td><span class="danger-hl" style="font-size:0.7em;word-break:break-all;">CfDJ8P9mRw...</span></td>
+                </tr>
+                <tr>
+                    <td>Martin</td>
+                    <td><span class="danger-hl" style="font-size:0.7em;word-break:break-all;">CfDJ8Lq3Yt...</span></td>
+                    <td><span class="danger-hl" style="font-size:0.7em;word-break:break-all;">CfDJ8Wn5Ka...</span></td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+    <p>
+        Le nom et prenom sont en clair dans les deux vues (colonnes non sensibles).
+        Les colonnes <code>NumeroNational</code>, <code>Diagnostic</code> et <code>NoteMedicale</code>
+        sont <strong>illisibles</strong> dans la base — un attaquant qui accede a la DB
+        ne voit que du texte chiffre.
+    </p>
+
+    <h3>Comment la page lit les donnees brutes</h3>
+    <pre><code><span class="cmt">// Lire via EF Core (dechiffre automatiquement)</span>
+<span class="kw">var</span> patients = <span class="kw">await</span> _db.Patients.<span class="fn">ToListAsync</span>();
+
+<span class="cmt">// Lire via SQL brut (montre le contenu reel de la DB)</span>
+<span class="kw">var</span> conn = _db.Database.<span class="fn">GetDbConnection</span>();
+<span class="kw">await</span> conn.<span class="fn">OpenAsync</span>();
+<span class="kw">using var</span> cmd = conn.<span class="fn">CreateCommand</span>();
+cmd.CommandText = <span class="str">"SELECT * FROM Patients"</span>;
+<span class="kw">using var</span> reader = <span class="kw">await</span> cmd.<span class="fn">ExecuteReaderAsync</span>();
+<span class="cmt">// → Les colonnes chiffrees contiennent du Base64 illisible</span></code></pre>
+
+    <h2 id="efcore-limites">Limitations du chiffrement applicatif</h2>
+    <table>
+        <tr>
+            <th>Limitation</th>
+            <th>Consequence</th>
+        </tr>
+        <tr>
+            <td>Pas de filtrage SQL sur colonnes chiffrees</td>
+            <td><code>WHERE NumeroNational = '...'</code> ne fonctionne pas (valeur chiffree differente a chaque ecriture)</td>
+        </tr>
+        <tr>
+            <td>Pas d'index ni de tri</td>
+            <td>Impossible de creer un index sur une colonne chiffree</td>
+        </tr>
+        <tr>
+            <td>Dependance aux cles</td>
+            <td>Si les cles Data Protection sont perdues, les donnees sont irrecuperables</td>
+        </tr>
+        <tr>
+            <td>Nonce aleatoire</td>
+            <td>Chiffrer la meme valeur deux fois produit un resultat different</td>
+        </tr>
+        <tr>
+            <td>Performance</td>
+            <td>Chiffrement/dechiffrement a chaque lecture/ecriture (negligeable pour la plupart des cas)</td>
+        </tr>
+    </table>
+
+    <div class="alert alert-warning">
+        <strong>Alternatives en production :</strong> Pour des besoins avances (filtrage sur colonnes chiffrees,
+        gestion centralisee des cles), envisagez <strong>Always Encrypted</strong> (SQL Server),
+        <strong>Transparent Data Encryption (TDE)</strong>, ou le chiffrement au niveau du disque.
+    </div>
+
     <h2 id="hierarchie">Hierarchie de configuration .NET</h2>
     <table>
         <tr>
@@ -476,6 +662,7 @@ builder.Services.<span class="fn">AddDataProtection</span>(); <span class="cmt">
     <ul>
         <li><a href="https://learn.microsoft.com/aspnet/core/security/app-secrets" style="color: var(--accent);">Documentation officielle — User Secrets</a></li>
         <li><a href="https://learn.microsoft.com/aspnet/core/security/data-protection/introduction" style="color: var(--accent);">Documentation officielle — Data Protection API</a></li>
+        <li><a href="https://learn.microsoft.com/ef/core/modeling/value-conversions" style="color: var(--accent);">Documentation officielle — EF Core Value Conversions</a></li>
         <li><a href="https://cheatsheetseries.owasp.org/cheatsheets/Secrets_Management_Cheat_Sheet.html" style="color: var(--accent);">OWASP — Secrets Management Cheat Sheet</a></li>
     </ul>
 </main>

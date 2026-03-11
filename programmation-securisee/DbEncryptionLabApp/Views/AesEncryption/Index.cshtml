@@ -1,0 +1,177 @@
+@model PatternViewModel
+@{
+    ViewData["Title"] = "AES-256 Manuel";
+}
+
+<div class="row justify-content-center mt-3">
+    <div class="col-lg-11">
+        <h2 class="fw-bold text-info mb-3">Pattern 3 : @Model.PatternName</h2>
+
+        <div class="alert alert-info">
+            <strong>SECURISE :</strong> @Model.PatternDescription
+        </div>
+
+        <!-- Application View (decrypted) -->
+        <div class="card border-success mb-4">
+            <div class="card-header bg-success text-white fw-bold">
+                Vue Application (donnees dechiffrees par le service AES)
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-dark table-striped mb-0">
+                        <thead>
+                            <tr>
+                                <th>ID</th><th>Nom</th><th>Prenom</th>
+                                <th>Numero National</th><th>Salaire</th><th>Compte Bancaire</th><th>Email</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var row in Model.AppRows)
+                            {
+                                <tr>
+                                    <td>@row["Id"]</td>
+                                    <td>@row["Nom"]</td>
+                                    <td>@row["Prenom"]</td>
+                                    <td><span class="text-success fw-bold">@row["NumeroNational"]</span></td>
+                                    <td><span class="text-success fw-bold">@row["Salaire"]</span></td>
+                                    <td><span class="text-success fw-bold">@row["CompteBancaire"]</span></td>
+                                    <td>@row["Email"]</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Database View (encrypted) -->
+        <div class="card border-danger mb-4">
+            <div class="card-header bg-dark text-danger fw-bold">
+                Vue Base de Donnees (contenu reel chiffre AES-256 dans SQL Server)
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-dark table-striped mb-0" style="font-size: 0.82rem;">
+                        <thead>
+                            <tr>
+                                <th>Id</th><th>Nom</th><th>Prenom</th>
+                                <th>NumeroNational</th><th>Salaire</th><th>CompteBancaire</th><th>Email</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var row in Model.DbRows)
+                            {
+                                <tr>
+                                    <td>@row["Id"]</td>
+                                    <td>@row["Nom"]</td>
+                                    <td>@row["Prenom"]</td>
+                                    <td><code class="text-danger encrypted-text">@row["NumeroNational"]</code></td>
+                                    <td><code class="text-danger encrypted-text">@row["Salaire"]</code></td>
+                                    <td><code class="text-danger encrypted-text">@row["CompteBancaire"]</code></td>
+                                    <td>@row["Email"]</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Architecture diagram -->
+        <div class="card border-info mb-4">
+            <div class="card-header bg-info text-white fw-bold">Architecture du chiffrement AES</div>
+            <div class="card-body">
+<pre class="bg-dark text-light p-3 rounded mb-2"><code>┌─────────────────────────────────────────────────────────┐
+│  Donnee en clair : "85.07.15-123.45"                    │
+│                         │                               │
+│                    ┌────▼────┐                           │
+│                    │ AES-256 │◄── Cle 256 bits           │
+│                    │   CBC   │◄── IV aleatoire (16 oct.) │
+│                    └────┬────┘                           │
+│                         │                               │
+│              ┌──────────▼──────────┐                    │
+│              │    IV + CipherText  │                    │
+│              └──────────┬──────────┘                    │
+│                         │                               │
+│                  ┌──────▼──────┐                        │
+│                  │ HMAC-SHA256 │◄── Cle HMAC 256 bits   │
+│                  └──────┬──────┘                        │
+│                         │                               │
+│         ┌───────────────▼───────────────┐               │
+│         │  Base64(IV + Cipher + HMAC)   │               │
+│         │  → Stocke en base de donnees  │               │
+│         └───────────────────────────────┘               │
+└─────────────────────────────────────────────────────────┘</code></pre>
+            </div>
+        </div>
+
+        <!-- Code -->
+        <div class="row g-4 mb-4">
+            <div class="col-md-6">
+                <div class="card border-secondary h-100">
+                    <div class="card-header bg-secondary text-white fw-bold">Chiffrement (Encrypt)</div>
+                    <div class="card-body">
+<pre class="bg-dark text-light p-3 rounded mb-0" style="font-size: 0.8rem;"><code><span class="text-primary">using var</span> aes = Aes.Create();
+aes.Key = _encryptionKey;  <span class="text-muted">// 256 bits</span>
+aes.Mode = CipherMode.CBC;
+aes.GenerateIV();          <span class="text-muted">// IV unique</span>
+
+<span class="text-muted">// Chiffrer</span>
+<span class="text-primary">var</span> cipher = encryptor
+    .TransformFinalBlock(plain, 0, plain.Length);
+
+<span class="text-muted">// Combiner : IV + CipherText</span>
+<span class="text-primary">var</span> combined = IV + cipher;
+
+<span class="text-muted">// Authentifier (Encrypt-then-MAC)</span>
+<span class="text-primary">var</span> mac = HMACSHA256(hmacKey, combined);
+
+<span class="text-primary">return</span> Base64(combined + mac);</code></pre>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card border-secondary h-100">
+                    <div class="card-header bg-secondary text-white fw-bold">Dechiffrement (Decrypt)</div>
+                    <div class="card-body">
+<pre class="bg-dark text-light p-3 rounded mb-0" style="font-size: 0.8rem;"><code><span class="text-primary">var</span> bytes = FromBase64(cipherText);
+
+<span class="text-muted">// 1. Extraire le HMAC (32 derniers octets)</span>
+<span class="text-primary">var</span> storedMac = bytes[^32..];
+<span class="text-primary">var</span> combined = bytes[..^32];
+
+<span class="text-muted">// 2. Verifier l'integrite AVANT dechiffrement</span>
+<span class="text-primary">var</span> computedMac = HMACSHA256(hmacKey, combined);
+<span class="text-primary">if</span> (!FixedTimeEquals(computedMac, storedMac))
+    <span class="text-primary">throw</span> <span class="text-warning">"Tampered data!"</span>;
+
+<span class="text-muted">// 3. Extraire IV (16 premiers octets) + dechiffrer</span>
+<span class="text-primary">var</span> iv = combined[..16];
+<span class="text-primary">var</span> cipher = combined[16..];
+<span class="text-primary">return</span> AesDecrypt(key, iv, cipher);</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="alert alert-success">
+            <strong>Points de securite importants :</strong>
+            <ul class="mb-0 mt-1">
+                <li><strong>IV aleatoire</strong> : chaque chiffrement produit un resultat different, meme pour la meme donnee</li>
+                <li><strong>Encrypt-then-MAC</strong> : le HMAC est calcule sur le texte chiffre, prevenant les attaques par oracle de padding</li>
+                <li><strong>FixedTimeEquals</strong> : comparaison en temps constant pour prevenir les attaques temporelles</li>
+                <li><strong>Cles separees</strong> : une cle pour AES, une cle pour HMAC (separation des responsabilites)</li>
+            </ul>
+        </div>
+
+        <div class="alert alert-warning">
+            <strong>Limitations :</strong>
+            <ul class="mb-0 mt-1">
+                <li>Gestion manuelle des cles (rotation, stockage securise, backup)</li>
+                <li>Memes limitations que les Value Converters pour les requetes WHERE</li>
+                <li>Plus de code a maintenir et auditer</li>
+                <li>Overhead de taille : IV (16 octets) + HMAC (32 octets) + padding + Base64 ~= +33%</li>
+            </ul>
+        </div>
+    </div>
+</div>

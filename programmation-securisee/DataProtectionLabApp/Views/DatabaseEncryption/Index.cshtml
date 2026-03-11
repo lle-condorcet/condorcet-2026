@@ -1,0 +1,165 @@
+@model DataProtectionLabApp.Models.DatabaseEncryptionViewModel
+@{
+    ViewData["Title"] = "Chiffrement en base de donnees (EF Core)";
+}
+
+<div class="row justify-content-center mt-3">
+    <div class="col-md-11">
+        <h2 class="fw-bold text-info mb-3">Chiffrement en base de donnees avec EF Core</h2>
+
+        <div class="alert alert-success">
+            <strong>Principe :</strong> Les donnees sensibles sont chiffrees de maniere transparente
+            grace aux <strong>Value Converters</strong> d'Entity Framework Core combines avec l'API Data Protection.
+            L'application voit les donnees en clair, mais la base de donnees ne contient que du texte chiffre.
+        </div>
+
+        <!-- Section 1: What the application sees -->
+        <div class="card border-success mb-4">
+            <div class="card-header bg-success text-white fw-bold">
+                Vue Application (donnees dechiffrees par EF Core)
+            </div>
+            <div class="card-body p-0">
+                <table class="table table-dark table-striped mb-0">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Nom</th>
+                            <th>Prenom</th>
+                            <th>Numero National</th>
+                            <th>Diagnostic</th>
+                            <th>Note Medicale</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var p in Model.Patients)
+                        {
+                            <tr>
+                                <td>@p.Id</td>
+                                <td>@p.Nom</td>
+                                <td>@p.Prenom</td>
+                                <td><span class="text-success fw-bold">@p.NumeroNational</span></td>
+                                <td><span class="text-success fw-bold">@p.Diagnostic</span></td>
+                                <td><span class="text-success fw-bold">@p.NoteMedicale</span></td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Section 2: What the database stores -->
+        <div class="card border-danger mb-4">
+            <div class="card-header bg-danger text-white fw-bold">
+                Vue Base de Donnees (contenu reel de la table SQLite)
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-dark table-striped mb-0" style="font-size: 0.82rem;">
+                        <thead>
+                            <tr>
+                                <th>Id</th>
+                                <th>Nom</th>
+                                <th>Prenom</th>
+                                <th>NumeroNational</th>
+                                <th>Diagnostic</th>
+                                <th>NoteMedicale</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var row in Model.RawRows)
+                            {
+                                <tr>
+                                    <td>@row["Id"]</td>
+                                    <td>@row["Nom"]</td>
+                                    <td>@row["Prenom"]</td>
+                                    <td><code class="text-danger" style="word-break: break-all; font-size: 0.75rem;">@row["NumeroNational"]</code></td>
+                                    <td><code class="text-danger" style="word-break: break-all; font-size: 0.75rem;">@row["Diagnostic"]</code></td>
+                                    <td><code class="text-danger" style="word-break: break-all; font-size: 0.75rem;">@row["NoteMedicale"]</code></td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Explanation -->
+        <div class="row g-4 mb-4">
+            <div class="col-md-6">
+                <div class="card border-info h-100">
+                    <div class="card-header bg-info text-white fw-bold">Comment ca fonctionne</div>
+                    <div class="card-body">
+                        <ol>
+                            <li>On definit un <strong>ValueConverter</strong> qui chiffre a l'ecriture et dechiffre a la lecture</li>
+                            <li>On l'applique aux proprietes sensibles dans <code>OnModelCreating</code></li>
+                            <li>EF Core appelle automatiquement <code>Protect()</code> avant chaque <code>INSERT/UPDATE</code></li>
+                            <li>EF Core appelle automatiquement <code>Unprotect()</code> apres chaque <code>SELECT</code></li>
+                            <li>Le code metier ne voit que des donnees en clair</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card border-warning h-100">
+                    <div class="card-header bg-warning text-dark fw-bold">Colonnes protegees vs non protegees</div>
+                    <div class="card-body">
+                        <table class="table table-dark table-sm mb-0">
+                            <thead><tr><th>Colonne</th><th>Chiffree ?</th></tr></thead>
+                            <tbody>
+                                <tr><td>Nom</td><td><span class="text-warning">Non</span> (donnee non sensible)</td></tr>
+                                <tr><td>Prenom</td><td><span class="text-warning">Non</span> (donnee non sensible)</td></tr>
+                                <tr><td>NumeroNational</td><td><span class="text-success">Oui</span></td></tr>
+                                <tr><td>Diagnostic</td><td><span class="text-success">Oui</span></td></tr>
+                                <tr><td>NoteMedicale</td><td><span class="text-success">Oui</span></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Code sample -->
+        <div class="card border-secondary mb-4">
+            <div class="card-header bg-secondary text-white fw-bold">Code : DbContext avec Value Converters</div>
+            <div class="card-body">
+<pre><code><span class="text-info">public class</span> EncryptedDbContext : DbContext
+{
+    <span class="text-info">private readonly</span> IDataProtector _protector;
+
+    <span class="text-info">public</span> EncryptedDbContext(DbContextOptions options, IDataProtectionProvider provider)
+        : <span class="text-info">base</span>(options)
+    {
+        _protector = provider.CreateProtector(<span class="text-warning">"DataProtectionLab.EFCore.Encryption"</span>);
+    }
+
+    <span class="text-info">protected override void</span> OnModelCreating(ModelBuilder modelBuilder)
+    {
+        <span class="text-muted">// ValueConverter : chiffre a l'ecriture, dechiffre a la lecture</span>
+        <span class="text-info">var</span> encryptedConverter = <span class="text-info">new</span> ValueConverter&lt;<span class="text-info">string</span>, <span class="text-info">string</span>&gt;(
+            v =&gt; _protector.Protect(v),       <span class="text-muted">// Ecriture → chiffrer</span>
+            v =&gt; _protector.Unprotect(v)      <span class="text-muted">// Lecture  → dechiffrer</span>
+        );
+
+        modelBuilder.Entity&lt;Patient&gt;(entity =&gt;
+        {
+            entity.Property(p =&gt; p.NumeroNational).HasConversion(encryptedConverter);
+            entity.Property(p =&gt; p.Diagnostic).HasConversion(encryptedConverter);
+            entity.Property(p =&gt; p.NoteMedicale).HasConversion(encryptedConverter);
+        });
+    }
+}</code></pre>
+            </div>
+        </div>
+
+        <!-- Limitations -->
+        <div class="alert alert-warning">
+            <strong>Limitations importantes :</strong>
+            <ul class="mb-0 mt-1">
+                <li>Les colonnes chiffrees ne peuvent <strong>pas etre utilisees dans les requetes WHERE</strong> (pas de filtrage, tri ou index)</li>
+                <li>Le chiffrement est lie aux <strong>cles de Data Protection</strong> — si elles sont perdues, les donnees sont irrecuperables</li>
+                <li>Chaque valeur produit un <strong>texte chiffre different</strong> a chaque ecriture (nonce aleatoire)</li>
+                <li>Pour du chiffrement en production, envisagez <strong>Always Encrypted</strong> (SQL Server) ou le chiffrement au niveau du disque</li>
+            </ul>
+        </div>
+    </div>
+</div>
