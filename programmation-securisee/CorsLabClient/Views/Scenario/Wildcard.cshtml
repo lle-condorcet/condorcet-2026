@@ -49,7 +49,7 @@
             <div class="card-body">
                 <pre><code>GET /api/wildcard/compte HTTP/1.1
 Host: localhost:5300
-Origin: http://localhost:5301
+Origin: https://localhost:5301
 
 HTTP/1.1 200 OK
 Content-Type: application/json
@@ -73,7 +73,7 @@ document.getElementById('btn-wildcard-no-cred').addEventListener('click', async 
     resultDiv.innerHTML = '<div class="text-muted">Envoi de la requete...</div>';
 
     try {
-        const response = await fetch('http://localhost:5300/api/wildcard/compte');
+        const response = await fetch('https://localhost:5300/api/wildcard/compte');
         const data = await response.json();
         resultDiv.innerHTML = `<div class="alert alert-success">
             <strong>Succes !</strong> Les donnees publiques sont accessibles :<br>
@@ -91,7 +91,7 @@ document.getElementById('btn-wildcard-cred').addEventListener('click', async () 
     resultDiv.innerHTML = '<div class="text-muted">Envoi de la requete avec credentials...</div>';
 
     try {
-        const response = await fetch('http://localhost:5300/api/wildcard/compte', {
+        const response = await fetch('https://localhost:5300/api/wildcard/compte', {
             credentials: 'include'
         });
         const data = await response.json();

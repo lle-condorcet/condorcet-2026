@@ -1,0 +1,2005 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Git — Bonnes Pratiques et Workflows</title>
+    <style>
+        :root {
+            --bg: #0f1117;
+            --surface: #1a1d27;
+            --surface-2: #242736;
+            --accent: #ffa502;
+            --accent-light: #ffbe33;
+            --danger: #ff4757;
+            --success: #2ed573;
+            --warning: #ffa502;
+            --info: #1e90ff;
+            --text: #e4e6eb;
+            --text-muted: #8b8fa3;
+            --border: #2e3142;
+            --code-bg: #12131a;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+        }
+
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 260px;
+            height: 100vh;
+            background: var(--surface);
+            border-right: 1px solid var(--border);
+            padding: 2rem 1.5rem;
+            overflow-y: auto;
+            z-index: 100;
+        }
+
+        nav .logo { font-size: 1.4rem; font-weight: 800; margin-bottom: 2rem; }
+        nav .logo span { color: var(--accent); }
+        nav .section-title {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--text-muted);
+            margin: 1.5rem 0 0.5rem;
+        }
+        nav a {
+            display: block;
+            color: var(--text-muted);
+            text-decoration: none;
+            padding: 0.3rem 0;
+            font-size: 0.9rem;
+            transition: color 0.2s;
+        }
+        nav a:hover { color: var(--accent); }
+
+        main {
+            margin-left: 260px;
+            max-width: 900px;
+            padding: 3rem 4rem;
+        }
+
+        h1 { font-size: 2.2rem; font-weight: 800; margin-bottom: 0.5rem; }
+        h1 span { color: var(--accent); }
+
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            margin-bottom: 3rem;
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin: 3rem 0 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--accent);
+        }
+
+        h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            margin: 2rem 0 0.8rem;
+            color: var(--accent-light);
+        }
+
+        p { margin-bottom: 1rem; }
+
+        code {
+            background: var(--code-bg);
+            padding: 0.15rem 0.4rem;
+            border-radius: 4px;
+            font-size: 0.88em;
+            color: var(--accent-light);
+        }
+
+        pre {
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.2rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-size: 0.88rem;
+            line-height: 1.6;
+        }
+
+        pre code { background: none; padding: 0; color: var(--text); }
+
+        .kw { color: #c678dd; }
+        .str { color: #98c379; }
+        .cmt { color: #5c6370; }
+        .fn { color: #61afef; }
+        .val { color: #d19a66; }
+        .danger-hl { color: #ff4757; }
+        .success-hl { color: #2ed573; }
+
+        .alert {
+            padding: 1rem 1.2rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            border-left: 4px solid;
+        }
+
+        .alert-danger { background: rgba(255, 71, 87, 0.1); border-color: var(--danger); }
+        .alert-success { background: rgba(46, 213, 115, 0.1); border-color: var(--success); }
+        .alert-warning { background: rgba(255, 165, 2, 0.1); border-color: var(--warning); }
+        .alert-info { background: rgba(30, 144, 255, 0.1); border-color: var(--info); }
+
+        .comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.5rem;
+        }
+
+        .card.bad { border-color: var(--danger); }
+        .card.good { border-color: var(--success); }
+
+        .card h4 { font-size: 1rem; margin-bottom: 1rem; }
+        .card.bad h4 { color: var(--danger); }
+        .card.good h4 { color: var(--success); }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+
+        th, td {
+            padding: 0.6rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th {
+            background: var(--surface-2);
+            font-weight: 600;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        ul, ol { margin: 0.5rem 0 1rem 1.5rem; }
+        li { margin-bottom: 0.3rem; }
+        strong { color: var(--text); }
+
+        footer {
+            margin-left: 260px;
+            padding: 2rem 4rem;
+            border-top: 1px solid var(--border);
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        .diagram {
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.85rem;
+            line-height: 1.5;
+            overflow-x: auto;
+            white-space: pre;
+            color: var(--accent-light);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.15rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .badge-cli { background: rgba(30, 144, 255, 0.2); color: var(--info); }
+        .badge-fork { background: rgba(46, 213, 115, 0.2); color: var(--success); }
+
+        .grid-3 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+
+        @media (max-width: 768px) {
+            nav { display: none; }
+            main, footer { margin-left: 0; padding: 1.5rem; }
+            .comparison, .grid-3 { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ============================== NAV ============================== -->
+<nav>
+    <div class="logo"><span>Git</span> Best Practices</div>
+
+    <div class="section-title">Fondamentaux</div>
+    <a href="#fondamentaux">Concepts cles</a>
+    <a href="#trois-zones">Les 3 zones</a>
+    <a href="#config">Configuration initiale</a>
+
+    <div class="section-title">Operations courantes</div>
+    <a href="#clone">Clone</a>
+    <a href="#add-commit">Add &amp; Commit</a>
+    <a href="#push-pull">Push, Pull, Fetch</a>
+    <a href="#status-log">Status &amp; Log</a>
+
+    <div class="section-title">Branches</div>
+    <a href="#branches">Creer et naviguer</a>
+    <a href="#merge">Fusionner</a>
+    <a href="#branch-delete">Supprimer</a>
+    <a href="#branch-strategies">Strategies</a>
+
+    <div class="section-title">Workflows</div>
+    <a href="#git-flow">Git Flow</a>
+    <a href="#github-flow">GitHub Flow</a>
+    <a href="#trunk-based">Trunk-Based</a>
+    <a href="#workflow-comparison">Comparaison</a>
+
+    <div class="section-title">Conflits</div>
+    <a href="#conflits">Resolution de conflits</a>
+
+    <div class="section-title">Utilisation avancee</div>
+    <a href="#rebase">Rebase</a>
+    <a href="#cherry-pick">Cherry-pick</a>
+    <a href="#stash">Stash</a>
+    <a href="#bisect">Bisect</a>
+    <a href="#reflog">Reflog</a>
+
+    <div class="section-title">Bonnes pratiques</div>
+    <a href="#conventional-commits">Commits conventionnels</a>
+    <a href="#commit-atomicity">Atomicite</a>
+    <a href="#gitignore">.gitignore</a>
+    <a href="#hooks">Hooks</a>
+
+    <div class="section-title">Fork (GUI)</div>
+    <a href="#fork-presentation">Presentation</a>
+    <a href="#fork-operations">Operations</a>
+    <a href="#fork-tips">Astuces</a>
+
+    <div class="section-title">Plateformes</div>
+    <a href="#github">GitHub</a>
+    <a href="#gitlab">GitLab</a>
+    <a href="#azure-devops">Azure DevOps</a>
+    <a href="#platform-comparison">Comparaison</a>
+
+    <div class="section-title">CI/CD</div>
+    <a href="#cicd">CI/CD et Git</a>
+
+    <div class="section-title">Securite</div>
+    <a href="#securite">Securite Git</a>
+
+    <div class="section-title">Reference</div>
+    <a href="#cheatsheet">Reference rapide</a>
+</nav>
+
+<!-- ============================== MAIN ============================== -->
+<main>
+
+<h1><span>Git</span> — Bonnes Pratiques et Workflows</h1>
+<p class="subtitle">Du commit local au deploiement — Maitriser Git en ligne de commande et avec Fork</p>
+
+<!-- ============================================================== -->
+<h2 id="fondamentaux">1. Fondamentaux de Git</h2>
+
+<h3>Qu'est-ce que Git ?</h3>
+<p>
+    Git est un <strong>systeme de controle de version distribue</strong> (DVCS) cree par Linus Torvalds en 2005
+    pour le developpement du noyau Linux. Contrairement aux systemes centralises (SVN, TFS), chaque
+    developpeur possede une <strong>copie complete</strong> de l'historique du projet.
+</p>
+
+<div class="comparison">
+    <div class="card bad">
+        <h4>Centralise (SVN, TFS)</h4>
+        <ul>
+            <li>Un seul serveur central</li>
+            <li>Connexion requise pour commiter</li>
+            <li>Point de defaillance unique</li>
+            <li>Branches lourdes et couteuses</li>
+        </ul>
+    </div>
+    <div class="card good">
+        <h4>Distribue (Git)</h4>
+        <ul>
+            <li>Chaque clone est un repo complet</li>
+            <li>Travail hors-ligne possible</li>
+            <li>Pas de point de defaillance unique</li>
+            <li>Branches ultra-legeres et rapides</li>
+        </ul>
+    </div>
+</div>
+
+<h3>Concepts cles</h3>
+<table>
+    <thead>
+        <tr><th>Concept</th><th>Description</th></tr>
+    </thead>
+    <tbody>
+        <tr><td><code>Repository</code></td><td>Dossier contenant le projet et tout son historique (dans <code>.git/</code>)</td></tr>
+        <tr><td><code>Commit</code></td><td>Instantane (snapshot) de l'etat du projet a un moment donne</td></tr>
+        <tr><td><code>Branch</code></td><td>Pointeur mobile vers un commit — permet le developpement parallele</td></tr>
+        <tr><td><code>Remote</code></td><td>Version distante du depot (ex: <code>origin</code> sur GitHub/GitLab)</td></tr>
+        <tr><td><code>HEAD</code></td><td>Pointeur vers le commit/branche actuellement "checked out"</td></tr>
+        <tr><td><code>SHA-1</code></td><td>Hash unique de 40 caracteres identifiant chaque commit (ex: <code>a3f5c2d...</code>)</td></tr>
+        <tr><td><code>Tag</code></td><td>Reference nommee et fixe vers un commit (pour les versions/releases)</td></tr>
+        <tr><td><code>Index</code></td><td>Zone de staging — fichiers prepares pour le prochain commit</td></tr>
+    </tbody>
+</table>
+
+<!-- ============================================================== -->
+<h3 id="trois-zones">Les 3 zones de Git</h3>
+<p>
+    Comprendre les 3 zones est <strong>essentiel</strong> pour maitriser Git.
+    Chaque fichier passe par ces etapes avant d'etre sauvegarde dans l'historique.
+</p>
+
+<div class="diagram">
+┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
+│  Working        │     │   Staging Area   │     │   Repository    │
+│  Directory      │────&gt;│   (Index)        │────&gt;│   (.git)        │
+│                 │ add │                  │commit│                 │
+│  Fichiers       │     │  Pret a commit   │     │  Historique     │
+│  modifies       │     │                  │     │  complet        │
+└─────────────────┘     └─────────────────┘     └─────────────────┘
+        │                                               │
+        │&lt;──────────────────────────────────────────────│
+        │                   checkout                    │
+</div>
+
+<table>
+    <thead>
+        <tr><th>Zone</th><th>Description</th><th>Commande associee</th></tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><strong>Working Directory</strong></td>
+            <td>Vos fichiers tels qu'ils sont sur le disque. Les modifications apparaissent ici.</td>
+            <td><code>git diff</code></td>
+        </tr>
+        <tr>
+            <td><strong>Staging Area (Index)</strong></td>
+            <td>Zone de preparation. Seuls les fichiers "stages" seront inclus dans le prochain commit.</td>
+            <td><code>git add</code>, <code>git diff --staged</code></td>
+        </tr>
+        <tr>
+            <td><strong>Repository (.git)</strong></td>
+            <td>L'historique complet. Chaque commit est un snapshot immuable.</td>
+            <td><code>git commit</code>, <code>git log</code></td>
+        </tr>
+    </tbody>
+</table>
+
+<div class="alert alert-info">
+    <strong>Cycle de vie d'un fichier :</strong>
+    Untracked → Staged (<code>git add</code>) → Committed (<code>git commit</code>) → Modified → Staged → Committed → ...
+</div>
+
+<!-- ============================================================== -->
+<h3 id="config">Configuration initiale</h3>
+<p>Avant de commencer a utiliser Git, configurez votre identite et vos preferences :</p>
+
+<pre><code><span class="cmt"># Identite (obligatoire)</span>
+<span class="fn">git config</span> <span class="kw">--global</span> user.name <span class="str">"Votre Nom"</span>
+<span class="fn">git config</span> <span class="kw">--global</span> user.email <span class="str">"votre@email.com"</span>
+
+<span class="cmt"># Branche par defaut (main au lieu de master)</span>
+<span class="fn">git config</span> <span class="kw">--global</span> init.defaultBranch <span class="str">main</span>
+
+<span class="cmt"># Fin de ligne (important sous Windows!)</span>
+<span class="fn">git config</span> <span class="kw">--global</span> core.autocrlf <span class="str">true</span>
+
+<span class="cmt"># Strategie de pull (merge par defaut, pas rebase)</span>
+<span class="fn">git config</span> <span class="kw">--global</span> pull.rebase <span class="str">false</span>
+
+<span class="cmt"># Editeur par defaut</span>
+<span class="fn">git config</span> <span class="kw">--global</span> core.editor <span class="str">"code --wait"</span>
+
+<span class="cmt"># Activer les couleurs</span>
+<span class="fn">git config</span> <span class="kw">--global</span> color.ui <span class="str">auto</span>
+
+<span class="cmt"># Alias utiles</span>
+<span class="fn">git config</span> <span class="kw">--global</span> alias.st <span class="str">"status"</span>
+<span class="fn">git config</span> <span class="kw">--global</span> alias.co <span class="str">"checkout"</span>
+<span class="fn">git config</span> <span class="kw">--global</span> alias.br <span class="str">"branch"</span>
+<span class="fn">git config</span> <span class="kw">--global</span> alias.lg <span class="str">"log --oneline --graph --all --decorate"</span>
+
+<span class="cmt"># Verifier la configuration</span>
+<span class="fn">git config</span> <span class="kw">--list</span></code></pre>
+
+<div class="alert alert-warning">
+    <strong>core.autocrlf sous Windows :</strong> Mettez cette option a <code>true</code> pour eviter
+    les problemes de fin de ligne (LF vs CRLF) lors de la collaboration avec des developpeurs sous macOS/Linux.
+</div>
+
+<!-- ============================================================== -->
+<h2 id="operations">2. Operations courantes</h2>
+
+<p>
+    Pour chaque operation, nous montrons la commande CLI et l'equivalent dans <strong>Fork</strong> (client Git graphique).
+</p>
+
+<h3 id="clone">Clone — Copier un depot distant</h3>
+
+<div class="comparison">
+    <div class="card">
+        <h4><span class="badge badge-cli">CLI</span> Ligne de commande</h4>
+<pre><code><span class="cmt"># Clone via HTTPS</span>
+<span class="fn">git clone</span> https://gitlab.example.com/team/project.git
+
+<span class="cmt"># Clone via SSH (recommande)</span>
+<span class="fn">git clone</span> git@github.com:user/project.git
+
+<span class="cmt"># Clone dans un dossier specifique</span>
+<span class="fn">git clone</span> git@github.com:user/project.git mon-dossier
+
+<span class="cmt"># Clone partiel (shallow) — plus rapide</span>
+<span class="fn">git clone</span> <span class="kw">--depth 1</span> https://github.com/user/project.git</code></pre>
+    </div>
+    <div class="card">
+        <h4><span class="badge badge-fork">Fork</span> Client graphique</h4>
+        <p><strong>File → Clone...</strong> (ou <code>Ctrl+Shift+O</code>)</p>
+        <ol>
+            <li>Collez l'URL du depot</li>
+            <li>Choisissez le dossier de destination</li>
+            <li>Cliquez sur <strong>Clone</strong></li>
+        </ol>
+        <p>Fork detecte automatiquement le protocole (HTTPS ou SSH) et vous propose de configurer les credentials si necessaire.</p>
+    </div>
+</div>
+
+<!-- ============================================================== -->
+<h3 id="add-commit">Add &amp; Commit — Preparer et sauvegarder</h3>
+
+<div class="comparison">
+    <div class="card">
+        <h4><span class="badge badge-cli">CLI</span> Ligne de commande</h4>
+<pre><code><span class="cmt"># Stager un fichier specifique</span>
+<span class="fn">git add</span> src/MonFichier.cs
+
+<span class="cmt"># Stager plusieurs fichiers</span>
+<span class="fn">git add</span> src/Auth.cs src/Login.cs
+
+<span class="cmt"># Stager tout (attention aux fichiers non voulus!)</span>
+<span class="fn">git add</span> .
+
+<span class="cmt"># Stager des parties d'un fichier (interactif)</span>
+<span class="fn">git add</span> <span class="kw">-p</span> src/MonFichier.cs
+
+<span class="cmt"># Commiter avec un message</span>
+<span class="fn">git commit</span> <span class="kw">-m</span> <span class="str">"feat: ajouter la validation du formulaire"</span>
+
+<span class="cmt"># Commiter avec un message multi-ligne</span>
+<span class="fn">git commit</span> <span class="kw">-m</span> <span class="str">"feat: ajouter OAuth2"</span> <span class="kw">-m</span> <span class="str">"Ajoute le support Google et Microsoft."</span>
+
+<span class="cmt"># Modifier le dernier commit (message ou contenu)</span>
+<span class="fn">git commit</span> <span class="kw">--amend</span> <span class="kw">-m</span> <span class="str">"feat: nouveau message"</span></code></pre>
+    </div>
+    <div class="card">
+        <h4><span class="badge badge-fork">Fork</span> Client graphique</h4>
+        <p>Dans l'onglet <strong>Changes</strong> :</p>
+        <ol>
+            <li>Les fichiers modifies apparaissent dans la liste</li>
+            <li>Cochez les fichiers a stager (ou cliquez <strong>Stage All</strong>)</li>
+            <li>Ecrivez le message de commit en bas</li>
+            <li>Cliquez <strong>Commit</strong> ou <code>Ctrl+Enter</code></li>
+        </ol>
+        <p><strong>Astuce :</strong> Cliquez sur un fichier pour voir le diff. Vous pouvez stager des lignes individuelles en selectionnant et en cliquant <em>Stage Selected Lines</em>.</p>
+    </div>
+</div>
+
+<div class="alert alert-danger">
+    <strong>Attention avec <code>git add .</code></strong> : Cette commande ajoute <em>tous</em> les fichiers,
+    y compris ceux que vous ne voulez peut-etre pas commiter (fichiers de build, secrets, logs...).
+    Utilisez toujours un <code>.gitignore</code> a jour et preferez ajouter des fichiers specifiques.
+</div>
+
+<!-- ============================================================== -->
+<h3 id="push-pull">Push, Pull, Fetch — Synchronisation</h3>
+
+<div class="comparison">
+    <div class="card">
+        <h4><span class="badge badge-cli">CLI</span> Ligne de commande</h4>
+<pre><code><span class="cmt"># Pousser vers le remote</span>
+<span class="fn">git push</span> origin main
+
+<span class="cmt"># Pousser et lier la branche locale au remote</span>
+<span class="fn">git push</span> <span class="kw">-u</span> origin feature/ma-branche
+
+<span class="cmt"># Tirer les changements (fetch + merge)</span>
+<span class="fn">git pull</span> origin main
+
+<span class="cmt"># Recuperer sans fusionner</span>
+<span class="fn">git fetch</span> <span class="kw">--all</span>
+
+<span class="cmt"># Pousser les tags</span>
+<span class="fn">git push</span> <span class="kw">--tags</span></code></pre>
+    </div>
+    <div class="card">
+        <h4><span class="badge badge-fork">Fork</span> Client graphique</h4>
+        <table>
+            <tr><td><strong>Push</strong></td><td><code>Ctrl+P</code></td></tr>
+            <tr><td><strong>Pull</strong></td><td><code>Ctrl+Shift+P</code></td></tr>
+            <tr><td><strong>Fetch</strong></td><td><code>Ctrl+Shift+F</code></td></tr>
+        </table>
+        <p>Les boutons correspondants sont egalement visibles dans la barre d'outils superieure. Fork affiche le nombre de commits en avance/retard par rapport au remote.</p>
+    </div>
+</div>
+
+<div class="diagram">
+       Local                              Remote (origin)
+  ┌──────────────┐                   ┌──────────────┐
+  │  main        │ ── git push ──&gt;   │  main        │
+  │  ● ● ● ●    │                   │  ● ● ● ●    │
+  │              │ &lt;── git pull ──   │              │
+  │              │ (fetch + merge)   │              │
+  │              │                   │              │
+  │              │ &lt;── git fetch ──  │              │
+  │              │ (sans merge)      │              │
+  └──────────────┘                   └──────────────┘
+</div>
+
+<div class="alert alert-info">
+    <strong>Pull = Fetch + Merge :</strong> <code>git pull</code> telecharge les changements distants
+    <em>et</em> les fusionne automatiquement. Si vous voulez d'abord inspecter les changements,
+    utilisez <code>git fetch</code> puis <code>git merge origin/main</code>.
+</div>
+
+<!-- ============================================================== -->
+<h3 id="status-log">Status &amp; Log — Inspecter l'etat</h3>
+
+<pre><code><span class="cmt"># Voir l'etat des fichiers</span>
+<span class="fn">git status</span>
+
+<span class="cmt"># Version courte</span>
+<span class="fn">git status</span> <span class="kw">-s</span>
+
+<span class="cmt"># Historique compact avec graphe</span>
+<span class="fn">git log</span> <span class="kw">--oneline --graph --all</span>
+
+<span class="cmt"># Historique formate</span>
+<span class="fn">git log</span> <span class="kw">--pretty=format:</span><span class="str">"%h %s (%an, %ar)"</span>
+
+<span class="cmt"># Voir les differences non stagees</span>
+<span class="fn">git diff</span>
+
+<span class="cmt"># Voir les differences stagees (pretes a commit)</span>
+<span class="fn">git diff</span> <span class="kw">--staged</span>
+
+<span class="cmt"># Voir les modifications d'un fichier specifique</span>
+<span class="fn">git diff</span> src/MonFichier.cs
+
+<span class="cmt"># Qui a modifie chaque ligne ? (blame)</span>
+<span class="fn">git blame</span> src/MonFichier.cs
+
+<span class="cmt"># Historique d'un fichier</span>
+<span class="fn">git log</span> <span class="kw">--follow</span> src/MonFichier.cs</code></pre>
+
+<p><span class="badge badge-fork">Fork</span> L'onglet <strong>Activity</strong> affiche le graphe visuel des branches et commits.
+L'onglet <strong>Changes</strong> montre les fichiers modifies avec un diff colore. Clic droit sur un fichier → <strong>Blame</strong> pour voir l'historique ligne par ligne.</p>
+
+<!-- ============================================================== -->
+<h2 id="branches">3. Branches — Strategies et exemples</h2>
+
+<h3>Cycle de vie d'une branche</h3>
+
+<div class="diagram">
+main       ●───●───────────────●──────────────●───●
+                \              ↑ merge        /
+feature/auth     ●───●───●────────────────────●
+                      \
+                       ●───● (revue de code / PR)
+</div>
+
+<p>
+    Les branches Git sont des <strong>pointeurs legers</strong> vers des commits.
+    Creer une branche ne copie rien — c'est instantane, quelle que soit la taille du projet.
+</p>
+
+<h3>Creer et naviguer</h3>
+
+<pre><code><span class="cmt"># Creer et basculer (ancienne syntaxe)</span>
+<span class="fn">git checkout</span> <span class="kw">-b</span> feature/login
+
+<span class="cmt"># Creer et basculer (nouvelle syntaxe, recommandee)</span>
+<span class="fn">git switch</span> <span class="kw">-c</span> feature/login
+
+<span class="cmt"># Creer sans basculer</span>
+<span class="fn">git branch</span> feature/login
+
+<span class="cmt"># Lister les branches</span>
+<span class="fn">git branch</span>                    <span class="cmt"># locales</span>
+<span class="fn">git branch</span> <span class="kw">-r</span>                 <span class="cmt"># distantes</span>
+<span class="fn">git branch</span> <span class="kw">-a</span>                 <span class="cmt"># toutes</span>
+
+<span class="cmt"># Basculer vers une branche existante</span>
+<span class="fn">git switch</span> main
+<span class="fn">git checkout</span> main
+
+<span class="cmt"># Creer une branche depuis un commit specifique</span>
+<span class="fn">git switch</span> <span class="kw">-c</span> fix/bug-123 abc123f</code></pre>
+
+<p><span class="badge badge-fork">Fork</span> Clic droit sur un commit → <strong>Create Branch...</strong>, ou menu <strong>Repository → Branch → New Branch...</strong>. Double-cliquez sur une branche dans la sidebar pour y basculer.</p>
+
+<!-- ============================================================== -->
+<h3 id="merge">Fusionner (Merge)</h3>
+
+<pre><code><span class="cmt"># Basculer sur la branche cible</span>
+<span class="fn">git checkout</span> main
+
+<span class="cmt"># Fusionner (fast-forward si possible)</span>
+<span class="fn">git merge</span> feature/login
+
+<span class="cmt"># Fusionner en creant un commit de merge (recommande)</span>
+<span class="fn">git merge</span> <span class="kw">--no-ff</span> feature/login
+
+<span class="cmt"># Annuler un merge en cours (conflit)</span>
+<span class="fn">git merge</span> <span class="kw">--abort</span></code></pre>
+
+<div class="comparison">
+    <div class="card">
+        <h4>Fast-Forward Merge</h4>
+<div class="diagram">
+Avant:  main ●───●
+                   \
+        feat        ●───●
+
+Apres:  main ●───●───●───●
+        (main avance simplement)
+</div>
+    </div>
+    <div class="card">
+        <h4>Merge --no-ff (recommande)</h4>
+<div class="diagram">
+Avant:  main ●───●
+                   \
+        feat        ●───●
+
+Apres:  main ●───●───────●  (merge commit)
+                   \     /
+        feat        ●───●
+</div>
+    </div>
+</div>
+
+<div class="alert alert-success">
+    <strong>Pourquoi <code>--no-ff</code> ?</strong> Il preserve l'historique visuel des branches,
+    meme quand un fast-forward serait possible. On voit clairement quand une feature a ete integree.
+</div>
+
+<p><span class="badge badge-fork">Fork</span> Clic droit sur la branche a fusionner → <strong>Merge into Current Branch...</strong>. Fork propose automatiquement l'option <code>--no-ff</code>.</p>
+
+<!-- ============================================================== -->
+<h3 id="branch-delete">Supprimer une branche</h3>
+
+<pre><code><span class="cmt"># Supprimer une branche locale (safe — refuse si non mergee)</span>
+<span class="fn">git branch</span> <span class="kw">-d</span> feature/login
+
+<span class="cmt"># Supprimer une branche locale (force — meme si non mergee)</span>
+<span class="fn">git branch</span> <span class="kw">-D</span> feature/login
+
+<span class="cmt"># Supprimer une branche distante</span>
+<span class="fn">git push</span> origin <span class="kw">--delete</span> feature/login
+
+<span class="cmt"># Nettoyer les references de branches distantes supprimees</span>
+<span class="fn">git fetch</span> <span class="kw">--prune</span></code></pre>
+
+<div class="alert alert-warning">
+    <strong>Attention avec <code>-D</code> :</strong> Cette commande force la suppression meme si les commits
+    de la branche n'ont pas ete merges. Vous perdrez du travail si vous n'avez pas merge ou pousse la branche.
+</div>
+
+<!-- ============================================================== -->
+<h2 id="workflows">4. Workflows — Comparaison detaillee</h2>
+
+<h3 id="git-flow">Git Flow</h3>
+
+<div class="diagram">
+main        ●──────────────────────────────●───────●
+             \                            / merge  |
+develop       ●───●───●───●───●───●──●──●          ●
+                   \       /       \               |
+feature/x           ●───●          \              |
+                                    \             |
+release/1.0                          ●───●       |
+                                                  |
+hotfix/y                                     ●───●
+</div>
+
+<table>
+    <thead>
+        <tr><th>Branche</th><th>Role</th><th>Duree de vie</th></tr>
+    </thead>
+    <tbody>
+        <tr><td><code>main</code></td><td>Code en production, tague a chaque release</td><td>Permanente</td></tr>
+        <tr><td><code>develop</code></td><td>Integration des features, base pour les branches feature</td><td>Permanente</td></tr>
+        <tr><td><code>feature/*</code></td><td>Developpement d'une fonctionnalite</td><td>Jours / semaines</td></tr>
+        <tr><td><code>release/*</code></td><td>Preparation d'une release (bug fixes, docs)</td><td>Quelques jours</td></tr>
+        <tr><td><code>hotfix/*</code></td><td>Correctif urgent en production</td><td>Heures / jours</td></tr>
+    </tbody>
+</table>
+
+<p><strong>Ideal pour :</strong> logiciels versiones, releases planifiees, equipes structurees.</p>
+<p><strong>Outils :</strong> Extension <code>git-flow</code> (automatise la creation/fermeture des branches).</p>
+
+<pre><code><span class="cmt"># Installation de git-flow et utilisation</span>
+<span class="fn">git flow</span> init
+<span class="fn">git flow</span> feature start login
+<span class="fn">git flow</span> feature finish login
+<span class="fn">git flow</span> release start <span class="val">1.0.0</span>
+<span class="fn">git flow</span> release finish <span class="val">1.0.0</span>
+<span class="fn">git flow</span> hotfix start fix-critical
+<span class="fn">git flow</span> hotfix finish fix-critical</code></pre>
+
+<!-- ============================================================== -->
+<h3 id="github-flow">GitHub Flow</h3>
+
+<div class="diagram">
+main       ●───●───●───●───●───●───●───●───●
+                \   ↑PR  \   ↑PR  \    ↑PR
+feature/a        ●──●     │        │
+                           │        │
+feature/b                  ●──●     │
+                                    │
+fix/bug-42                          ●──●
+</div>
+
+<p>
+    Le workflow le plus simple : <strong>main + feature branches + Pull Requests</strong>.
+    Pas de branche develop, pas de branches release.
+</p>
+
+<ol>
+    <li>Creer une branche depuis <code>main</code></li>
+    <li>Faire des commits</li>
+    <li>Ouvrir une Pull Request</li>
+    <li>Revue de code par les pairs</li>
+    <li>Merge dans <code>main</code> (souvent avec deploiement automatique)</li>
+</ol>
+
+<p><strong>Ideal pour :</strong> deploiement continu, applications web, equipes agiles.</p>
+
+<!-- ============================================================== -->
+<h3 id="trunk-based">Trunk-Based Development</h3>
+
+<div class="diagram">
+main     ●─●─●─●─●─●─●─●─●─●─●─●─●─●─●─●─●
+          ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑
+     petits commits frequents (+ feature flags)
+</div>
+
+<p>
+    Tout le monde commite directement sur <code>main</code> (ou des branches de tres courte duree, &lt; 1 jour).
+    Les fonctionnalites inachevees sont gerees par des <strong>feature flags</strong>.
+</p>
+
+<p><strong>Ideal pour :</strong> equipes experimentees, CI/CD mature, Google/Facebook-style.</p>
+
+<!-- ============================================================== -->
+<h3 id="workflow-comparison">Comparaison des workflows</h3>
+
+<table>
+    <thead>
+        <tr><th>Critere</th><th>Git Flow</th><th>GitHub Flow</th><th>Trunk-Based</th></tr>
+    </thead>
+    <tbody>
+        <tr><td>Complexite</td><td><span class="danger-hl">Elevee</span></td><td><span class="success-hl">Faible</span></td><td><span class="success-hl">Faible</span></td></tr>
+        <tr><td>Branches permanentes</td><td>main + develop</td><td>main</td><td>main</td></tr>
+        <tr><td>Duree des branches</td><td>Jours/semaines</td><td>Heures/jours</td><td>Heures max</td></tr>
+        <tr><td>Releases</td><td>Planifiees</td><td>Continues</td><td>Continues</td></tr>
+        <tr><td>Code Review</td><td>Optionnel</td><td>Pull Request</td><td>PR ou pair programming</td></tr>
+        <tr><td>Ideal pour</td><td>Logiciel versionne</td><td>Apps web, SaaS</td><td>Equipes seniors</td></tr>
+        <tr><td>Feature Flags</td><td>Non necessaire</td><td>Optionnel</td><td>Indispensable</td></tr>
+        <tr><td>CI/CD requis</td><td>Recommande</td><td>Important</td><td>Obligatoire</td></tr>
+        <tr><td>Risque de conflits</td><td><span class="danger-hl">Eleve</span></td><td>Moyen</td><td><span class="success-hl">Faible</span></td></tr>
+    </tbody>
+</table>
+
+<!-- ============================================================== -->
+<h2 id="conflits">5. Resolution de conflits</h2>
+
+<h3>Pourquoi les conflits arrivent ?</h3>
+<p>
+    Un conflit se produit quand <strong>deux branches modifient les memes lignes du meme fichier</strong>
+    de maniere differente. Git ne peut pas choisir automatiquement quelle version garder.
+</p>
+
+<div class="diagram">
+main       ●───●──── modifie ligne 42 ────●
+                \                          ↑ CONFLIT!
+feature/login    ●── modifie aussi ligne 42 ──●
+</div>
+
+<h3>Marqueurs de conflit</h3>
+<pre><code><span class="cmt">// Code avant le conflit (OK)</span>
+public string Validate(string input)
+{
+<span class="danger-hl">&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD</span>
+    <span class="cmt">// Code de la branche actuelle (main)</span>
+    <span class="kw">return</span> input.Trim().ToLower();
+<span class="danger-hl">=======</span>
+    <span class="cmt">// Code de la branche entrante (feature/login)</span>
+    <span class="kw">return</span> input.Trim().ToUpper();
+<span class="danger-hl">&gt;&gt;&gt;&gt;&gt;&gt;&gt; feature/login</span>
+}</code></pre>
+
+<h3>Resolution en CLI</h3>
+<pre><code><span class="cmt"># 1. Tenter le merge</span>
+<span class="fn">git merge</span> feature/login
+<span class="cmt"># CONFLICT (content): Merge conflict in src/Validator.cs</span>
+
+<span class="cmt"># 2. Voir les fichiers en conflit</span>
+<span class="fn">git status</span>
+
+<span class="cmt"># 3. Ouvrir et editer les fichiers en conflit</span>
+<span class="cmt">#    Supprimer les marqueurs, garder le code voulu</span>
+
+<span class="cmt"># 4. Marquer comme resolu</span>
+<span class="fn">git add</span> src/Validator.cs
+
+<span class="cmt"># 5. Finaliser le merge</span>
+<span class="fn">git commit</span>
+
+<span class="cmt"># Alternative : annuler le merge</span>
+<span class="fn">git merge</span> <span class="kw">--abort</span></code></pre>
+
+<h3>Resolution dans Fork</h3>
+<p>
+    Fork propose un <strong>outil de merge visuel a 3 panneaux</strong> :
+</p>
+<ul>
+    <li><strong>Panneau gauche (Mine) :</strong> votre version (branche actuelle)</li>
+    <li><strong>Panneau droit (Theirs) :</strong> la version entrante (branche a fusionner)</li>
+    <li><strong>Panneau central (Base) :</strong> l'ancetre commun</li>
+    <li><strong>Panneau bas (Result) :</strong> le resultat final que vous construisez</li>
+</ul>
+<p>Vous pouvez cliquer sur les fleches pour choisir quelle version garder, ou editer directement le resultat.</p>
+
+<h3>Minimiser les conflits</h3>
+<div class="alert alert-success">
+    <strong>Conseils pour eviter les conflits :</strong>
+    <ul>
+        <li>Communiquez avec votre equipe sur qui modifie quoi</li>
+        <li>Faites <code>git pull</code> regulierement</li>
+        <li>Gardez vos branches courtes (quelques jours max)</li>
+        <li>Gardez vos Pull Requests petites (300 lignes max)</li>
+        <li>Decoupez les gros fichiers en modules plus petits</li>
+        <li>Utilisez un formateur de code (moins de changements de style)</li>
+    </ul>
+</div>
+
+<!-- ============================================================== -->
+<h2 id="avance">6. Utilisation avancee</h2>
+
+<h3 id="rebase">Rebase — Reecrire l'historique</h3>
+
+<p>
+    <code>git rebase</code> "replante" vos commits sur une nouvelle base, creant un historique lineaire.
+</p>
+
+<div class="comparison">
+    <div class="card">
+        <h4>Avant le rebase</h4>
+<div class="diagram">
+main       ●───●───●───●
+                \
+feature         ●───●───●
+</div>
+    </div>
+    <div class="card">
+        <h4>Apres <code>git rebase main</code></h4>
+<div class="diagram">
+main       ●───●───●───●
+                         \
+feature                   ●'──●'──●'
+           (nouveaux SHA, meme contenu)
+</div>
+    </div>
+</div>
+
+<pre><code><span class="cmt"># Rebaser la branche courante sur main</span>
+<span class="fn">git rebase</span> main
+
+<span class="cmt"># Rebase interactif (squash, edit, reorder, drop)</span>
+<span class="fn">git rebase</span> <span class="kw">-i</span> HEAD~3
+
+<span class="cmt"># Options du rebase interactif :</span>
+<span class="cmt"># pick   = garder le commit tel quel</span>
+<span class="cmt"># squash = fusionner avec le commit precedent</span>
+<span class="cmt"># fixup  = comme squash mais jeter le message</span>
+<span class="cmt"># edit   = s'arreter pour modifier le commit</span>
+<span class="cmt"># drop   = supprimer le commit</span>
+<span class="cmt"># reword = changer le message</span>
+
+<span class="cmt"># Annuler un rebase en cours</span>
+<span class="fn">git rebase</span> <span class="kw">--abort</span>
+
+<span class="cmt"># Continuer apres avoir resolu un conflit</span>
+<span class="fn">git rebase</span> <span class="kw">--continue</span></code></pre>
+
+<h4>Merge vs Rebase</h4>
+<table>
+    <thead>
+        <tr><th>Critere</th><th>Merge</th><th>Rebase</th></tr>
+    </thead>
+    <tbody>
+        <tr><td>Historique</td><td>Preserve la chronologie reelle</td><td>Cree un historique lineaire</td></tr>
+        <tr><td>Commits</td><td>Ajoute un merge commit</td><td>Pas de commit supplementaire</td></tr>
+        <tr><td>SHA</td><td>Conserves</td><td>Modifies (nouveaux SHA)</td></tr>
+        <tr><td>Securite</td><td><span class="success-hl">Sur</span></td><td><span class="danger-hl">Risque si branche partagee</span></td></tr>
+        <tr><td>Lisibilite</td><td>Peut etre complexe</td><td>Propre et lineaire</td></tr>
+    </tbody>
+</table>
+
+<div class="alert alert-danger">
+    <strong>REGLE D'OR :</strong> Ne jamais rebaser une branche publique/partagee !
+    Le rebase reecrit les SHA — si d'autres personnes travaillent sur la meme branche,
+    cela causera des conflits impossibles. Rebasez uniquement vos branches <em>locales</em> et <em>personnelles</em>.
+</div>
+
+<p><span class="badge badge-fork">Fork</span> Clic droit sur un commit → <strong>Interactive Rebase...</strong>. Fork offre une interface drag-and-drop pour reordonner, squasher et supprimer des commits.</p>
+
+<!-- ============================================================== -->
+<h3 id="cherry-pick">Cherry-pick — Selectionner des commits</h3>
+
+<p>
+    <code>git cherry-pick</code> copie un commit specifique d'une branche vers une autre,
+    sans fusionner toute la branche.
+</p>
+
+<pre><code><span class="cmt"># Appliquer un seul commit</span>
+<span class="fn">git cherry-pick</span> abc123f
+
+<span class="cmt"># Appliquer plusieurs commits</span>
+<span class="fn">git cherry-pick</span> abc123f def456a
+
+<span class="cmt"># Appliquer une plage de commits</span>
+<span class="fn">git cherry-pick</span> abc123f<span class="kw">..</span>def456a
+
+<span class="cmt"># Cherry-pick sans commiter (utile pour combiner)</span>
+<span class="fn">git cherry-pick</span> <span class="kw">--no-commit</span> abc123f
+
+<span class="cmt"># Annuler un cherry-pick en cours</span>
+<span class="fn">git cherry-pick</span> <span class="kw">--abort</span></code></pre>
+
+<div class="alert alert-info">
+    <strong>Cas d'usage typique :</strong> Backporter un correctif de <code>main</code> vers une branche
+    <code>release/1.x</code> sans fusionner toutes les nouvelles fonctionnalites.
+</div>
+
+<p><span class="badge badge-fork">Fork</span> Clic droit sur le commit dans le graphe → <strong>Cherry-pick Commit...</strong>.</p>
+
+<!-- ============================================================== -->
+<h3 id="stash">Stash — Mettre de cote temporairement</h3>
+
+<p>
+    <code>git stash</code> sauvegarde vos modifications en cours sans commiter,
+    pour pouvoir changer de branche proprement.
+</p>
+
+<pre><code><span class="cmt"># Stasher les modifications</span>
+<span class="fn">git stash</span>
+
+<span class="cmt"># Stasher avec un message descriptif</span>
+<span class="fn">git stash</span> push <span class="kw">-m</span> <span class="str">"WIP: formulaire de login"</span>
+
+<span class="cmt"># Stasher en incluant les fichiers non suivis</span>
+<span class="fn">git stash</span> <span class="kw">-u</span>
+
+<span class="cmt"># Lister les stashes</span>
+<span class="fn">git stash</span> list
+
+<span class="cmt"># Restaurer le dernier stash ET le supprimer</span>
+<span class="fn">git stash</span> pop
+
+<span class="cmt"># Restaurer le dernier stash SANS le supprimer</span>
+<span class="fn">git stash</span> apply
+
+<span class="cmt"># Restaurer un stash specifique</span>
+<span class="fn">git stash</span> apply stash@{2}
+
+<span class="cmt"># Voir le contenu d'un stash</span>
+<span class="fn">git stash</span> show <span class="kw">-p</span> stash@{0}
+
+<span class="cmt"># Supprimer un stash</span>
+<span class="fn">git stash</span> drop stash@{0}
+
+<span class="cmt"># Supprimer tous les stashes</span>
+<span class="fn">git stash</span> clear</code></pre>
+
+<p><span class="badge badge-fork">Fork</span> Menu <strong>Repository → Stash...</strong>. Les stashes apparaissent dans la section <strong>Stashes</strong> de la sidebar gauche. Clic droit pour appliquer, supprimer ou voir le contenu.</p>
+
+<!-- ============================================================== -->
+<h3 id="bisect">Bisect — Trouver le commit fautif</h3>
+
+<p>
+    <code>git bisect</code> effectue une <strong>recherche dichotomique</strong> dans l'historique
+    pour trouver le commit qui a introduit un bug.
+</p>
+
+<div class="diagram">
+Historique:   ●──●──●──●──●──●──●──●──●──●
+              ✓  ✓  ✓  ?  ?  ?  ?  ?  ✗  ✗
+              good              ↑            bad
+                          bisect trouve
+                          le coupable !
+</div>
+
+<pre><code><span class="cmt"># 1. Demarrer bisect</span>
+<span class="fn">git bisect</span> start
+
+<span class="cmt"># 2. Marquer le commit actuel comme mauvais</span>
+<span class="fn">git bisect</span> bad
+
+<span class="cmt"># 3. Marquer un commit connu comme bon</span>
+<span class="fn">git bisect</span> good v1.0
+
+<span class="cmt"># 4. Git checkout un commit au milieu.</span>
+<span class="cmt">#    Testez, puis indiquez :</span>
+<span class="fn">git bisect</span> good   <span class="cmt"># si ca marche</span>
+<span class="fn">git bisect</span> bad    <span class="cmt"># si c'est casse</span>
+
+<span class="cmt"># 5. Repetez jusqu'a trouver le commit fautif</span>
+
+<span class="cmt"># 6. Terminer bisect</span>
+<span class="fn">git bisect</span> reset
+
+<span class="cmt"># Automatiser avec un script de test :</span>
+<span class="fn">git bisect</span> run npm test</code></pre>
+
+<div class="alert alert-info">
+    <strong>Complexite O(log n) :</strong> Avec bisect, trouver le commit fautif parmi 1000 commits
+    ne necessite que ~10 etapes (2^10 = 1024).
+</div>
+
+<!-- ============================================================== -->
+<h3 id="reflog">Reflog — Le filet de securite</h3>
+
+<p>
+    Le reflog enregistre <strong>tous les mouvements de HEAD</strong>, meme ceux que <code>git log</code> ne montre pas
+    (rebase, reset, amend...). C'est votre <strong>dernier recours</strong> pour recuperer du travail perdu.
+</p>
+
+<pre><code><span class="cmt"># Voir l'historique complet de HEAD</span>
+<span class="fn">git reflog</span>
+
+<span class="cmt"># Exemple de sortie :</span>
+<span class="cmt"># abc123f HEAD@{0}: commit: feat: ajouter login</span>
+<span class="cmt"># def456a HEAD@{1}: rebase: updating HEAD</span>
+<span class="cmt"># 789bcd0 HEAD@{2}: reset: moving to HEAD~3</span>
+<span class="cmt"># aaa111b HEAD@{3}: commit: feat: formulaire complet</span>
+
+<span class="cmt"># Revenir a un etat precedent</span>
+<span class="fn">git checkout</span> HEAD@{5}
+
+<span class="cmt"># Creer une branche de sauvetage</span>
+<span class="fn">git branch</span> rescue HEAD@{3}
+
+<span class="cmt"># Reset dur vers un etat precedent</span>
+<span class="fn">git reset</span> <span class="kw">--hard</span> HEAD@{3}</code></pre>
+
+<div class="alert alert-success">
+    <strong>Rien n'est jamais vraiment perdu dans Git !</strong> Tant que le garbage collector n'a pas tourne
+    (environ 30 jours), vous pouvez recuperer n'importe quel commit via le reflog.
+</div>
+
+<!-- ============================================================== -->
+<h2 id="bonnes-pratiques">7. Bonnes pratiques</h2>
+
+<h3 id="conventional-commits">Conventional Commits</h3>
+<p>
+    La specification <strong>Conventional Commits</strong> definit un format structure pour les messages de commit,
+    ce qui facilite la generation automatique de changelogs et le versionning semantique.
+</p>
+
+<pre><code><span class="cmt"># Format</span>
+&lt;type&gt;(&lt;scope&gt;): &lt;description&gt;
+
+[corps optionnel]
+
+[footer(s) optionnel(s)]</code></pre>
+
+<h4>Exemples concrets</h4>
+<pre><code><span class="success-hl">feat</span>: ajouter l'authentification OAuth2
+<span class="success-hl">feat</span>(auth): implementer le refresh token
+<span class="success-hl">fix</span>: corriger le calcul du total TTC
+<span class="success-hl">fix</span>(panier): empecher les quantites negatives
+<span class="success-hl">docs</span>: mettre a jour le README
+<span class="success-hl">refactor</span>: simplifier la logique de validation
+<span class="success-hl">test</span>: ajouter des tests pour le service de paiement
+<span class="success-hl">chore</span>: mettre a jour les dependances NuGet
+<span class="success-hl">ci</span>: configurer le pipeline GitHub Actions
+<span class="success-hl">perf</span>: optimiser la requete de recherche
+<span class="success-hl">style</span>: corriger l'indentation dans Program.cs
+<span class="success-hl">build</span>: migrer vers .NET 8
+<span class="success-hl">revert</span>: annuler "feat: dark mode"</code></pre>
+
+<h4>Types de commits</h4>
+<table>
+    <thead>
+        <tr><th>Type</th><th>Description</th><th>Exemple</th></tr>
+    </thead>
+    <tbody>
+        <tr><td><code>feat</code></td><td>Nouvelle fonctionnalite</td><td>Ajouter page de login</td></tr>
+        <tr><td><code>fix</code></td><td>Correction de bug</td><td>Corriger le crash au demarrage</td></tr>
+        <tr><td><code>docs</code></td><td>Documentation uniquement</td><td>Mettre a jour l'API doc</td></tr>
+        <tr><td><code>style</code></td><td>Formatage, points-virgules, etc. (pas de code)</td><td>Appliquer Prettier</td></tr>
+        <tr><td><code>refactor</code></td><td>Restructuration sans changer le comportement</td><td>Extraire une methode</td></tr>
+        <tr><td><code>perf</code></td><td>Amelioration des performances</td><td>Cache les resultats SQL</td></tr>
+        <tr><td><code>test</code></td><td>Ajout/modification de tests</td><td>Tests unitaires du panier</td></tr>
+        <tr><td><code>build</code></td><td>Systeme de build, dependances</td><td>Mettre a jour webpack</td></tr>
+        <tr><td><code>ci</code></td><td>Configuration CI/CD</td><td>Ajouter etape de deploy</td></tr>
+        <tr><td><code>chore</code></td><td>Taches diverses</td><td>Mettre a jour .gitignore</td></tr>
+        <tr><td><code>revert</code></td><td>Annulation d'un commit precedent</td><td>Annuler la feature X</td></tr>
+    </tbody>
+</table>
+
+<!-- ============================================================== -->
+<h3 id="commit-atomicity">Atomicite des commits</h3>
+<p>
+    Un bon commit represente <strong>un seul changement logique</strong>. Il doit pouvoir etre
+    revert individuellement sans casser d'autres fonctionnalites.
+</p>
+
+<div class="comparison">
+    <div class="card bad">
+        <h4>Mauvais : commit fourre-tout</h4>
+<pre><code><span class="danger-hl">git commit -m "mise a jour"</span>
+
+<span class="cmt">Contient :</span>
+- Fix d'un bug de login
+- Ajout d'une page "A propos"
+- Mise a jour des dependances
+- Correction d'un typo dans le footer
+- Changement de couleur du bouton</code></pre>
+    </div>
+    <div class="card good">
+        <h4>Bon : commits atomiques</h4>
+<pre><code><span class="success-hl">fix(auth): corriger la validation du mot de passe</span>
+<span class="success-hl">feat(pages): ajouter la page A propos</span>
+<span class="success-hl">chore(deps): mettre a jour les packages NuGet</span>
+<span class="success-hl">fix(ui): corriger le typo dans le footer</span>
+<span class="success-hl">style(ui): changer la couleur du bouton principal</span>
+
+<span class="cmt">Chaque commit = 1 changement logique</span></code></pre>
+    </div>
+</div>
+
+<div class="alert alert-info">
+    <strong>Regle pratique :</strong> Si votre message de commit contient "et", c'est probablement
+    deux commits distincts. Si vous ne pouvez pas decrire le changement en une phrase, c'est trop gros.
+</div>
+
+<!-- ============================================================== -->
+<h3 id="gitignore">.gitignore — Exclure les fichiers</h3>
+
+<p>
+    Le fichier <code>.gitignore</code> indique a Git quels fichiers ne doivent <strong>jamais</strong> etre suivis.
+    Placez-le a la racine du projet.
+</p>
+
+<h4>Exemple pour un projet .NET</h4>
+<pre><code><span class="cmt"># Build outputs</span>
+bin/
+obj/
+out/
+
+<span class="cmt"># Fichiers utilisateur Visual Studio</span>
+*.user
+*.suo
+*.vs/
+.vscode/
+
+<span class="cmt"># Packages NuGet</span>
+packages/
+
+<span class="cmt"># Secrets et configuration locale</span>
+appsettings.Development.json
+*.pfx
+*.key
+
+<span class="cmt"># OS</span>
+Thumbs.db
+.DS_Store
+
+<span class="cmt"># Logs</span>
+*.log
+logs/</code></pre>
+
+<h4>Exemple pour un projet Node.js</h4>
+<pre><code><span class="cmt"># Dependencies</span>
+node_modules/
+
+<span class="cmt"># Build</span>
+dist/
+build/
+.next/
+
+<span class="cmt"># Environment</span>
+.env
+.env.local
+.env.*.local
+
+<span class="cmt"># IDE</span>
+.idea/
+.vscode/
+
+<span class="cmt"># Logs</span>
+npm-debug.log*
+yarn-debug.log*
+
+<span class="cmt"># OS</span>
+.DS_Store
+Thumbs.db</code></pre>
+
+<h4>Exemple pour un projet Python</h4>
+<pre><code><span class="cmt"># Environnements virtuels</span>
+venv/
+.venv/
+env/
+
+<span class="cmt"># Bytecode</span>
+__pycache__/
+*.py[cod]
+*.pyo
+
+<span class="cmt"># Distribution</span>
+dist/
+build/
+*.egg-info/
+
+<span class="cmt"># IDE</span>
+.idea/
+.vscode/
+
+<span class="cmt"># Environment</span>
+.env
+
+<span class="cmt"># Jupyter</span>
+.ipynb_checkpoints/</code></pre>
+
+<div class="alert alert-warning">
+    <strong>Gitignore global :</strong> Pour les fichiers specifiques a votre machine (IDE, OS),
+    configurez un gitignore global :<br>
+    <code>git config --global core.excludesfile ~/.gitignore_global</code><br><br>
+    <strong>Templates :</strong> <a href="https://github.com/github/gitignore" style="color: var(--info);">github.com/github/gitignore</a> — collection officielle de templates .gitignore.
+</div>
+
+<pre><code><span class="cmt"># Fichier deja suivi ? Le retirer du tracking sans le supprimer :</span>
+<span class="fn">git rm</span> <span class="kw">--cached</span> appsettings.Development.json
+
+<span class="cmt"># Verifier ce qui serait ignore</span>
+<span class="fn">git status</span> <span class="kw">--ignored</span></code></pre>
+
+<!-- ============================================================== -->
+<h3 id="hooks">Git Hooks — Automatiser les verifications</h3>
+
+<p>
+    Les hooks sont des scripts executes automatiquement par Git a certains moments
+    (avant commit, avant push, etc.). Ils vivent dans <code>.git/hooks/</code>.
+</p>
+
+<table>
+    <thead>
+        <tr><th>Hook</th><th>Moment</th><th>Usage typique</th></tr>
+    </thead>
+    <tbody>
+        <tr><td><code>pre-commit</code></td><td>Avant le commit</td><td>Lint, formatage, scan de secrets</td></tr>
+        <tr><td><code>commit-msg</code></td><td>Apres ecriture du message</td><td>Valider les Conventional Commits</td></tr>
+        <tr><td><code>pre-push</code></td><td>Avant le push</td><td>Executer les tests</td></tr>
+        <tr><td><code>post-merge</code></td><td>Apres un merge</td><td>Installer les dependances</td></tr>
+        <tr><td><code>post-checkout</code></td><td>Apres un checkout</td><td>Nettoyer les fichiers temporaires</td></tr>
+    </tbody>
+</table>
+
+<h4>Exemple : pre-commit avec Husky (Node.js)</h4>
+<pre><code><span class="cmt"># Installation</span>
+<span class="fn">npm install</span> <span class="kw">--save-dev</span> husky lint-staged
+<span class="fn">npx husky</span> init
+
+<span class="cmt"># .husky/pre-commit</span>
+npx lint-staged
+
+<span class="cmt"># package.json</span>
+{
+  <span class="str">"lint-staged"</span>: {
+    <span class="str">"*.{js,ts}"</span>: [<span class="str">"eslint --fix"</span>, <span class="str">"prettier --write"</span>],
+    <span class="str">"*.{json,md}"</span>: [<span class="str">"prettier --write"</span>]
+  }
+}</code></pre>
+
+<h4>Exemple : pre-commit pour .NET</h4>
+<pre><code><span class="cmt">#!/bin/sh</span>
+<span class="cmt"># .git/hooks/pre-commit</span>
+
+<span class="cmt"># Verifier le formatage</span>
+dotnet format --verify-no-changes
+<span class="kw">if</span> [ $? -ne 0 ]; <span class="kw">then</span>
+    echo <span class="str">"Erreur : formatez votre code avec 'dotnet format'"</span>
+    exit 1
+<span class="kw">fi</span>
+
+<span class="cmt"># Scanner les secrets</span>
+<span class="fn">git diff</span> <span class="kw">--cached</span> <span class="kw">--diff-filter=ACM</span> | grep -iE "(password|secret|api_key|token)\s*=" &amp;&amp; {
+    echo <span class="str">"ATTENTION : secret potentiel detecte !"</span>
+    exit 1
+}</code></pre>
+
+<!-- ============================================================== -->
+<h2 id="fork-gui">8. Fork — Client Git graphique</h2>
+
+<h3 id="fork-presentation">Presentation</h3>
+<p>
+    <strong>Fork</strong> est un client Git rapide et convivial pour <strong>Windows et macOS</strong>.
+    Il offre une interface visuelle pour toutes les operations Git, avec un accent sur la performance
+    et la simplicite.
+</p>
+
+<div class="alert alert-info">
+    <strong>Site officiel :</strong> <a href="https://git-fork.com" style="color: var(--info);">git-fork.com</a>
+    — Gratuit pour l'evaluation, licence payante pour un usage continu.
+</div>
+
+<h4>Interface principale</h4>
+<div class="card" style="margin: 1rem 0;">
+    <p><strong>Description de l'interface Fork :</strong></p>
+    <table>
+        <thead>
+            <tr><th>Zone</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+            <tr><td><strong>Sidebar gauche</strong></td><td>Branches locales, Remotes, Tags, Stashes — navigation par arborescence</td></tr>
+            <tr><td><strong>Zone centrale</strong></td><td>Graphe des commits — historique visuel avec les branches en couleur</td></tr>
+            <tr><td><strong>Panneau droit</strong></td><td>Details du commit selectionne, diff des fichiers modifies</td></tr>
+            <tr><td><strong>Zone basse</strong></td><td>Staging area — fichiers modifies a gauche, diff a droite, message de commit</td></tr>
+            <tr><td><strong>Barre d'outils</strong></td><td>Boutons rapides : Pull, Push, Fetch, Branch, Merge, Stash, Terminal</td></tr>
+        </tbody>
+    </table>
+</div>
+
+<!-- ============================================================== -->
+<h3 id="fork-operations">Operations dans Fork</h3>
+
+<table>
+    <thead>
+        <tr><th>Operation</th><th>Menu / Action</th><th>Raccourci</th></tr>
+    </thead>
+    <tbody>
+        <tr><td>Clone</td><td>File → Clone</td><td><code>Ctrl+Shift+O</code></td></tr>
+        <tr><td>Ouvrir un depot</td><td>File → Open Repository</td><td><code>Ctrl+O</code></td></tr>
+        <tr><td>Commit</td><td>Staging area → Commit</td><td><code>Ctrl+Enter</code></td></tr>
+        <tr><td>Push</td><td>Repository → Push</td><td><code>Ctrl+P</code></td></tr>
+        <tr><td>Pull</td><td>Repository → Pull</td><td><code>Ctrl+Shift+P</code></td></tr>
+        <tr><td>Fetch</td><td>Repository → Fetch</td><td><code>Ctrl+Shift+F</code></td></tr>
+        <tr><td>Nouvelle branche</td><td>Repository → Branch → New Branch</td><td>—</td></tr>
+        <tr><td>Merge</td><td>Clic droit sur branche → Merge into Current</td><td>—</td></tr>
+        <tr><td>Stash</td><td>Repository → Stash</td><td>—</td></tr>
+        <tr><td>Rebase interactif</td><td>Clic droit → Interactive Rebase</td><td>—</td></tr>
+        <tr><td>Cherry-pick</td><td>Clic droit sur commit → Cherry-pick</td><td>—</td></tr>
+        <tr><td>Blame</td><td>Clic droit sur fichier → Blame</td><td>—</td></tr>
+        <tr><td>Ouvrir dans terminal</td><td>File → Open in Terminal</td><td>—</td></tr>
+        <tr><td>Recherche globale</td><td>Edit → Quick Open</td><td><code>Ctrl+Shift+P</code></td></tr>
+        <tr><td>Voir les tags</td><td>Sidebar gauche → Tags</td><td>—</td></tr>
+        <tr><td>Creer un tag</td><td>Clic droit sur commit → Create Tag</td><td>—</td></tr>
+    </tbody>
+</table>
+
+<!-- ============================================================== -->
+<h3 id="fork-tips">Astuces Fork</h3>
+
+<ul>
+    <li><strong>Show All Branches :</strong> Activez cette option pour voir toutes les branches dans le graphe (pas seulement la branche courante)</li>
+    <li><strong>Tab pour naviguer :</strong> Utilisez <code>Tab</code> pour basculer entre les onglets (Activity, Changes)</li>
+    <li><strong>Drag &amp; Drop :</strong> Glissez une branche sur une autre pour initier un merge</li>
+    <li><strong>Staging partiel :</strong> Selectionnez des lignes specifiques dans le diff et cliquez <em>Stage Selected Lines</em></li>
+    <li><strong>Comparer des branches :</strong> Selectionnez deux commits en maintenant <code>Ctrl</code> pour voir le diff entre eux</li>
+    <li><strong>Recherche dans l'historique :</strong> <code>Ctrl+F</code> pour chercher dans les messages de commit, auteurs, fichiers</li>
+    <li><strong>Ouvrir plusieurs repos :</strong> Fork supporte les onglets — ouvrez plusieurs depots dans la meme fenetre</li>
+</ul>
+
+<h4>Fork vs Autres clients Git</h4>
+<table>
+    <thead>
+        <tr><th>Client</th><th>Prix</th><th>OS</th><th>Points forts</th><th>Points faibles</th></tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><strong>Fork</strong></td>
+            <td>Payant</td>
+            <td>Win, Mac</td>
+            <td>Rapide, interface propre, rebase interactif</td>
+            <td>Pas de version Linux</td>
+        </tr>
+        <tr>
+            <td><strong>SourceTree</strong></td>
+            <td>Gratuit</td>
+            <td>Win, Mac</td>
+            <td>Gratuit, integration Atlassian</td>
+            <td>Lent, interface parfois confuse</td>
+        </tr>
+        <tr>
+            <td><strong>GitKraken</strong></td>
+            <td>Freemium</td>
+            <td>Win, Mac, Linux</td>
+            <td>Beau, multi-plateforme, integrations</td>
+            <td>Payant pour les repos prives</td>
+        </tr>
+        <tr>
+            <td><strong>VS Code Git</strong></td>
+            <td>Gratuit</td>
+            <td>Win, Mac, Linux</td>
+            <td>Integre a l'editeur, extensions</td>
+            <td>Fonctionnalites avancees limitees</td>
+        </tr>
+        <tr>
+            <td><strong>GitHub Desktop</strong></td>
+            <td>Gratuit</td>
+            <td>Win, Mac</td>
+            <td>Simple, integration GitHub</td>
+            <td>Pas de rebase interactif, basique</td>
+        </tr>
+    </tbody>
+</table>
+
+<!-- ============================================================== -->
+<h2 id="plateformes">9. Plateformes de depot</h2>
+
+<h3 id="github">GitHub</h3>
+<p>
+    La plateforme la plus populaire pour l'hebergement de code, acquise par Microsoft en 2018.
+    Reference pour l'open source.
+</p>
+
+<div class="card" style="margin: 1rem 0;">
+    <h4>Fonctionnalites principales</h4>
+    <ul>
+        <li><strong>Pull Requests :</strong> Revue de code, discussions, approbations, CODEOWNERS</li>
+        <li><strong>GitHub Actions :</strong> CI/CD integre via des workflows YAML</li>
+        <li><strong>Issues &amp; Projects :</strong> Gestion de projet Kanban</li>
+        <li><strong>Packages :</strong> Registre de packages (npm, NuGet, Docker, Maven...)</li>
+        <li><strong>Codespaces :</strong> Environnements de dev cloud</li>
+        <li><strong>Copilot :</strong> Assistant IA pour le code</li>
+        <li><strong>GitHub Pages :</strong> Hebergement de sites statiques</li>
+        <li><strong>Dependabot :</strong> Alertes de securite et mises a jour automatiques</li>
+        <li><strong>CodeQL :</strong> Analyse statique de securite (SAST)</li>
+    </ul>
+</div>
+
+<h4>Branch Protection Rules</h4>
+<p>Sur GitHub, vous pouvez proteger des branches avec des regles :</p>
+<ul>
+    <li>Exiger des Pull Request reviews (1 ou 2 approbations)</li>
+    <li>Exiger que les checks CI passent avant le merge</li>
+    <li>Exiger des commits signes</li>
+    <li>Interdire le force push</li>
+    <li>Exiger un historique lineaire</li>
+    <li>Limiter qui peut pousser sur la branche</li>
+</ul>
+
+<h4>Exemple GitHub Actions</h4>
+<pre><code><span class="cmt"># .github/workflows/ci.yml</span>
+<span class="kw">name:</span> CI
+
+<span class="kw">on:</span>
+  <span class="fn">push:</span>
+    <span class="kw">branches:</span> [ main ]
+  <span class="fn">pull_request:</span>
+    <span class="kw">branches:</span> [ main ]
+
+<span class="kw">jobs:</span>
+  <span class="fn">build-and-test:</span>
+    <span class="kw">runs-on:</span> ubuntu-latest
+
+    <span class="kw">steps:</span>
+    - <span class="kw">uses:</span> actions/checkout@v4
+
+    - <span class="kw">name:</span> <span class="str">Setup .NET</span>
+      <span class="kw">uses:</span> actions/setup-dotnet@v4
+      <span class="kw">with:</span>
+        <span class="kw">dotnet-version:</span> <span class="str">'8.0.x'</span>
+
+    - <span class="kw">name:</span> <span class="str">Restore</span>
+      <span class="kw">run:</span> dotnet restore
+
+    - <span class="kw">name:</span> <span class="str">Build</span>
+      <span class="kw">run:</span> dotnet build --no-restore
+
+    - <span class="kw">name:</span> <span class="str">Test</span>
+      <span class="kw">run:</span> dotnet test --no-build --verbosity normal
+
+    - <span class="kw">name:</span> <span class="str">Security Scan</span>
+      <span class="kw">run:</span> dotnet list package --vulnerable --include-transitive</code></pre>
+
+<!-- ============================================================== -->
+<h3 id="gitlab">GitLab</h3>
+<p>
+    Plateforme DevSecOps complete, disponible en <strong>self-hosted</strong> (Community Edition gratuite)
+    ou en cloud (gitlab.com). Connue pour son CI/CD integre, le plus puissant du marche.
+</p>
+
+<div class="card" style="margin: 1rem 0;">
+    <h4>Fonctionnalites principales</h4>
+    <ul>
+        <li><strong>Merge Requests :</strong> Equivalent des Pull Requests, avec revue et approbation</li>
+        <li><strong>CI/CD Pipelines :</strong> Le point fort — CI/CD natif via <code>.gitlab-ci.yml</code></li>
+        <li><strong>GitLab Runner :</strong> Agent d'execution des pipelines (self-hosted ou partage)</li>
+        <li><strong>Container Registry :</strong> Registre Docker integre</li>
+        <li><strong>Security Scanning :</strong> SAST, DAST, Dependency Scanning, Container Scanning, Secret Detection — tous integres</li>
+        <li><strong>Issues &amp; Boards :</strong> Gestion de projet avec epics et milestones</li>
+        <li><strong>GitLab Pages :</strong> Hebergement de sites statiques</li>
+        <li><strong>Web IDE :</strong> Editeur de code integre dans le navigateur</li>
+        <li><strong>Auto DevOps :</strong> Configuration CI/CD automatique</li>
+    </ul>
+</div>
+
+<h4>Exemple .gitlab-ci.yml</h4>
+<pre><code><span class="cmt"># .gitlab-ci.yml</span>
+<span class="kw">stages:</span>
+  - build
+  - test
+  - security
+  - deploy
+
+<span class="fn">build:</span>
+  <span class="kw">stage:</span> build
+  <span class="kw">image:</span> mcr.microsoft.com/dotnet/sdk:8.0
+  <span class="kw">script:</span>
+    - dotnet restore
+    - dotnet build --no-restore
+  <span class="kw">artifacts:</span>
+    <span class="kw">paths:</span>
+      - bin/
+
+<span class="fn">test:</span>
+  <span class="kw">stage:</span> test
+  <span class="kw">image:</span> mcr.microsoft.com/dotnet/sdk:8.0
+  <span class="kw">script:</span>
+    - dotnet test --no-restore --logger <span class="str">"junit"</span>
+  <span class="kw">artifacts:</span>
+    <span class="kw">reports:</span>
+      <span class="kw">junit:</span> <span class="str">"**/TestResults/*.xml"</span>
+
+<span class="fn">sast:</span>
+  <span class="kw">stage:</span> security
+  <span class="kw">include:</span>
+    - <span class="kw">template:</span> Security/SAST.gitlab-ci.yml
+
+<span class="fn">dependency_scanning:</span>
+  <span class="kw">stage:</span> security
+  <span class="kw">include:</span>
+    - <span class="kw">template:</span> Security/Dependency-Scanning.gitlab-ci.yml
+
+<span class="fn">secret_detection:</span>
+  <span class="kw">stage:</span> security
+  <span class="kw">include:</span>
+    - <span class="kw">template:</span> Security/Secret-Detection.gitlab-ci.yml
+
+<span class="fn">deploy_staging:</span>
+  <span class="kw">stage:</span> deploy
+  <span class="kw">script:</span>
+    - echo <span class="str">"Deploying to staging..."</span>
+  <span class="kw">environment:</span>
+    <span class="kw">name:</span> staging
+  <span class="kw">only:</span>
+    - main</code></pre>
+
+<!-- ============================================================== -->
+<h3 id="azure-devops">Azure DevOps</h3>
+<p>
+    La plateforme DevOps de Microsoft, fortement integree avec <strong>Visual Studio</strong>,
+    <strong>Azure</strong> et l'ecosysteme .NET. Offre des outils complets pour le cycle de vie du logiciel.
+</p>
+
+<div class="card" style="margin: 1rem 0;">
+    <h4>Fonctionnalites principales</h4>
+    <ul>
+        <li><strong>Azure Repos :</strong> Hebergement Git avec Pull Requests et branch policies</li>
+        <li><strong>Azure Pipelines :</strong> CI/CD multi-plateforme (Windows, Linux, macOS)</li>
+        <li><strong>Azure Boards :</strong> Gestion de projet agile (Scrum, Kanban, sprints)</li>
+        <li><strong>Azure Artifacts :</strong> Registre de packages (NuGet, npm, Maven, Python)</li>
+        <li><strong>Azure Test Plans :</strong> Gestion des tests manuels et automatises</li>
+        <li><strong>Integration Visual Studio :</strong> Connexion native depuis l'IDE</li>
+    </ul>
+</div>
+
+<h4>Branch Policies (Azure DevOps)</h4>
+<ul>
+    <li>Nombre minimum de reviewers</li>
+    <li>Build validation (le pipeline doit reussir)</li>
+    <li>Lier un work item (tracer chaque changement a une tache)</li>
+    <li>Resoudre tous les commentaires avant merge</li>
+    <li>Strategie de merge (merge commit, squash, rebase)</li>
+    <li>Limiter les types de merge autorises</li>
+</ul>
+
+<h4>Exemple azure-pipelines.yml</h4>
+<pre><code><span class="cmt"># azure-pipelines.yml</span>
+<span class="kw">trigger:</span>
+  - main
+
+<span class="kw">pool:</span>
+  <span class="kw">vmImage:</span> <span class="str">'ubuntu-latest'</span>
+
+<span class="kw">variables:</span>
+  <span class="kw">buildConfiguration:</span> <span class="str">'Release'</span>
+
+<span class="kw">steps:</span>
+- <span class="kw">task:</span> UseDotNet@2
+  <span class="kw">inputs:</span>
+    <span class="kw">packageType:</span> <span class="str">'sdk'</span>
+    <span class="kw">version:</span> <span class="str">'8.0.x'</span>
+
+- <span class="kw">script:</span> dotnet restore
+  <span class="kw">displayName:</span> <span class="str">'Restore NuGet packages'</span>
+
+- <span class="kw">script:</span> dotnet build --configuration $(buildConfiguration)
+  <span class="kw">displayName:</span> <span class="str">'Build'</span>
+
+- <span class="kw">script:</span> dotnet test --configuration $(buildConfiguration) --no-build
+  <span class="kw">displayName:</span> <span class="str">'Run Tests'</span>
+
+- <span class="kw">task:</span> DotNetCoreCLI@2
+  <span class="kw">inputs:</span>
+    <span class="kw">command:</span> <span class="str">'publish'</span>
+    <span class="kw">publishWebProjects:</span> true
+    <span class="kw">arguments:</span> <span class="str">'--configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)'</span>
+
+- <span class="kw">task:</span> PublishBuildArtifacts@1
+  <span class="kw">inputs:</span>
+    <span class="kw">PathtoPublish:</span> <span class="str">'$(Build.ArtifactStagingDirectory)'</span>
+    <span class="kw">ArtifactName:</span> <span class="str">'drop'</span></code></pre>
+
+<!-- ============================================================== -->
+<h3 id="platform-comparison">Comparaison des plateformes</h3>
+
+<table>
+    <thead>
+        <tr><th>Fonctionnalite</th><th>GitHub</th><th>GitLab</th><th>Azure DevOps</th></tr>
+    </thead>
+    <tbody>
+        <tr><td>CI/CD</td><td>Actions</td><td><span class="success-hl">Built-in (le meilleur)</span></td><td>Pipelines</td></tr>
+        <tr><td>Gratuit (prive)</td><td>Oui (limite)</td><td>Oui</td><td>Oui (5 users)</td></tr>
+        <tr><td>Self-hosted</td><td>Enterprise</td><td><span class="success-hl">Community Edition</span></td><td>Server</td></tr>
+        <tr><td>Container Registry</td><td>Oui</td><td>Oui</td><td>Artifacts</td></tr>
+        <tr><td>Security Scanning</td><td>Dependabot, CodeQL</td><td><span class="success-hl">SAST/DAST integres</span></td><td>Extensions</td></tr>
+        <tr><td>Gestion de projet</td><td>Projects, Issues</td><td>Issues, Boards, Epics</td><td><span class="success-hl">Boards, Sprints</span></td></tr>
+        <tr><td>Code Review</td><td>Pull Requests</td><td>Merge Requests</td><td>Pull Requests</td></tr>
+        <tr><td>IDE Integration</td><td>VS Code, Codespaces</td><td>Web IDE, VS Code</td><td><span class="success-hl">Visual Studio</span></td></tr>
+        <tr><td>Pages / Sites</td><td>GitHub Pages</td><td>GitLab Pages</td><td>—</td></tr>
+        <tr><td>IA / Copilot</td><td><span class="success-hl">GitHub Copilot</span></td><td>Duo (GitLab AI)</td><td>Via Copilot</td></tr>
+        <tr><td>Open Source</td><td><span class="success-hl">Reference</span></td><td>Populaire</td><td>Rare</td></tr>
+        <tr><td>Ecosysteme</td><td>Marketplace riche</td><td>Tout integre</td><td>Microsoft / Azure</td></tr>
+    </tbody>
+</table>
+
+<div class="alert alert-info">
+    <strong>Recommandation :</strong>
+    <ul>
+        <li><strong>Open source / projets personnels :</strong> GitHub (communaute, visibilite)</li>
+        <li><strong>Entreprise avec CI/CD avance :</strong> GitLab (DevSecOps complet)</li>
+        <li><strong>Ecosysteme Microsoft / .NET :</strong> Azure DevOps (integration Visual Studio + Azure)</li>
+    </ul>
+</div>
+
+<!-- ============================================================== -->
+<h2 id="cicd">10. CI/CD et Git</h2>
+
+<h3>Comment la strategie de branches pilote le CI/CD</h3>
+
+<div class="diagram">
+Branche          Action CI/CD                    Environnement
+─────────────────────────────────────────────────────────────────
+feature/*        Build + Tests unitaires          —
+                 Lint + Security scan
+
+develop          Build + Tests + Integration      Staging
+                 Deploy automatique
+
+release/*        Build + Tests complets           Pre-production
+                 Tests de performance
+
+main             Build + Tests + Deploy           Production
+                 Tag de version
+                 Notification equipe
+
+hotfix/*         Build + Tests critiques          Production
+                 Deploy urgent
+</div>
+
+<h3>Branch Protection + CI/CD</h3>
+<p>
+    Combinez les regles de protection de branche avec le CI/CD pour garantir la qualite :
+</p>
+
+<table>
+    <thead>
+        <tr><th>Regle</th><th>Effet</th></tr>
+    </thead>
+    <tbody>
+        <tr><td>Build requis avant merge</td><td>Le code compile toujours</td></tr>
+        <tr><td>Tests requis avant merge</td><td>Pas de regression</td></tr>
+        <tr><td>Review requise (2 approbations)</td><td>Qualite du code verifiee</td></tr>
+        <tr><td>Scan de securite requis</td><td>Pas de vulnerabilite connue</td></tr>
+        <tr><td>Pas de force push</td><td>L'historique est preserve</td></tr>
+        <tr><td>Branches a jour avec main</td><td>Pas de conflit au merge</td></tr>
+    </tbody>
+</table>
+
+<h3>Pipeline type</h3>
+<div class="diagram">
+┌──────┐    ┌───────┐    ┌──────┐    ┌──────────┐    ┌────────┐
+│ Push │───&gt;│ Build │───&gt;│ Test │───&gt;│ Security │───&gt;│ Deploy │
+└──────┘    └───────┘    └──────┘    └──────────┘    └────────┘
+                              │            │
+                              ▼            ▼
+                         Unit Tests    SAST/DAST
+                         Integration   Dependency Scan
+                         E2E           Secret Detection
+</div>
+
+<!-- ============================================================== -->
+<h2 id="securite">11. Securite Git</h2>
+
+<h3>Commits signes (GPG/SSH)</h3>
+<p>
+    Signer vos commits prouve cryptographiquement que <strong>vous</strong> etes l'auteur.
+    Les commits signes affichent un badge "Verified" sur GitHub/GitLab.
+</p>
+
+<pre><code><span class="cmt"># Configurer la signature GPG</span>
+<span class="fn">git config</span> <span class="kw">--global</span> commit.gpgsign <span class="str">true</span>
+<span class="fn">git config</span> <span class="kw">--global</span> user.signingkey <span class="str">ABCDEF1234567890</span>
+
+<span class="cmt"># Ou avec une cle SSH (Git 2.34+)</span>
+<span class="fn">git config</span> <span class="kw">--global</span> gpg.format <span class="str">ssh</span>
+<span class="fn">git config</span> <span class="kw">--global</span> user.signingkey <span class="str">~/.ssh/id_ed25519.pub</span>
+
+<span class="cmt"># Verifier les signatures</span>
+<span class="fn">git log</span> <span class="kw">--show-signature</span>
+
+<span class="cmt"># Signer un tag</span>
+<span class="fn">git tag</span> <span class="kw">-s</span> v1.0.0 <span class="kw">-m</span> <span class="str">"Release 1.0.0"</span></code></pre>
+
+<h3>Proteger les secrets</h3>
+
+<div class="alert alert-danger">
+    <strong>Ne commitez JAMAIS de secrets !</strong> Mots de passe, cles API, tokens, certificats...
+    Une fois dans l'historique Git, un secret est extremement difficile a supprimer completement.
+</div>
+
+<pre><code><span class="cmt"># Installer gitleaks (outil de detection de secrets)</span>
+<span class="cmt"># https://github.com/gitleaks/gitleaks</span>
+
+<span class="cmt"># Scanner le repo</span>
+<span class="fn">gitleaks</span> detect --source .
+
+<span class="cmt"># Scanner avant chaque commit (pre-commit hook)</span>
+<span class="fn">gitleaks</span> protect --staged
+
+<span class="cmt"># Autre outil : git-secrets (AWS)</span>
+<span class="fn">git secrets</span> <span class="kw">--install</span>
+<span class="fn">git secrets</span> <span class="kw">--register-aws</span>
+<span class="fn">git secrets</span> <span class="kw">--scan</span></code></pre>
+
+<h3>SSH vs HTTPS</h3>
+<table>
+    <thead>
+        <tr><th>Critere</th><th>HTTPS</th><th>SSH</th></tr>
+    </thead>
+    <tbody>
+        <tr><td>Configuration</td><td><span class="success-hl">Simple</span></td><td>Necessite generer une cle</td></tr>
+        <tr><td>Authentification</td><td>Mot de passe / token</td><td><span class="success-hl">Cle cryptographique</span></td></tr>
+        <tr><td>Securite</td><td>Bonne (avec token)</td><td><span class="success-hl">Excellente</span></td></tr>
+        <tr><td>Firewall</td><td><span class="success-hl">Port 443 (rarement bloque)</span></td><td>Port 22 (parfois bloque)</td></tr>
+        <tr><td>Recommandation</td><td>Debutants, environnements restreints</td><td><span class="success-hl">Usage quotidien</span></td></tr>
+    </tbody>
+</table>
+
+<pre><code><span class="cmt"># Generer une cle SSH Ed25519 (recommandee)</span>
+<span class="fn">ssh-keygen</span> <span class="kw">-t ed25519</span> <span class="kw">-C</span> <span class="str">"votre@email.com"</span>
+
+<span class="cmt"># Ajouter la cle a l'agent SSH</span>
+<span class="fn">eval</span> <span class="str">"$(ssh-agent -s)"</span>
+<span class="fn">ssh-add</span> ~/.ssh/id_ed25519
+
+<span class="cmt"># Copier la cle publique (a coller dans GitHub/GitLab)</span>
+<span class="fn">cat</span> ~/.ssh/id_ed25519.pub
+
+<span class="cmt"># Tester la connexion</span>
+<span class="fn">ssh</span> <span class="kw">-T</span> git@github.com</code></pre>
+
+<h3>Git LFS — Large File Storage</h3>
+<p>
+    Git n'est pas fait pour les gros fichiers binaires (images, videos, modeles 3D...).
+    <strong>Git LFS</strong> les stocke separement et ne garde qu'un pointeur dans le repo.
+</p>
+
+<pre><code><span class="cmt"># Installer Git LFS</span>
+<span class="fn">git lfs</span> install
+
+<span class="cmt"># Suivre les fichiers par extension</span>
+<span class="fn">git lfs</span> track <span class="str">"*.psd"</span>
+<span class="fn">git lfs</span> track <span class="str">"*.mp4"</span>
+<span class="fn">git lfs</span> track <span class="str">"*.zip"</span>
+
+<span class="cmt"># Le .gitattributes est mis a jour automatiquement</span>
+<span class="fn">git add</span> .gitattributes
+
+<span class="cmt"># Voir les fichiers suivis par LFS</span>
+<span class="fn">git lfs</span> ls-files</code></pre>
+
+<h3>Supprimer des donnees sensibles de l'historique</h3>
+
+<pre><code><span class="cmt"># Avec git filter-repo (outil recommande)</span>
+<span class="cmt"># Installation : pip install git-filter-repo</span>
+
+<span class="cmt"># Supprimer un fichier de TOUT l'historique</span>
+<span class="fn">git filter-repo</span> <span class="kw">--path</span> secrets.json <span class="kw">--invert-paths</span>
+
+<span class="cmt"># Remplacer un texte dans tout l'historique</span>
+<span class="fn">git filter-repo</span> <span class="kw">--replace-text</span> expressions.txt
+
+<span class="cmt"># ATTENTION : cela reecrit TOUT l'historique !</span>
+<span class="cmt"># Tous les collaborateurs devront re-cloner le repo.</span></code></pre>
+
+<div class="alert alert-warning">
+    <strong>Apres avoir nettoye l'historique :</strong>
+    <ul>
+        <li>Changez immediatement tous les secrets qui ont ete exposes</li>
+        <li>Forcez le push : <code>git push --force-with-lease</code></li>
+        <li>Demandez a tous les collaborateurs de re-cloner</li>
+        <li>Revoquez les tokens/cles compromis</li>
+    </ul>
+</div>
+
+<!-- ============================================================== -->
+<h2 id="cheatsheet">12. Reference rapide</h2>
+
+<h3>Configuration</h3>
+<table>
+    <thead>
+        <tr><th>Commande</th><th>Description</th></tr>
+    </thead>
+    <tbody>
+        <tr><td><code>git init</code></td><td>Initialiser un nouveau depot Git</td></tr>
+        <tr><td><code>git clone &lt;url&gt;</code></td><td>Cloner un depot distant</td></tr>
+        <tr><td><code>git config --global user.name "Nom"</code></td><td>Definir le nom d'utilisateur</td></tr>
+        <tr><td><code>git config --global user.email "email"</code></td><td>Definir l'adresse email</td></tr>
+        <tr><td><code>git config --list</code></td><td>Voir la configuration actuelle</td></tr>
+    </tbody>
+</table>
+
+<h3>Modifications</h3>
+<table>
+    <thead>
+        <tr><th>Commande</th><th>Description</th></tr>
+    </thead>
+    <tbody>
+        <tr><td><code>git status</code></td><td>Voir l'etat des fichiers</td></tr>
+        <tr><td><code>git add &lt;fichier&gt;</code></td><td>Stager un fichier</td></tr>
+        <tr><td><code>git add .</code></td><td>Stager tous les changements</td></tr>
+        <tr><td><code>git add -p</code></td><td>Stager interactivement (par morceaux)</td></tr>
+        <tr><td><code>git commit -m "msg"</code></td><td>Creer un commit</td></tr>
+        <tr><td><code>git commit --amend</code></td><td>Modifier le dernier commit</td></tr>
+        <tr><td><code>git diff</code></td><td>Voir les modifications non stagees</td></tr>
+        <tr><td><code>git diff --staged</code></td><td>Voir les modifications stagees</td></tr>
+        <tr><td><code>git rm &lt;fichier&gt;</code></td><td>Supprimer un fichier et stager</td></tr>
+        <tr><td><code>git mv &lt;src&gt; &lt;dst&gt;</code></td><td>Deplacer/renommer un fichier</td></tr>
+    </tbody>
+</table>
+
+<h3>Branches</h3>
+<table>
+    <thead>
+        <tr><th>Commande</th><th>Description</th></tr>
+    </thead>
+    <tbody>
+        <tr><td><code>git branch</code></td><td>Lister les branches locales</td></tr>
+        <tr><td><code>git branch -a</code></td><td>Lister toutes les branches</td></tr>
+        <tr><td><code>git switch -c &lt;nom&gt;</code></td><td>Creer et basculer vers une branche</td></tr>
+        <tr><td><code>git switch &lt;nom&gt;</code></td><td>Basculer vers une branche</td></tr>
+        <tr><td><code>git merge &lt;branche&gt;</code></td><td>Fusionner une branche</td></tr>
+        <tr><td><code>git merge --no-ff &lt;branche&gt;</code></td><td>Fusionner avec commit de merge</td></tr>
+        <tr><td><code>git branch -d &lt;nom&gt;</code></td><td>Supprimer une branche (safe)</td></tr>
+        <tr><td><code>git branch -D &lt;nom&gt;</code></td><td>Supprimer une branche (force)</td></tr>
+    </tbody>
+</table>
+
+<h3>Synchronisation</h3>
+<table>
+    <thead>
+        <tr><th>Commande</th><th>Description</th></tr>
+    </thead>
+    <tbody>
+        <tr><td><code>git fetch</code></td><td>Recuperer les changements distants</td></tr>
+        <tr><td><code>git pull</code></td><td>Recuperer et fusionner (fetch + merge)</td></tr>
+        <tr><td><code>git push</code></td><td>Pousser les commits vers le remote</td></tr>
+        <tr><td><code>git push -u origin &lt;branche&gt;</code></td><td>Pousser et lier la branche au remote</td></tr>
+        <tr><td><code>git push origin --delete &lt;br&gt;</code></td><td>Supprimer une branche distante</td></tr>
+        <tr><td><code>git remote -v</code></td><td>Voir les remotes configures</td></tr>
+        <tr><td><code>git remote add &lt;nom&gt; &lt;url&gt;</code></td><td>Ajouter un remote</td></tr>
+    </tbody>
+</table>
+
+<h3>Historique</h3>
+<table>
+    <thead>
+        <tr><th>Commande</th><th>Description</th></tr>
+    </thead>
+    <tbody>
+        <tr><td><code>git log</code></td><td>Voir l'historique des commits</td></tr>
+        <tr><td><code>git log --oneline --graph</code></td><td>Historique compact avec graphe</td></tr>
+        <tr><td><code>git log -p &lt;fichier&gt;</code></td><td>Historique detaille d'un fichier</td></tr>
+        <tr><td><code>git blame &lt;fichier&gt;</code></td><td>Qui a modifie chaque ligne</td></tr>
+        <tr><td><code>git show &lt;commit&gt;</code></td><td>Voir le contenu d'un commit</td></tr>
+        <tr><td><code>git reflog</code></td><td>Historique de tous les mouvements HEAD</td></tr>
+    </tbody>
+</table>
+
+<h3>Annulation</h3>
+<table>
+    <thead>
+        <tr><th>Commande</th><th>Description</th></tr>
+    </thead>
+    <tbody>
+        <tr><td><code>git restore &lt;fichier&gt;</code></td><td>Annuler les modifications non stagees</td></tr>
+        <tr><td><code>git restore --staged &lt;fichier&gt;</code></td><td>Destocker un fichier (unstage)</td></tr>
+        <tr><td><code>git reset HEAD~1</code></td><td>Annuler le dernier commit (garder les fichiers)</td></tr>
+        <tr><td><code>git reset --hard HEAD~1</code></td><td>Annuler le dernier commit (tout supprimer)</td></tr>
+        <tr><td><code>git revert &lt;commit&gt;</code></td><td>Creer un commit inverse (safe)</td></tr>
+        <tr><td><code>git clean -fd</code></td><td>Supprimer les fichiers non suivis</td></tr>
+    </tbody>
+</table>
+
+<h3>Avance</h3>
+<table>
+    <thead>
+        <tr><th>Commande</th><th>Description</th></tr>
+    </thead>
+    <tbody>
+        <tr><td><code>git stash</code></td><td>Mettre de cote les modifications</td></tr>
+        <tr><td><code>git stash pop</code></td><td>Restaurer le dernier stash</td></tr>
+        <tr><td><code>git rebase main</code></td><td>Rebaser sur main</td></tr>
+        <tr><td><code>git rebase -i HEAD~3</code></td><td>Rebase interactif (3 derniers commits)</td></tr>
+        <tr><td><code>git cherry-pick &lt;sha&gt;</code></td><td>Copier un commit specifique</td></tr>
+        <tr><td><code>git bisect start</code></td><td>Demarrer la recherche dichotomique</td></tr>
+        <tr><td><code>git tag v1.0.0</code></td><td>Creer un tag leger</td></tr>
+        <tr><td><code>git tag -a v1.0.0 -m "msg"</code></td><td>Creer un tag annote</td></tr>
+    </tbody>
+</table>
+
+<div class="alert alert-success">
+    <strong>Astuce finale :</strong> En cas de doute, faites <code>git status</code>.
+    Si vous avez fait une erreur, consultez <code>git reflog</code>.
+    Git est concu pour ne (presque) jamais perdre de donnees !
+</div>
+
+</main>
+
+<footer>
+    Condorcet 2026 — Programmation Securisee
+</footer>
+
+</body>
+</html>

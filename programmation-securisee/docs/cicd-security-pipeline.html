@@ -1,0 +1,2540 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pipeline CI/CD Securise - DevSecOps</title>
+    <style>
+        :root {
+            --bg: #0f1117;
+            --surface: #1a1d27;
+            --surface-2: #242736;
+            --accent: #ffa502;
+            --accent-light: #ffbe33;
+            --danger: #ff4757;
+            --success: #2ed573;
+            --warning: #ffa502;
+            --info: #1e90ff;
+            --text: #e4e6eb;
+            --text-muted: #8b8fa3;
+            --border: #2e3142;
+            --code-bg: #12131a;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+        }
+
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 260px;
+            height: 100vh;
+            background: var(--surface);
+            border-right: 1px solid var(--border);
+            padding: 2rem 1.5rem;
+            overflow-y: auto;
+            z-index: 100;
+        }
+
+        nav .logo { font-size: 1.4rem; font-weight: 800; margin-bottom: 2rem; }
+        nav .logo span { color: var(--accent); }
+        nav .section-title {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--text-muted);
+            margin: 1.5rem 0 0.5rem;
+        }
+        nav a {
+            display: block;
+            color: var(--text-muted);
+            text-decoration: none;
+            padding: 0.3rem 0;
+            font-size: 0.9rem;
+            transition: color 0.2s;
+        }
+        nav a:hover { color: var(--accent); }
+
+        main {
+            margin-left: 260px;
+            max-width: 900px;
+            padding: 3rem 4rem;
+        }
+
+        h1 { font-size: 2.2rem; font-weight: 800; margin-bottom: 0.5rem; }
+        h1 span { color: var(--accent); }
+
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            margin-bottom: 3rem;
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin: 3rem 0 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--accent);
+        }
+
+        h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            margin: 2rem 0 0.8rem;
+            color: var(--accent-light);
+        }
+
+        p { margin-bottom: 1rem; }
+
+        code {
+            background: var(--code-bg);
+            padding: 0.15rem 0.4rem;
+            border-radius: 4px;
+            font-size: 0.88em;
+            color: var(--accent-light);
+        }
+
+        pre {
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.2rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-size: 0.88rem;
+            line-height: 1.6;
+        }
+
+        pre code { background: none; padding: 0; color: var(--text); }
+
+        .kw { color: #c678dd; }
+        .str { color: #98c379; }
+        .cmt { color: #5c6370; }
+        .fn { color: #61afef; }
+        .val { color: #d19a66; }
+        .danger-hl { color: #ff4757; }
+        .success-hl { color: #2ed573; }
+
+        .alert {
+            padding: 1rem 1.2rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            border-left: 4px solid;
+        }
+
+        .alert-danger { background: rgba(255, 71, 87, 0.1); border-color: var(--danger); }
+        .alert-success { background: rgba(46, 213, 115, 0.1); border-color: var(--success); }
+        .alert-warning { background: rgba(255, 165, 2, 0.1); border-color: var(--warning); }
+        .alert-info { background: rgba(30, 144, 255, 0.1); border-color: var(--info); }
+
+        .comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.5rem;
+        }
+
+        .card.bad { border-color: var(--danger); }
+        .card.good { border-color: var(--success); }
+
+        .card h4 { font-size: 1rem; margin-bottom: 1rem; }
+        .card.bad h4 { color: var(--danger); }
+        .card.good h4 { color: var(--success); }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+
+        th, td {
+            padding: 0.6rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th {
+            background: var(--surface-2);
+            font-weight: 600;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        ul, ol { margin: 0.5rem 0 1rem 1.5rem; }
+        li { margin-bottom: 0.3rem; }
+        strong { color: var(--text); }
+
+        footer {
+            margin-left: 260px;
+            padding: 2rem 4rem;
+            border-top: 1px solid var(--border);
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        .diagram-box {
+            background: var(--surface);
+            border: 2px solid var(--accent);
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            text-align: center;
+        }
+
+        .diagram-box pre {
+            background: none;
+            border: none;
+            text-align: left;
+            margin: 0;
+            padding: 0;
+        }
+
+        .diagram-box pre code {
+            color: var(--text);
+            font-size: 0.82rem;
+        }
+
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+
+        .stat-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.2rem;
+            text-align: center;
+        }
+
+        .stat-card .stat-number {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--accent);
+            display: block;
+            margin-bottom: 0.3rem;
+        }
+
+        .stat-card .stat-label {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .cost-bar {
+            display: flex;
+            align-items: center;
+            margin: 0.5rem 0;
+            gap: 0.8rem;
+        }
+
+        .cost-bar .label {
+            width: 120px;
+            font-size: 0.9rem;
+            text-align: right;
+        }
+
+        .cost-bar .bar {
+            height: 28px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            padding-left: 0.6rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #fff;
+        }
+
+        .pipeline-full {
+            background: var(--surface);
+            border: 2px solid var(--accent);
+            border-radius: 12px;
+            padding: 2rem;
+            margin: 1.5rem 0;
+            overflow-x: auto;
+        }
+
+        .pipeline-full pre {
+            background: none;
+            border: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.15rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .badge-success { background: rgba(46,213,115,0.2); color: var(--success); }
+        .badge-danger { background: rgba(255,71,87,0.2); color: var(--danger); }
+        .badge-warning { background: rgba(255,165,2,0.2); color: var(--warning); }
+        .badge-info { background: rgba(30,144,255,0.2); color: var(--info); }
+
+        .checklist {
+            list-style: none;
+            margin-left: 0;
+        }
+        .checklist li {
+            padding: 0.4rem 0;
+            padding-left: 1.8rem;
+            position: relative;
+        }
+        .checklist li::before {
+            content: "\2713";
+            position: absolute;
+            left: 0;
+            color: var(--success);
+            font-weight: bold;
+        }
+
+        @media (max-width: 768px) {
+            nav { display: none; }
+            main, footer { margin-left: 0; padding: 1.5rem; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ============================== NAV ============================== -->
+<nav>
+    <div class="logo"><span>DevSec</span>Ops</div>
+
+    <div class="section-title">Introduction</div>
+    <a href="#intro">Pourquoi DevSecOps ?</a>
+    <a href="#shift-left">Shift Left Security</a>
+
+    <div class="section-title">Pipeline CI/CD</div>
+    <a href="#pipeline-classique">Etapes classiques</a>
+    <a href="#pipeline-securise">Pipeline securise</a>
+
+    <div class="section-title">SAST</div>
+    <a href="#sast">Analyse statique</a>
+    <a href="#sast-outils">Outils SAST</a>
+    <a href="#sast-exemples">Exemples CI</a>
+
+    <div class="section-title">SCA</div>
+    <a href="#sca">Analyse des dependances</a>
+    <a href="#sbom">SBOM</a>
+    <a href="#sca-outils">Outils SCA</a>
+
+    <div class="section-title">DAST</div>
+    <a href="#dast">Analyse dynamique</a>
+    <a href="#dast-outils">Outils DAST</a>
+
+    <div class="section-title">Secrets</div>
+    <a href="#secrets">Detection de secrets</a>
+    <a href="#secrets-gestion">Gestion des secrets</a>
+
+    <div class="section-title">Conteneurs</div>
+    <a href="#containers">Scan d'images</a>
+    <a href="#docker-bp">Bonnes pratiques</a>
+
+    <div class="section-title">IaC</div>
+    <a href="#iac">Scan de config</a>
+    <a href="#iac-compliance">Compliance</a>
+
+    <div class="section-title">Qualite</div>
+    <a href="#quality-gate">Quality Gates</a>
+    <a href="#sonarqube">SonarQube</a>
+
+    <div class="section-title">Production</div>
+    <a href="#deploy">Mise en production</a>
+    <a href="#rollback">Rollback</a>
+
+    <div class="section-title">Exemples complets</div>
+    <a href="#github-actions">GitHub Actions</a>
+    <a href="#gitlab-ci">GitLab CI</a>
+    <a href="#azure-devops">Azure DevOps</a>
+
+    <div class="section-title">Recap</div>
+    <a href="#bonnes-pratiques">Bonnes pratiques</a>
+    <a href="#references">References</a>
+</nav>
+
+<!-- ============================== MAIN ============================== -->
+<main>
+    <h1>Pipeline CI/CD <span>Securise</span> &mdash; DevSecOps</h1>
+    <p class="subtitle">Integrer la cybersecurite dans chaque etape du pipeline de developpement</p>
+
+    <!-- =============================================================== -->
+    <!-- 1. INTRODUCTION                                                 -->
+    <!-- =============================================================== -->
+    <h2 id="intro">1. Introduction &mdash; Pourquoi DevSecOps ?</h2>
+
+    <p>
+        Le modele traditionnel de developpement logiciel separait strictement les equipes :
+        les developpeurs ecrivaient le code, les equipes operations le deployaient, et la securite
+        intervenait <strong>en fin de cycle</strong> &mdash; souvent trop tard pour corriger les problemes
+        de maniere efficace et economique.
+    </p>
+
+    <div class="comparison">
+        <div class="card bad">
+            <h4>Modele traditionnel (Dev + Ops)</h4>
+<pre><code>Developpeurs          Securite         Operations
+     |                   |                  |
+     |  Code termine     |                  |
+     |-------------------+---> Audit ------>|
+     |                   |  (trop tard!)    |
+     |   Corrections     |                  |
+     |<------------------+                  |
+     |   (couteuses)     |                  |</code></pre>
+            <p>La securite est un <strong>goulot d'etranglement</strong> en fin de cycle. Les corrections sont couteuses et retardent la livraison.</p>
+        </div>
+        <div class="card good">
+            <h4>DevSecOps (Securite integree)</h4>
+<pre><code>  Dev + Sec + Ops = Une seule equipe
+         |
+    +---------+
+    | Commit  | --> Scan secrets
+    +---------+     Lint securite
+         |
+    +---------+
+    | Build   | --> SAST, SCA
+    +---------+     Image scan
+         |
+    +---------+
+    | Test    | --> DAST, Fuzzing
+    +---------+     Pentest auto
+         |
+    +---------+
+    | Deploy  | --> Security Gate
+    +---------+     SBOM, Signing</code></pre>
+            <p>La securite est <strong>automatisee</strong> et presente a chaque etape.</p>
+        </div>
+    </div>
+
+    <h3 id="shift-left">Shift Left Security</h3>
+
+    <p>
+        Le concept de <strong>"Shift Left"</strong> consiste a deplacer les controles de securite
+        le plus tot possible dans le cycle de developpement. Plus une vulnerabilite est detectee tot,
+        moins elle coute a corriger.
+    </p>
+
+    <div class="alert alert-warning">
+        <strong>Cout de correction d'un bug selon la phase de detection :</strong>
+    </div>
+
+    <div class="cost-bar">
+        <div class="label">Design</div>
+        <div class="bar" style="width: 80px; background: var(--success);">1x</div>
+    </div>
+    <div class="cost-bar">
+        <div class="label">Developpement</div>
+        <div class="bar" style="width: 160px; background: #61afef;">6.5x</div>
+    </div>
+    <div class="cost-bar">
+        <div class="label">Tests</div>
+        <div class="bar" style="width: 300px; background: var(--warning);">15x</div>
+    </div>
+    <div class="cost-bar">
+        <div class="label">Production</div>
+        <div class="bar" style="width: 500px; background: var(--danger);">100x</div>
+    </div>
+
+    <p style="margin-top:1rem;">
+        <em>Source : IBM Systems Sciences Institute &mdash; Un bug detecte en production coute jusqu'a
+        <strong>100 fois plus</strong> a corriger que s'il avait ete detecte en phase de conception.</em>
+    </p>
+
+    <h3>La boucle infinie DevSecOps</h3>
+
+    <div class="diagram-box">
+<pre><code>                    +-----------+
+               +--->|   PLAN    |---+
+               |    +-----------+   |
+               |                    v
+        +-----------+         +-----------+
+        |  MONITOR  |         |   CODE    |
+        +-----------+         +-----------+
+               ^                    |
+               |                    v
+        +-----------+         +-----------+
+        |  OPERATE  |         |   BUILD   |
+        +-----------+         +-----------+
+               ^                    |
+               |                    v
+        +-----------+         +-----------+
+        |  DEPLOY   |<--------|   TEST    |
+        +-----------+         +-----------+
+
+        |<--- Ops ------->|<--- Dev ------->|
+        |<---------- Sec (partout) -------->|
+
+           ===  CONTINUOUS FEEDBACK  ===</code></pre>
+    </div>
+
+    <h3>Statistiques cles</h3>
+
+    <div class="stat-grid">
+        <div class="stat-card">
+            <span class="stat-number">84%</span>
+            <span class="stat-label">des codebases contiennent au moins une vulnerabilite connue</span>
+        </div>
+        <div class="stat-card">
+            <span class="stat-number">158j</span>
+            <span class="stat-label">temps moyen pour corriger une CVE critique</span>
+        </div>
+        <div class="stat-card">
+            <span class="stat-number">80-90%</span>
+            <span class="stat-label">du code est compose de dependances open source</span>
+        </div>
+        <div class="stat-card">
+            <span class="stat-number">100x</span>
+            <span class="stat-label">cout de correction en production vs conception</span>
+        </div>
+    </div>
+
+    <!-- =============================================================== -->
+    <!-- 2. PIPELINE CI/CD                                               -->
+    <!-- =============================================================== -->
+    <h2 id="pipeline-classique">2. Pipeline CI/CD : Classique vs Securise</h2>
+
+    <h3>Pipeline classique (sans securite)</h3>
+
+    <div class="diagram-box">
+<pre><code>  +--------+     +--------+     +--------+     +--------+
+  |  CODE  |---->| BUILD  |---->|  TEST  |---->| DEPLOY |
+  +--------+     +--------+     +--------+     +--------+
+
+  Aucune verification de securite automatisee.
+  Les vulnerabilites passent directement en production.</code></pre>
+    </div>
+
+    <div class="alert alert-danger">
+        <strong>Problemes :</strong> Pas de scan de secrets, pas d'analyse de vulnerabilites,
+        pas de verification des dependances, pas de gate de securite avant le deploiement.
+    </div>
+
+    <h3 id="pipeline-securise">Pipeline securise (DevSecOps)</h3>
+
+    <div class="pipeline-full">
+<pre><code>+=====================================================================+
+|                    PIPELINE DevSecOps COMPLET                        |
++=====================================================================+
+|                                                                     |
+|  COMMIT              BUILD               TEST              DEPLOY   |
+|    |                   |                   |                  |     |
+|    v                   v                   v                  v     |
+| +----------+     +----------+        +----------+      +----------+|
+| | Secret   |     | SAST     |        | DAST     |      | Security ||
+| | Scan     |     | (code)   |        | (runtime)|      | Gate     ||
+| |----------|     |----------|        |----------|      |----------||
+| | Lint     |     | SCA      |        | Pentest  |      | Artifact ||
+| | securite |     | (deps)   |        | auto     |      | Sign     ||
+| |----------|     |----------|        |----------|      |----------||
+| | Pre-     |     | License  |        | Fuzzing  |      | SBOM     ||
+| | commit   |     | Check    |        |          |      | Generate ||
+| | hooks    |     |----------|        | API      |      |----------||
+| |          |     | Image    |        | Security |      | Deploy   ||
+| |          |     | Scan     |        | Test     |      | Canary   ||
+| +----------+     +----------+        +----------+      +----------+|
+|                                                                     |
+|  <======== FEEDBACK CONTINU (Notifications, Dashboards) ========>  |
+|  <======== MONITORING & ALERTES (SIEM, Runtime Protection) =====>  |
++=====================================================================+</code></pre>
+    </div>
+
+    <div class="alert alert-success">
+        <strong>Chaque etape</strong> du pipeline integre des controles de securite automatises.
+        Le feedback est continu : les developpeurs sont alertes immediatement en cas de probleme.
+    </div>
+
+    <h3>Comparaison detaillee</h3>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Aspect</th>
+                <th>Pipeline classique</th>
+                <th>Pipeline DevSecOps</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Scan de secrets</td>
+                <td><span class="badge badge-danger">Aucun</span></td>
+                <td><span class="badge badge-success">Pre-commit + CI</span></td>
+            </tr>
+            <tr>
+                <td>Analyse du code</td>
+                <td><span class="badge badge-warning">Lint basique</span></td>
+                <td><span class="badge badge-success">SAST + Lint securite</span></td>
+            </tr>
+            <tr>
+                <td>Dependances</td>
+                <td><span class="badge badge-danger">Non verifiees</span></td>
+                <td><span class="badge badge-success">SCA + License check</span></td>
+            </tr>
+            <tr>
+                <td>Tests runtime</td>
+                <td><span class="badge badge-warning">Tests fonctionnels</span></td>
+                <td><span class="badge badge-success">DAST + Fuzzing + Pentest</span></td>
+            </tr>
+            <tr>
+                <td>Conteneurs</td>
+                <td><span class="badge badge-danger">Non scannes</span></td>
+                <td><span class="badge badge-success">Image scan + SBOM</span></td>
+            </tr>
+            <tr>
+                <td>Gate de deploiement</td>
+                <td><span class="badge badge-danger">Aucune</span></td>
+                <td><span class="badge badge-success">Quality Gate obligatoire</span></td>
+            </tr>
+            <tr>
+                <td>Tracabilite</td>
+                <td><span class="badge badge-danger">Limitee</span></td>
+                <td><span class="badge badge-success">SBOM + Signing + Logs</span></td>
+            </tr>
+        </tbody>
+    </table>
+
+
+    <!-- =============================================================== -->
+    <!-- 3. SAST                                                         -->
+    <!-- =============================================================== -->
+    <h2 id="sast">3. SAST &mdash; Analyse Statique de Securite</h2>
+
+    <p>
+        Le <strong>SAST (Static Application Security Testing)</strong> analyse le code source
+        <em>sans l'executer</em> pour detecter les vulnerabilites potentielles. Il intervient
+        lors de la phase de build, idealement sur chaque commit ou pull request.
+    </p>
+
+    <div class="diagram-box">
+<pre><code>    Code source
+         |
+         v
+  +-------------+
+  | Analyseur   |     Regles de securite
+  | SAST        |<--- (OWASP, CWE, custom)
+  +-------------+
+         |
+         v
+  +-------------+
+  | Rapport     |
+  | - Critique  | ---> Bloque le pipeline
+  | - Haute     | ---> Alerte equipe
+  | - Moyenne   | ---> Ticket cree
+  | - Basse     | ---> Info dans dashboard
+  +-------------+</code></pre>
+    </div>
+
+    <h3>Vulnerabilites detectees par SAST</h3>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Categorie</th>
+                <th>Exemples</th>
+                <th>CWE</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Injection</td>
+                <td>SQL injection, OS command injection, LDAP injection</td>
+                <td>CWE-89, CWE-78</td>
+            </tr>
+            <tr>
+                <td>XSS</td>
+                <td>Reflected XSS, Stored XSS, DOM-based XSS</td>
+                <td>CWE-79</td>
+            </tr>
+            <tr>
+                <td>Buffer Overflow</td>
+                <td>Stack overflow, Heap overflow</td>
+                <td>CWE-120</td>
+            </tr>
+            <tr>
+                <td>Deserialization</td>
+                <td>Insecure deserialization, type confusion</td>
+                <td>CWE-502</td>
+            </tr>
+            <tr>
+                <td>Secrets en dur</td>
+                <td>Mots de passe, cles API, tokens dans le code</td>
+                <td>CWE-798</td>
+            </tr>
+            <tr>
+                <td>Crypto faible</td>
+                <td>MD5, SHA1, DES, cles trop courtes</td>
+                <td>CWE-327</td>
+            </tr>
+            <tr>
+                <td>Path Traversal</td>
+                <td>Acces fichiers non autorises via ../</td>
+                <td>CWE-22</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h3 id="sast-outils">Outils SAST &mdash; Comparaison</h3>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Outil</th>
+                <th>Langages</th>
+                <th>Open Source</th>
+                <th>CI/CD</th>
+                <th>Forces</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>SonarQube</strong></td>
+                <td>30+</td>
+                <td><span class="badge badge-info">Community</span></td>
+                <td>GitHub, GitLab, Azure</td>
+                <td>Qualite + securite</td>
+            </tr>
+            <tr>
+                <td><strong>Semgrep</strong></td>
+                <td>30+</td>
+                <td><span class="badge badge-success">Oui</span></td>
+                <td>Tous</td>
+                <td>Regles personnalisables</td>
+            </tr>
+            <tr>
+                <td><strong>Snyk Code</strong></td>
+                <td>10+</td>
+                <td><span class="badge badge-danger">Non</span></td>
+                <td>Tous</td>
+                <td>UX, suggestions de fix</td>
+            </tr>
+            <tr>
+                <td><strong>CodeQL</strong></td>
+                <td>10+</td>
+                <td><span class="badge badge-info">Queries</span></td>
+                <td>GitHub Actions</td>
+                <td>Profondeur d'analyse</td>
+            </tr>
+            <tr>
+                <td><strong>Checkmarx</strong></td>
+                <td>30+</td>
+                <td><span class="badge badge-danger">Non</span></td>
+                <td>Tous</td>
+                <td>Entreprise, compliance</td>
+            </tr>
+            <tr>
+                <td><strong>Fortify</strong></td>
+                <td>25+</td>
+                <td><span class="badge badge-danger">Non</span></td>
+                <td>Tous</td>
+                <td>Tres complet</td>
+            </tr>
+            <tr>
+                <td><strong>Roslyn Analyzers</strong></td>
+                <td>C#/.NET</td>
+                <td><span class="badge badge-success">Oui</span></td>
+                <td>dotnet build</td>
+                <td>Integre a .NET</td>
+            </tr>
+            <tr>
+                <td><strong>Bandit</strong></td>
+                <td>Python</td>
+                <td><span class="badge badge-success">Oui</span></td>
+                <td>Tous</td>
+                <td>Leger, rapide</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h3 id="sast-exemples">Exemples d'integration CI</h3>
+
+    <h3>GitHub Actions &mdash; SAST avec Semgrep</h3>
+
+<pre><code><span class="cmt"># .github/workflows/sast.yml</span>
+<span class="kw">name:</span> <span class="str">SAST - Semgrep</span>
+<span class="kw">on:</span> [push, pull_request]
+
+<span class="kw">jobs:</span>
+  <span class="fn">semgrep:</span>
+    <span class="kw">runs-on:</span> ubuntu-latest
+    <span class="kw">container:</span>
+      <span class="kw">image:</span> <span class="str">returntocorp/semgrep</span>
+    <span class="kw">steps:</span>
+      - <span class="kw">uses:</span> actions/checkout@v4
+      - <span class="kw">run:</span> semgrep ci
+        <span class="kw">env:</span>
+          <span class="val">SEMGREP_RULES:</span> <span class="str">"p/owasp-top-ten p/cwe-top-25"</span></code></pre>
+
+    <h3>GitLab CI &mdash; SAST avec SonarQube</h3>
+
+<pre><code><span class="cmt"># .gitlab-ci.yml</span>
+<span class="fn">sonarqube-sast:</span>
+  <span class="kw">stage:</span> test
+  <span class="kw">image:</span> <span class="str">sonarsource/sonar-scanner-cli:latest</span>
+  <span class="kw">variables:</span>
+    <span class="val">SONAR_HOST_URL:</span> <span class="str">"https://sonarqube.example.com"</span>
+    <span class="val">SONAR_TOKEN:</span> <span class="str">"$SONAR_TOKEN"</span>
+  <span class="kw">script:</span>
+    - sonar-scanner
+        -Dsonar.projectKey=my-project
+        -Dsonar.sources=src/
+        -Dsonar.qualitygate.wait=true
+  <span class="kw">allow_failure:</span> <span class="val">false</span>
+  <span class="cmt"># Le pipeline echoue si le Quality Gate ne passe pas</span></code></pre>
+
+    <h3>Gestion des resultats SAST</h3>
+
+    <div class="comparison">
+        <div class="card bad">
+            <h4>Mauvaise pratique</h4>
+            <ul>
+                <li>Ignorer les faux positifs sans les documenter</li>
+                <li>Desactiver le scan quand il y a trop d'alertes</li>
+                <li>Ne pas prioriser les findings</li>
+                <li>Reporter indefiniment les corrections</li>
+            </ul>
+        </div>
+        <div class="card good">
+            <h4>Bonne pratique</h4>
+            <ul>
+                <li>Traiter chaque finding : corriger ou marquer comme faux positif avec justification</li>
+                <li>Prioriser par severite : Critique &gt; Haute &gt; Moyenne &gt; Basse</li>
+                <li>Integrer dans le workflow : tickets Jira automatiques</li>
+                <li>Revue de securite lors des code reviews</li>
+            </ul>
+        </div>
+    </div>
+
+
+    <!-- =============================================================== -->
+    <!-- 4. SCA                                                          -->
+    <!-- =============================================================== -->
+    <h2 id="sca">4. SCA &mdash; Analyse des Dependances</h2>
+
+    <p>
+        Le <strong>SCA (Software Composition Analysis)</strong> verifie que les dependances
+        (bibliotheques open source) utilisees par votre projet ne contiennent pas de vulnerabilites
+        connues (CVE). Avec <strong>80 a 90%</strong> du code des applications modernes provenant
+        de l'open source, le SCA est essentiel.
+    </p>
+
+    <div class="diagram-box">
+<pre><code>  Votre application
+  +--------------------------------+
+  |  Votre code (10-20%)           |
+  |================================|
+  |  Dependance A  v2.3.1          |  <-- CVE-2024-1234 (Critique!)
+  |  Dependance B  v1.0.0          |  <-- OK
+  |  Dependance C  v5.2.0          |  <-- CVE-2023-5678 (Haute)
+  |    +-- Dep transitive D v1.1   |  <-- CVE-2024-9999 (Moyenne)
+  |    +-- Dep transitive E v3.0   |  <-- OK
+  |  Dependance F  v0.9.8          |  <-- Licence GPL! (contamination)
+  +--------------------------------+
+
+  Le SCA analyse TOUTES les dependances,
+  y compris les dependances transitives.</code></pre>
+    </div>
+
+    <h3 id="sbom">SBOM &mdash; Software Bill of Materials</h3>
+
+    <p>
+        Un <strong>SBOM</strong> est un inventaire complet de tous les composants logiciels
+        d'une application. C'est l'equivalent d'une liste d'ingredients pour un produit alimentaire.
+        Requis par le decret executif americain 14028 pour les fournisseurs du gouvernement federal.
+    </p>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Format</th>
+                <th>Organisation</th>
+                <th>Format</th>
+                <th>Adoption</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>CycloneDX</strong></td>
+                <td>OWASP</td>
+                <td>JSON, XML</td>
+                <td>Securite applicative, tres populaire</td>
+            </tr>
+            <tr>
+                <td><strong>SPDX</strong></td>
+                <td>Linux Foundation</td>
+                <td>JSON, RDF, YAML</td>
+                <td>Conformite licence, standard ISO</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h3 id="sca-outils">Outils SCA &mdash; Comparaison</h3>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Outil</th>
+                <th>Ecosystemes</th>
+                <th>SBOM</th>
+                <th>Licence</th>
+                <th>Forces</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Dependabot</strong></td>
+                <td>npm, NuGet, pip, etc.</td>
+                <td><span class="badge badge-danger">Non</span></td>
+                <td><span class="badge badge-danger">Non</span></td>
+                <td>Integre GitHub, PRs automatiques</td>
+            </tr>
+            <tr>
+                <td><strong>Snyk</strong></td>
+                <td>Tous</td>
+                <td><span class="badge badge-success">Oui</span></td>
+                <td><span class="badge badge-success">Oui</span></td>
+                <td>Fix suggestions, monitoring continu</td>
+            </tr>
+            <tr>
+                <td><strong>OWASP Dep-Check</strong></td>
+                <td>Java, .NET, Node</td>
+                <td><span class="badge badge-success">Oui</span></td>
+                <td><span class="badge badge-danger">Non</span></td>
+                <td>Gratuit, mature, reference</td>
+            </tr>
+            <tr>
+                <td><strong>Trivy</strong></td>
+                <td>Tous + Docker</td>
+                <td><span class="badge badge-success">Oui</span></td>
+                <td><span class="badge badge-danger">Non</span></td>
+                <td>Rapide, polyvalent</td>
+            </tr>
+            <tr>
+                <td><strong>Renovate</strong></td>
+                <td>Tous</td>
+                <td><span class="badge badge-danger">Non</span></td>
+                <td><span class="badge badge-danger">Non</span></td>
+                <td>PRs auto, tres configurable</td>
+            </tr>
+            <tr>
+                <td><strong>WhiteSource (Mend)</strong></td>
+                <td>Tous</td>
+                <td><span class="badge badge-success">Oui</span></td>
+                <td><span class="badge badge-success">Oui</span></td>
+                <td>Entreprise, complet</td>
+            </tr>
+            <tr>
+                <td><strong>npm audit / dotnet list</strong></td>
+                <td>npm / .NET</td>
+                <td><span class="badge badge-danger">Non</span></td>
+                <td><span class="badge badge-danger">Non</span></td>
+                <td>Integres, zero configuration</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h3>Exemple : dotnet list package --vulnerable</h3>
+
+<pre><code><span class="cmt"># Verifier les packages NuGet vulnerables</span>
+$ <span class="fn">dotnet list package --vulnerable</span>
+
+Le projet 'MyApp' contient les references de package vulnerables suivantes :
+
+   [net8.0]:
+   Niveau superieur      Demandee   Resolue   Severite   URL d'avis
+   > <span class="danger-hl">System.Text.Json</span>   6.0.0      6.0.0     <span class="danger-hl">Haute</span>       https://github.com/advisories/GHSA-...
+   > <span class="danger-hl">Newtonsoft.Json</span>    12.0.1     12.0.1    <span class="danger-hl">Critique</span>   https://github.com/advisories/GHSA-...</code></pre>
+
+    <h3>Exemple : Configuration Dependabot</h3>
+
+<pre><code><span class="cmt"># .github/dependabot.yml</span>
+<span class="kw">version:</span> <span class="val">2</span>
+<span class="kw">updates:</span>
+  <span class="cmt"># NuGet (.NET)</span>
+  - <span class="kw">package-ecosystem:</span> <span class="str">"nuget"</span>
+    <span class="kw">directory:</span> <span class="str">"/"</span>
+    <span class="kw">schedule:</span>
+      <span class="kw">interval:</span> <span class="str">"weekly"</span>
+    <span class="kw">open-pull-requests-limit:</span> <span class="val">10</span>
+    <span class="kw">labels:</span>
+      - <span class="str">"dependencies"</span>
+      - <span class="str">"security"</span>
+
+  <span class="cmt"># npm (frontend)</span>
+  - <span class="kw">package-ecosystem:</span> <span class="str">"npm"</span>
+    <span class="kw">directory:</span> <span class="str">"/frontend"</span>
+    <span class="kw">schedule:</span>
+      <span class="kw">interval:</span> <span class="str">"daily"</span>
+
+  <span class="cmt"># Docker</span>
+  - <span class="kw">package-ecosystem:</span> <span class="str">"docker"</span>
+    <span class="kw">directory:</span> <span class="str">"/"</span>
+    <span class="kw">schedule:</span>
+      <span class="kw">interval:</span> <span class="str">"weekly"</span></code></pre>
+
+    <h3>Exemple : Trivy SCA en CI</h3>
+
+<pre><code><span class="cmt"># Scan des dependances d'un projet</span>
+$ <span class="fn">trivy fs --scanners vuln --severity HIGH,CRITICAL .</span>
+
+my-project (package-lock.json)
+Total: 3 (HIGH: 2, CRITICAL: 1)
+
++-----------------+------------------+----------+-------------------+
+|     Library     | Vulnerability    | Severity | Installed Version |
++-----------------+------------------+----------+-------------------+
+| <span class="danger-hl">lodash</span>          | CVE-2021-23337   | <span class="danger-hl">CRITICAL</span> | 4.17.20           |
+| <span class="danger-hl">axios</span>           | CVE-2023-45857   | HIGH     | 0.21.1            |
+| <span class="danger-hl">express</span>         | CVE-2024-29041   | HIGH     | 4.18.1            |
++-----------------+------------------+----------+-------------------+</code></pre>
+
+    <h3>Conformite des licences</h3>
+
+    <div class="alert alert-warning">
+        <strong>Attention aux licences virales !</strong> Certaines licences open source imposent
+        que votre code devienne lui aussi open source si vous utilisez le composant.
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Licence</th>
+                <th>Risque</th>
+                <th>Usage commercial</th>
+                <th>Obligation</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>MIT</strong></td>
+                <td><span class="badge badge-success">Faible</span></td>
+                <td>Autorise</td>
+                <td>Attribution seulement</td>
+            </tr>
+            <tr>
+                <td><strong>Apache 2.0</strong></td>
+                <td><span class="badge badge-success">Faible</span></td>
+                <td>Autorise</td>
+                <td>Attribution + NOTICE</td>
+            </tr>
+            <tr>
+                <td><strong>LGPL</strong></td>
+                <td><span class="badge badge-warning">Moyen</span></td>
+                <td>Autorise (linking)</td>
+                <td>Modifications LGPL partagees</td>
+            </tr>
+            <tr>
+                <td><strong>GPL v3</strong></td>
+                <td><span class="badge badge-danger">Eleve</span></td>
+                <td>Conditionnel</td>
+                <td>Tout le code derive doit etre GPL</td>
+            </tr>
+            <tr>
+                <td><strong>AGPL</strong></td>
+                <td><span class="badge badge-danger">Tres eleve</span></td>
+                <td>Conditionnel</td>
+                <td>Meme pour les services reseau (SaaS)</td>
+            </tr>
+        </tbody>
+    </table>
+
+
+    <!-- =============================================================== -->
+    <!-- 5. DAST                                                         -->
+    <!-- =============================================================== -->
+    <h2 id="dast">5. DAST &mdash; Analyse Dynamique de Securite</h2>
+
+    <p>
+        Le <strong>DAST (Dynamic Application Security Testing)</strong> teste l'application
+        <em>en cours d'execution</em>, depuis l'exterieur (approche "boite noire").
+        Il simule des attaques reelles contre l'application deployee dans un environnement
+        de staging ou pre-production.
+    </p>
+
+    <div class="diagram-box">
+<pre><code>                                    +---------------------+
+                                    |  Application en     |
+  +----------+    Requetes HTTP     |  cours d'execution  |
+  | Scanner  | ------------------> |  (Staging)          |
+  | DAST     | <------------------ |                     |
+  +----------+    Reponses         +---------------------+
+       |
+       v
+  +----------+
+  | Rapport  |   Le scanner analyse les reponses pour
+  | DAST     |   detecter : XSS, SQLi, CSRF, Headers
+  +----------+   manquants, erreurs de configuration...</code></pre>
+    </div>
+
+    <div class="comparison">
+        <div class="card">
+            <h4 style="color: var(--info);">SAST vs DAST</h4>
+            <table>
+                <tr><th>Critere</th><th>SAST</th><th>DAST</th></tr>
+                <tr><td>Approche</td><td>Boite blanche</td><td>Boite noire</td></tr>
+                <tr><td>Quand</td><td>Build time</td><td>Runtime (staging)</td></tr>
+                <tr><td>Acces au code</td><td>Oui</td><td>Non</td></tr>
+                <tr><td>Faux positifs</td><td>Plus nombreux</td><td>Moins nombreux</td></tr>
+                <tr><td>Couverture</td><td>Tout le code</td><td>Endpoints exposes</td></tr>
+                <tr><td>Vitesse</td><td>Rapide</td><td>Plus lent</td></tr>
+            </table>
+        </div>
+        <div class="card">
+            <h4 style="color: var(--info);">Quoi utiliser ?</h4>
+            <p><strong>Les deux !</strong> SAST et DAST sont complementaires :</p>
+            <ul>
+                <li><strong>SAST</strong> trouve les bugs dans le code source</li>
+                <li><strong>DAST</strong> trouve les problemes de configuration et les vulnerabilites en runtime</li>
+                <li><strong>IAST</strong> (Interactive) combine les deux avec un agent dans l'application</li>
+            </ul>
+            <div class="alert alert-info" style="margin-top:1rem;">
+                <strong>Conseil :</strong> Utilisez SAST sur chaque commit et DAST en pipeline de nuit ou sur les environnements de staging.
+            </div>
+        </div>
+    </div>
+
+    <h3 id="dast-outils">Outils DAST &mdash; Comparaison</h3>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Outil</th>
+                <th>Type</th>
+                <th>Open Source</th>
+                <th>API Testing</th>
+                <th>Forces</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>OWASP ZAP</strong></td>
+                <td>Proxy/Scanner</td>
+                <td><span class="badge badge-success">Oui</span></td>
+                <td><span class="badge badge-success">Oui</span></td>
+                <td>Reference gratuite, communaute active</td>
+            </tr>
+            <tr>
+                <td><strong>Burp Suite</strong></td>
+                <td>Proxy/Scanner</td>
+                <td><span class="badge badge-info">Community</span></td>
+                <td><span class="badge badge-success">Oui</span></td>
+                <td>Le plus complet, standard de l'industrie</td>
+            </tr>
+            <tr>
+                <td><strong>Nikto</strong></td>
+                <td>Scanner web</td>
+                <td><span class="badge badge-success">Oui</span></td>
+                <td><span class="badge badge-danger">Non</span></td>
+                <td>Rapide, simple, historique</td>
+            </tr>
+            <tr>
+                <td><strong>Nuclei</strong></td>
+                <td>Scanner templates</td>
+                <td><span class="badge badge-success">Oui</span></td>
+                <td><span class="badge badge-success">Oui</span></td>
+                <td>Templates communautaires, extensible</td>
+            </tr>
+            <tr>
+                <td><strong>OWASP Amass</strong></td>
+                <td>Recon/Discovery</td>
+                <td><span class="badge badge-success">Oui</span></td>
+                <td><span class="badge badge-danger">Non</span></td>
+                <td>Reconnaissance de surface d'attaque</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h3>Exemple : OWASP ZAP dans GitHub Actions</h3>
+
+<pre><code><span class="cmt"># .github/workflows/dast.yml</span>
+<span class="kw">name:</span> <span class="str">DAST - OWASP ZAP</span>
+<span class="kw">on:</span>
+  <span class="kw">schedule:</span>
+    - <span class="kw">cron:</span> <span class="str">'0 2 * * 1-5'</span>  <span class="cmt"># Chaque nuit, lundi-vendredi</span>
+
+<span class="kw">jobs:</span>
+  <span class="fn">zap-scan:</span>
+    <span class="kw">runs-on:</span> ubuntu-latest
+    <span class="kw">steps:</span>
+      - <span class="kw">name:</span> <span class="str">ZAP Baseline Scan</span>
+        <span class="kw">uses:</span> zaproxy/action-baseline@v0.12.0
+        <span class="kw">with:</span>
+          <span class="val">target:</span> <span class="str">'https://staging.example.com'</span>
+          <span class="val">rules_file_name:</span> <span class="str">'.zap/rules.tsv'</span>
+          <span class="val">cmd_options:</span> <span class="str">'-a'</span>
+
+      - <span class="kw">name:</span> <span class="str">ZAP Full Scan</span>
+        <span class="kw">uses:</span> zaproxy/action-full-scan@v0.10.0
+        <span class="kw">with:</span>
+          <span class="val">target:</span> <span class="str">'https://staging.example.com'</span>
+
+      - <span class="kw">name:</span> <span class="str">Upload Report</span>
+        <span class="kw">uses:</span> actions/upload-artifact@v4
+        <span class="kw">with:</span>
+          <span class="val">name:</span> <span class="str">zap-report</span>
+          <span class="val">path:</span> <span class="str">report_html.html</span></code></pre>
+
+    <h3>Couverture OWASP Top 10</h3>
+
+    <table>
+        <thead>
+            <tr>
+                <th>OWASP Top 10 (2021)</th>
+                <th>SAST</th>
+                <th>DAST</th>
+                <th>SCA</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td>A01 - Broken Access Control</td><td><span class="badge badge-warning">Partiel</span></td><td><span class="badge badge-success">Oui</span></td><td>-</td></tr>
+            <tr><td>A02 - Crypto Failures</td><td><span class="badge badge-success">Oui</span></td><td><span class="badge badge-warning">Partiel</span></td><td>-</td></tr>
+            <tr><td>A03 - Injection</td><td><span class="badge badge-success">Oui</span></td><td><span class="badge badge-success">Oui</span></td><td>-</td></tr>
+            <tr><td>A04 - Insecure Design</td><td><span class="badge badge-warning">Partiel</span></td><td><span class="badge badge-danger">Non</span></td><td>-</td></tr>
+            <tr><td>A05 - Security Misconfiguration</td><td><span class="badge badge-warning">Partiel</span></td><td><span class="badge badge-success">Oui</span></td><td>-</td></tr>
+            <tr><td>A06 - Vulnerable Components</td><td><span class="badge badge-danger">Non</span></td><td><span class="badge badge-danger">Non</span></td><td><span class="badge badge-success">Oui</span></td></tr>
+            <tr><td>A07 - Auth Failures</td><td><span class="badge badge-warning">Partiel</span></td><td><span class="badge badge-success">Oui</span></td><td>-</td></tr>
+            <tr><td>A08 - Data Integrity Failures</td><td><span class="badge badge-success">Oui</span></td><td><span class="badge badge-warning">Partiel</span></td><td><span class="badge badge-success">Oui</span></td></tr>
+            <tr><td>A09 - Logging Failures</td><td><span class="badge badge-success">Oui</span></td><td><span class="badge badge-danger">Non</span></td><td>-</td></tr>
+            <tr><td>A10 - SSRF</td><td><span class="badge badge-success">Oui</span></td><td><span class="badge badge-success">Oui</span></td><td>-</td></tr>
+        </tbody>
+    </table>
+
+
+    <!-- =============================================================== -->
+    <!-- 6. SECRETS                                                      -->
+    <!-- =============================================================== -->
+    <h2 id="secrets">6. Detection et Gestion des Secrets</h2>
+
+    <p>
+        Les secrets (cles API, mots de passe, tokens, certificats) sont l'une des causes
+        majeures de compromission. GitHub detecte <strong>des millions de secrets</strong>
+        exposes dans les depots publics chaque annee.
+    </p>
+
+    <div class="alert alert-danger">
+        <strong>Chiffre cle :</strong> En 2023, GitHub a detecte plus de 12 millions de secrets
+        dans les commits de depots publics. Une cle API exposee peut etre exploitee en
+        <strong>moins de 30 secondes</strong> par des bots qui scannent GitHub en continu.
+    </div>
+
+    <div class="diagram-box">
+<pre><code>  Types de secrets exposes dans le code :
+
+  +-------------------+------------------------+-------------------+
+  |  Cles API         |  Tokens d'acces        |  Credentials DB   |
+  |  (AWS, GCP,       |  (GitHub, Slack,       |  (connection      |
+  |   Azure, Stripe)  |   JWT, OAuth)          |   strings, mots   |
+  |                   |                        |   de passe)       |
+  +-------------------+------------------------+-------------------+
+  |  Certificats      |  Cles SSH              |  Variables env    |
+  |  (TLS/SSL,        |  (id_rsa, clefs        |  (.env, secrets   |
+  |   signing keys)   |   privees)             |   en dur)         |
+  +-------------------+------------------------+-------------------+</code></pre>
+    </div>
+
+    <h3>Outils de detection de secrets</h3>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Outil</th>
+                <th>Pre-commit</th>
+                <th>CI/CD</th>
+                <th>Patterns</th>
+                <th>Forces</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>GitLeaks</strong></td>
+                <td><span class="badge badge-success">Oui</span></td>
+                <td><span class="badge badge-success">Oui</span></td>
+                <td>150+</td>
+                <td>Rapide, populaire, bien maintenu</td>
+            </tr>
+            <tr>
+                <td><strong>TruffleHog</strong></td>
+                <td><span class="badge badge-success">Oui</span></td>
+                <td><span class="badge badge-success">Oui</span></td>
+                <td>Entropy + regex</td>
+                <td>Analyse historique git complete</td>
+            </tr>
+            <tr>
+                <td><strong>detect-secrets</strong></td>
+                <td><span class="badge badge-success">Oui</span></td>
+                <td><span class="badge badge-success">Oui</span></td>
+                <td>Plugins</td>
+                <td>Leger, par Yelp</td>
+            </tr>
+            <tr>
+                <td><strong>GitHub Secret Scanning</strong></td>
+                <td><span class="badge badge-danger">Non</span></td>
+                <td><span class="badge badge-info">Integre</span></td>
+                <td>200+ providers</td>
+                <td>Natif GitHub, notifie le provider</td>
+            </tr>
+            <tr>
+                <td><strong>GitLab Secret Detection</strong></td>
+                <td><span class="badge badge-danger">Non</span></td>
+                <td><span class="badge badge-info">Integre</span></td>
+                <td>SAST template</td>
+                <td>Natif GitLab, zero config</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h3>Pre-commit hook avec GitLeaks</h3>
+
+<pre><code><span class="cmt"># Installation du hook pre-commit</span>
+$ <span class="fn">brew install gitleaks</span>   <span class="cmt"># ou scoop install gitleaks sur Windows</span>
+
+<span class="cmt"># .pre-commit-config.yaml</span>
+<span class="kw">repos:</span>
+  - <span class="kw">repo:</span> <span class="str">https://github.com/gitleaks/gitleaks</span>
+    <span class="kw">rev:</span> <span class="str">v8.18.0</span>
+    <span class="kw">hooks:</span>
+      - <span class="kw">id:</span> <span class="str">gitleaks</span>
+
+<span class="cmt"># Lancer manuellement</span>
+$ <span class="fn">gitleaks detect --source . --verbose</span>
+
+    <span class="danger-hl">RuleID: generic-api-key</span>
+    <span class="danger-hl">Entropy: 4.7</span>
+    <span class="danger-hl">File: src/config/settings.json</span>
+    <span class="danger-hl">Line: 12</span>
+    <span class="danger-hl">Secret: AKIAIOSFODNN7EXAMPLE</span></code></pre>
+
+    <h3>Configuration .gitleaks.toml</h3>
+
+<pre><code><span class="cmt"># .gitleaks.toml</span>
+<span class="kw">title</span> = <span class="str">"Configuration GitLeaks personnalisee"</span>
+
+<span class="cmt"># Ajouter des regles personnalisees</span>
+[[rules]]
+<span class="kw">id</span> = <span class="str">"custom-api-key"</span>
+<span class="kw">description</span> = <span class="str">"Cle API interne detectee"</span>
+<span class="kw">regex</span> = <span class="str">'''(?i)api[_-]?key\s*[:=]\s*['"][a-zA-Z0-9]{32,}['"]'''</span>
+<span class="kw">tags</span> = [<span class="str">"key"</span>, <span class="str">"api"</span>]
+
+<span class="cmt"># Exclure certains fichiers (faux positifs)</span>
+[allowlist]
+<span class="kw">paths</span> = [
+    <span class="str">'''tests/fixtures/'''</span>,
+    <span class="str">'''docs/examples/'''</span>,
+]
+
+<span class="cmt"># Exclure certaines regles pour des fichiers specifiques</span>
+[[rules]]
+<span class="kw">id</span> = <span class="str">"test-credentials"</span>
+<span class="kw">description</span> = <span class="str">"Credentials de test ignores"</span>
+<span class="kw">regex</span> = <span class="str">'''test_password\s*='''</span>
+[rules.allowlist]
+<span class="kw">paths</span> = [<span class="str">'''tests/'''</span>]</code></pre>
+
+    <h3>Que faire quand un secret est expose ?</h3>
+
+    <div class="alert alert-danger">
+        <strong>URGENT :</strong> Ne jamais simplement supprimer le commit !
+        Le secret reste dans l'historique git. Voici la procedure correcte :
+    </div>
+
+    <div class="diagram-box">
+<pre><code>  Secret expose detecte !
+         |
+         v
+  +------------------+
+  | 1. REVOQUER      |  Revoquer immediatement le secret
+  |    le secret     |  chez le fournisseur (AWS, GitHub, etc.)
+  +------------------+
+         |
+         v
+  +------------------+
+  | 2. GENERER       |  Generer un nouveau secret et le
+  |    un nouveau    |  stocker dans un gestionnaire securise
+  +------------------+
+         |
+         v
+  +------------------+
+  | 3. DEPLOYER      |  Deployer la nouvelle configuration
+  |    la rotation   |  avec le nouveau secret
+  +------------------+
+         |
+         v
+  +------------------+
+  | 4. NETTOYER      |  Optionnel : git filter-branch ou
+  |    l'historique   |  BFG Repo-Cleaner pour supprimer
+  +------------------+  le secret de l'historique
+         |
+         v
+  +------------------+
+  | 5. POST-MORTEM   |  Analyser la cause, renforcer
+  |    et prevention |  les protections (pre-commit hooks)
+  +------------------+</code></pre>
+    </div>
+
+    <h3 id="secrets-gestion">Solutions de gestion de secrets</h3>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Solution</th>
+                <th>Cloud</th>
+                <th>Type</th>
+                <th>Integration CI/CD</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Azure Key Vault</strong></td>
+                <td>Azure</td>
+                <td>Managed</td>
+                <td>Azure DevOps, GitHub Actions</td>
+            </tr>
+            <tr>
+                <td><strong>HashiCorp Vault</strong></td>
+                <td>Multi-cloud</td>
+                <td>Self-hosted / Cloud</td>
+                <td>Tous (API universelle)</td>
+            </tr>
+            <tr>
+                <td><strong>AWS Secrets Manager</strong></td>
+                <td>AWS</td>
+                <td>Managed</td>
+                <td>AWS CodePipeline, GitHub Actions</td>
+            </tr>
+            <tr>
+                <td><strong>GitHub Secrets</strong></td>
+                <td>GitHub</td>
+                <td>Integre</td>
+                <td>GitHub Actions</td>
+            </tr>
+            <tr>
+                <td><strong>GitLab CI Variables</strong></td>
+                <td>GitLab</td>
+                <td>Integre</td>
+                <td>GitLab CI</td>
+            </tr>
+        </tbody>
+    </table>
+
+
+    <!-- =============================================================== -->
+    <!-- 7. CONTENEURS                                                   -->
+    <!-- =============================================================== -->
+    <h2 id="containers">7. Scan de Conteneurs et Images Docker</h2>
+
+    <p>
+        Les images Docker sont construites a partir d'images de base contenant un systeme d'exploitation
+        et des packages qui peuvent contenir des vulnerabilites connues. Le scan d'images est essentiel
+        avant tout deploiement.
+    </p>
+
+    <div class="diagram-box">
+<pre><code>  Image Docker : couches de vulnerabilites potentielles
+
+  +========================================+
+  |  Votre application (code)              |  <-- SAST
+  +========================================+
+  |  Dependances (npm, NuGet, pip)         |  <-- SCA
+  +========================================+
+  |  Runtime (.NET, Node.js, Python)       |  <-- Image Scan
+  +========================================+
+  |  OS packages (apt, apk)               |  <-- Image Scan
+  +========================================+
+  |  Image de base (ubuntu, alpine, etc.)  |  <-- Image Scan
+  +========================================+
+
+  Chaque couche peut introduire des CVE !
+  Le scanner analyse TOUTES les couches.</code></pre>
+    </div>
+
+    <h3>Outils de scan d'images</h3>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Outil</th>
+                <th>Registry</th>
+                <th>CI/CD</th>
+                <th>SBOM</th>
+                <th>Forces</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Trivy</strong></td>
+                <td><span class="badge badge-success">Oui</span></td>
+                <td><span class="badge badge-success">Oui</span></td>
+                <td><span class="badge badge-success">Oui</span></td>
+                <td>Le plus populaire, rapide</td>
+            </tr>
+            <tr>
+                <td><strong>Docker Scout</strong></td>
+                <td><span class="badge badge-success">Oui</span></td>
+                <td><span class="badge badge-success">Oui</span></td>
+                <td><span class="badge badge-success">Oui</span></td>
+                <td>Integre Docker Desktop</td>
+            </tr>
+            <tr>
+                <td><strong>Grype</strong></td>
+                <td><span class="badge badge-success">Oui</span></td>
+                <td><span class="badge badge-success">Oui</span></td>
+                <td><span class="badge badge-success">Oui</span></td>
+                <td>Rapide, par Anchore</td>
+            </tr>
+            <tr>
+                <td><strong>Snyk Container</strong></td>
+                <td><span class="badge badge-success">Oui</span></td>
+                <td><span class="badge badge-success">Oui</span></td>
+                <td><span class="badge badge-success">Oui</span></td>
+                <td>Suggestions de fix, base image upgrade</td>
+            </tr>
+            <tr>
+                <td><strong>Clair</strong></td>
+                <td><span class="badge badge-success">Oui</span></td>
+                <td><span class="badge badge-success">Oui</span></td>
+                <td><span class="badge badge-danger">Non</span></td>
+                <td>Open source, CoreOS/Red Hat</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h3>Exemple : Trivy scan d'image en pipeline</h3>
+
+<pre><code><span class="cmt"># GitHub Actions - Scan d'image Docker</span>
+- <span class="kw">name:</span> <span class="str">Build Docker image</span>
+  <span class="kw">run:</span> docker build -t myapp:${{ github.sha }} .
+
+- <span class="kw">name:</span> <span class="str">Trivy image scan</span>
+  <span class="kw">uses:</span> aquasecurity/trivy-action@master
+  <span class="kw">with:</span>
+    <span class="val">image-ref:</span> <span class="str">'myapp:${{ github.sha }}'</span>
+    <span class="val">format:</span> <span class="str">'sarif'</span>
+    <span class="val">output:</span> <span class="str">'trivy-results.sarif'</span>
+    <span class="val">severity:</span> <span class="str">'CRITICAL,HIGH'</span>
+    <span class="val">exit-code:</span> <span class="str">'1'</span>  <span class="cmt"># Echoue si vulns critiques</span></code></pre>
+
+    <h3 id="docker-bp">Bonnes pratiques Dockerfile</h3>
+
+    <div class="comparison">
+        <div class="card bad">
+            <h4>Mauvais Dockerfile</h4>
+<pre><code><span class="cmt"># Image lourde avec plein de CVE</span>
+<span class="kw">FROM</span> <span class="danger-hl">ubuntu:latest</span>
+
+<span class="cmt"># Installation en root</span>
+<span class="kw">RUN</span> apt-get update && \
+    apt-get install -y nodejs npm
+
+<span class="cmt"># Copie de TOUT, y compris .env</span>
+<span class="kw">COPY</span> <span class="danger-hl">. .</span>
+
+<span class="cmt"># Secrets en dur dans l'image</span>
+<span class="kw">ENV</span> <span class="danger-hl">DB_PASSWORD=SuperSecret123</span>
+
+<span class="cmt"># Execution en root !</span>
+<span class="kw">CMD</span> ["node", "server.js"]</code></pre>
+        </div>
+        <div class="card good">
+            <h4>Bon Dockerfile</h4>
+<pre><code><span class="cmt"># Image minimale, version fixee</span>
+<span class="kw">FROM</span> <span class="success-hl">node:20-alpine@sha256:abc...</span>
+
+<span class="cmt"># Utilisateur non-root</span>
+<span class="kw">RUN</span> <span class="success-hl">addgroup -S app && adduser -S app -G app</span>
+
+<span class="kw">WORKDIR</span> /app
+
+<span class="cmt"># Copie selective avec .dockerignore</span>
+<span class="kw">COPY</span> package*.json ./
+<span class="kw">RUN</span> npm ci --only=production
+
+<span class="kw">COPY</span> <span class="success-hl">src/ ./src/</span>
+
+<span class="kw">USER</span> <span class="success-hl">app</span>
+<span class="kw">CMD</span> ["node", "src/server.js"]</code></pre>
+        </div>
+    </div>
+
+    <div class="alert alert-info">
+        <strong>Conseil :</strong> Utilisez des images <code>distroless</code> (Google) ou <code>alpine</code>
+        pour reduire drastiquement la surface d'attaque. Une image <code>ubuntu:latest</code> contient
+        environ 100+ CVE, tandis qu'une image <code>alpine</code> en contient generalement moins de 5.
+    </div>
+
+
+    <!-- =============================================================== -->
+    <!-- 8. IaC Security                                                 -->
+    <!-- =============================================================== -->
+    <h2 id="iac">8. Securite Infrastructure as Code (IaC)</h2>
+
+    <p>
+        L'Infrastructure as Code (Terraform, CloudFormation, Kubernetes manifests, Dockerfiles)
+        peut contenir des erreurs de configuration qui exposent l'infrastructure a des attaques.
+        Les scanners IaC detectent ces problemes avant le deploiement.
+    </p>
+
+    <h3>Erreurs de configuration courantes</h3>
+
+    <div class="diagram-box">
+<pre><code>  Misconfigurations detectees par les scanners IaC :
+
+  +------------------+  +------------------+  +------------------+
+  |  S3 bucket       |  |  Security Group  |  |  IAM Policy      |
+  |  public          |  |  0.0.0.0/0       |  |  trop permissive |
+  |  (pas de ACL)    |  |  (ouvert a tous) |  |  (admin:*)       |
+  +------------------+  +------------------+  +------------------+
+  +------------------+  +------------------+  +------------------+
+  |  Chiffrement     |  |  Logging         |  |  Base de donnees |
+  |  desactive       |  |  desactive       |  |  publique        |
+  |  (EBS, RDS)      |  |  (CloudTrail)    |  |  (RDS, Cosmos)   |
+  +------------------+  +------------------+  +------------------+</code></pre>
+    </div>
+
+    <h3>Outils IaC Security</h3>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Outil</th>
+                <th>IaC supportes</th>
+                <th>Open Source</th>
+                <th>Regles</th>
+                <th>Forces</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Checkov</strong></td>
+                <td>Terraform, CF, K8s, Docker, ARM</td>
+                <td><span class="badge badge-success">Oui</span></td>
+                <td>1000+</td>
+                <td>Le plus complet, par Bridgecrew/Palo Alto</td>
+            </tr>
+            <tr>
+                <td><strong>tfsec</strong></td>
+                <td>Terraform</td>
+                <td><span class="badge badge-success">Oui</span></td>
+                <td>300+</td>
+                <td>Rapide, specialise Terraform</td>
+            </tr>
+            <tr>
+                <td><strong>KICS</strong></td>
+                <td>Terraform, CF, K8s, Docker, Ansible</td>
+                <td><span class="badge badge-success">Oui</span></td>
+                <td>2000+</td>
+                <td>Par Checkmarx, tres complet</td>
+            </tr>
+            <tr>
+                <td><strong>Terrascan</strong></td>
+                <td>Terraform, K8s, Docker, CF</td>
+                <td><span class="badge badge-success">Oui</span></td>
+                <td>500+</td>
+                <td>OPA/Rego policies</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h3 id="iac-compliance">Exemple : Checkov dans le pipeline</h3>
+
+<pre><code><span class="cmt"># Scan Terraform avec Checkov</span>
+$ <span class="fn">checkov -d ./terraform/ --framework terraform</span>
+
+Passed checks: 42, Failed checks: 3, Skipped checks: 0
+
+Check: <span class="danger-hl">CKV_AWS_18: "Ensure the S3 bucket has access logging enabled"</span>
+        FAILED for resource: aws_s3_bucket.data
+        File: /main.tf:15-25
+
+Check: <span class="danger-hl">CKV_AWS_24: "Ensure no security group allows ingress from 0.0.0.0/0 to port 22"</span>
+        FAILED for resource: aws_security_group.web
+        File: /network.tf:8-20
+
+Check: <span class="danger-hl">CKV_AWS_145: "Ensure RDS instance has encryption enabled"</span>
+        FAILED for resource: aws_db_instance.default
+        File: /database.tf:1-15</code></pre>
+
+
+    <!-- =============================================================== -->
+    <!-- 9. QUALITY GATES                                                -->
+    <!-- =============================================================== -->
+    <h2 id="quality-gate">9. Quality Gates et Couverture</h2>
+
+    <h3 id="sonarqube">SonarQube Quality Gate</h3>
+
+    <p>
+        Un <strong>Quality Gate</strong> est un ensemble de conditions que le code doit remplir
+        avant de pouvoir progresser dans le pipeline. Si le gate echoue, le pipeline est bloque.
+    </p>
+
+    <div class="diagram-box">
+<pre><code>  Quality Gate SonarQube - Configuration par defaut ("Sonar way")
+
+  +================================================================+
+  |                    QUALITY GATE                                 |
+  +================================================================+
+  |                                                                |
+  |  Condition                           Seuil      Statut        |
+  |  ──────────────────────────────────  ─────────  ────────      |
+  |  Couverture sur nouveau code         >= 80%     PASS/FAIL     |
+  |  Duplications sur nouveau code       <= 3%      PASS/FAIL     |
+  |  Fiabilite (bugs) nouveau code       A          PASS/FAIL     |
+  |  Securite (vulns) nouveau code       A          PASS/FAIL     |
+  |  Maintenabilite (code smells)        A          PASS/FAIL     |
+  |  Security hotspots reviewed          100%       PASS/FAIL     |
+  |                                                                |
+  |  Resultat : PASS  --> Le code peut continuer                  |
+  |             FAIL  --> Le pipeline est bloque !                |
+  +================================================================+</code></pre>
+    </div>
+
+    <h3>Metriques de securite SonarQube</h3>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Metrique</th>
+                <th>Description</th>
+                <th>Impact pipeline</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Vulnerabilities</strong></td>
+                <td>Failles de securite confirmees (CWE)</td>
+                <td><span class="badge badge-danger">Bloquant si &gt; 0 (A)</span></td>
+            </tr>
+            <tr>
+                <td><strong>Security Hotspots</strong></td>
+                <td>Code sensible necessitant une revue manuelle</td>
+                <td><span class="badge badge-warning">Doit etre revu a 100%</span></td>
+            </tr>
+            <tr>
+                <td><strong>Bugs</strong></td>
+                <td>Bugs potentiels dans le code</td>
+                <td><span class="badge badge-danger">Bloquant si note &lt; A</span></td>
+            </tr>
+            <tr>
+                <td><strong>Code Smells</strong></td>
+                <td>Problemes de maintenabilite</td>
+                <td><span class="badge badge-warning">Objectif : note A</span></td>
+            </tr>
+            <tr>
+                <td><strong>Coverage</strong></td>
+                <td>Couverture de tests unitaires</td>
+                <td><span class="badge badge-info">Minimum 80% nouveau code</span></td>
+            </tr>
+            <tr>
+                <td><strong>Duplications</strong></td>
+                <td>Code duplique</td>
+                <td><span class="badge badge-info">Maximum 3% nouveau code</span></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h3>Strategie "Break the Build"</h3>
+
+    <div class="comparison">
+        <div class="card bad">
+            <h4>Sans Quality Gate</h4>
+<pre><code>Pipeline :
+  Build   --> <span class="success-hl">PASS</span>
+  Tests   --> <span class="success-hl">PASS</span>
+  Deploy  --> <span class="success-hl">PASS</span>
+
+  Resultat : 15 vulnerabilites
+  critiques en production !</code></pre>
+        </div>
+        <div class="card good">
+            <h4>Avec Quality Gate</h4>
+<pre><code>Pipeline :
+  Build   --> <span class="success-hl">PASS</span>
+  Tests   --> <span class="success-hl">PASS</span>
+  <span class="danger-hl">Quality Gate --> FAIL</span>
+    - 2 vulnerabilites critiques
+    - Couverture : 65% (&lt; 80%)
+  Deploy  --> <span class="danger-hl">BLOQUE</span>
+
+  Le deploiement est empeche !</code></pre>
+        </div>
+    </div>
+
+    <h3>Exemple : Quality Gate dans GitHub Actions</h3>
+
+<pre><code><span class="cmt"># Verification du Quality Gate apres analyse SonarQube</span>
+- <span class="kw">name:</span> <span class="str">SonarQube Quality Gate</span>
+  <span class="kw">uses:</span> sonarsource/sonarqube-quality-gate-action@master
+  <span class="kw">timeout-minutes:</span> <span class="val">5</span>
+  <span class="kw">env:</span>
+    <span class="val">SONAR_TOKEN:</span> <span class="str">${{ secrets.SONAR_TOKEN }}</span>
+
+<span class="cmt"># Si le Quality Gate echoue, le workflow entier echoue</span>
+<span class="cmt"># et le deploiement est automatiquement bloque</span></code></pre>
+
+
+    <!-- =============================================================== -->
+    <!-- 10. MISE EN PRODUCTION                                          -->
+    <!-- =============================================================== -->
+    <h2 id="deploy">10. Mise en Production Securisee</h2>
+
+    <h3>Security Gates avant deploiement</h3>
+
+    <div class="diagram-box">
+<pre><code>  Checklist pre-deploiement :
+
+  +================================================================+
+  |  SECURITY GATE - Verification avant production                 |
+  +================================================================+
+  |                                                                |
+  |  [x] SAST : aucune vulnerabilite critique/haute               |
+  |  [x] SCA  : aucune dependance avec CVE critique               |
+  |  [x] DAST : aucune faille OWASP Top 10 detectee              |
+  |  [x] Secrets : aucun secret detecte dans le code              |
+  |  [x] Image scan : aucune CVE critique dans l'image            |
+  |  [x] Quality Gate : SonarQube PASS                            |
+  |  [x] Tests : couverture >= 80%, 0 echec                       |
+  |  [x] Licence : aucune licence virale detectee                 |
+  |                                                                |
+  |  Resultat : [ PASS ] --> Deploiement autorise                 |
+  +================================================================+</code></pre>
+    </div>
+
+    <h3>Signature d'artefacts</h3>
+
+    <p>
+        La <strong>signature d'artefacts</strong> garantit l'integrite et l'authenticite des binaires
+        deployes. Personne n'a modifie l'artefact entre le build et le deploiement.
+    </p>
+
+<pre><code><span class="cmt"># Signature d'une image Docker avec cosign (Sigstore)</span>
+$ <span class="fn">cosign sign --key cosign.key myregistry.io/myapp:v1.2.3</span>
+
+<span class="cmt"># Verification de la signature</span>
+$ <span class="fn">cosign verify --key cosign.pub myregistry.io/myapp:v1.2.3</span>
+
+Verification for myregistry.io/myapp:v1.2.3 --
+The following checks were performed:
+  - The cosign claims were validated
+  - The signatures were verified against the specified public key</code></pre>
+
+    <h3>Generation SBOM</h3>
+
+<pre><code><span class="cmt"># Generer un SBOM au format CycloneDX pour une image Docker</span>
+$ <span class="fn">trivy image --format cyclonedx --output sbom.json myapp:v1.2.3</span>
+
+<span class="cmt"># Generer un SBOM pour un projet .NET</span>
+$ <span class="fn">dotnet CycloneDX myapp.csproj -o ./sbom/</span>
+
+<span class="cmt"># Generer un SBOM avec syft (Anchore)</span>
+$ <span class="fn">syft myapp:v1.2.3 -o cyclonedx-json > sbom.json</span></code></pre>
+
+    <h3 id="rollback">Strategies de deploiement securise</h3>
+
+    <div class="diagram-box">
+<pre><code>  Canary Deployment :
+
+  Etape 1: 5% du trafic         Etape 2: 25%              Etape 3: 100%
+  +----------+---------+        +----------+--------+     +-----------+
+  |          |  v2     |        |          | v2     |     |    v2     |
+  |  v1      |  (5%)   |        |  v1      | (25%)  |     |   (100%) |
+  |  (95%)   |         |        |  (75%)   |        |     |          |
+  +----------+---------+        +----------+--------+     +-----------+
+       |                             |                         |
+       v                             v                         v
+  Monitoring OK ?              Monitoring OK ?            Deploye !
+  Metriques, erreurs,          Si NON --> Rollback
+  latence, logs                automatique a v1
+
+  ================================================================
+  Blue-Green Deployment :
+
+  +--------+    Load        +--------+
+  |  BLUE  |<-- Balancer    | GREEN  |
+  | (prod) |                | (new)  |
+  +--------+                +--------+
+       |                         |
+       v                         v
+  Trafic actif              Tests complets
+                            sur GREEN
+                            Si OK --> switch
+                            Si NON --> pas de switch</code></pre>
+    </div>
+
+
+    <!-- =============================================================== -->
+    <!-- 11. EXEMPLES COMPLETS                                           -->
+    <!-- =============================================================== -->
+    <h2 id="github-actions">11. Exemples de Pipelines Complets</h2>
+
+    <h3>GitHub Actions &mdash; Pipeline DevSecOps complet</h3>
+
+<pre><code><span class="cmt"># .github/workflows/devsecops.yml</span>
+<span class="kw">name:</span> <span class="str">DevSecOps Pipeline</span>
+<span class="kw">on:</span>
+  <span class="kw">push:</span>
+    <span class="kw">branches:</span> [main, develop]
+  <span class="kw">pull_request:</span>
+    <span class="kw">branches:</span> [main]
+
+<span class="kw">env:</span>
+  <span class="val">DOTNET_VERSION:</span> <span class="str">'8.0.x'</span>
+  <span class="val">IMAGE_NAME:</span> <span class="str">'myapp'</span>
+
+<span class="kw">jobs:</span>
+  <span class="cmt"># ────────────────────────────────────────────</span>
+  <span class="cmt"># ETAPE 1 : Lint et detection de secrets</span>
+  <span class="cmt"># ────────────────────────────────────────────</span>
+  <span class="fn">secret-scan:</span>
+    <span class="kw">runs-on:</span> ubuntu-latest
+    <span class="kw">steps:</span>
+      - <span class="kw">uses:</span> actions/checkout@v4
+        <span class="kw">with:</span>
+          <span class="val">fetch-depth:</span> <span class="val">0</span>
+      - <span class="kw">name:</span> <span class="str">GitLeaks - Secret Scan</span>
+        <span class="kw">uses:</span> gitleaks/gitleaks-action@v2
+        <span class="kw">env:</span>
+          <span class="val">GITHUB_TOKEN:</span> <span class="str">${{ secrets.GITHUB_TOKEN }}</span>
+
+  <span class="cmt"># ────────────────────────────────────────────</span>
+  <span class="cmt"># ETAPE 2 : Build et analyse statique</span>
+  <span class="cmt"># ────────────────────────────────────────────</span>
+  <span class="fn">build-and-sast:</span>
+    <span class="kw">runs-on:</span> ubuntu-latest
+    <span class="kw">needs:</span> secret-scan
+    <span class="kw">steps:</span>
+      - <span class="kw">uses:</span> actions/checkout@v4
+        <span class="kw">with:</span>
+          <span class="val">fetch-depth:</span> <span class="val">0</span>
+
+      - <span class="kw">name:</span> <span class="str">Setup .NET</span>
+        <span class="kw">uses:</span> actions/setup-dotnet@v4
+        <span class="kw">with:</span>
+          <span class="val">dotnet-version:</span> <span class="str">${{ env.DOTNET_VERSION }}</span>
+
+      - <span class="kw">name:</span> <span class="str">Restore &amp; Build</span>
+        <span class="kw">run:</span> |
+          dotnet restore
+          dotnet build --no-restore
+
+      - <span class="kw">name:</span> <span class="str">SAST - Semgrep</span>
+        <span class="kw">uses:</span> returntocorp/semgrep-action@v1
+        <span class="kw">with:</span>
+          <span class="val">config:</span> <span class="str">"p/owasp-top-ten p/cwe-top-25"</span>
+
+      - <span class="kw">name:</span> <span class="str">SAST - CodeQL</span>
+        <span class="kw">uses:</span> github/codeql-action/analyze@v3
+
+  <span class="cmt"># ────────────────────────────────────────────</span>
+  <span class="cmt"># ETAPE 3 : Analyse des dependances (SCA)</span>
+  <span class="cmt"># ────────────────────────────────────────────</span>
+  <span class="fn">sca:</span>
+    <span class="kw">runs-on:</span> ubuntu-latest
+    <span class="kw">needs:</span> secret-scan
+    <span class="kw">steps:</span>
+      - <span class="kw">uses:</span> actions/checkout@v4
+
+      - <span class="kw">name:</span> <span class="str">SCA - Trivy (dependances)</span>
+        <span class="kw">uses:</span> aquasecurity/trivy-action@master
+        <span class="kw">with:</span>
+          <span class="val">scan-type:</span> <span class="str">'fs'</span>
+          <span class="val">severity:</span> <span class="str">'CRITICAL,HIGH'</span>
+          <span class="val">exit-code:</span> <span class="str">'1'</span>
+
+      - <span class="kw">name:</span> <span class="str">dotnet list vulnerable packages</span>
+        <span class="kw">run:</span> dotnet list package --vulnerable --include-transitive
+
+  <span class="cmt"># ────────────────────────────────────────────</span>
+  <span class="cmt"># ETAPE 4 : Tests unitaires</span>
+  <span class="cmt"># ────────────────────────────────────────────</span>
+  <span class="fn">tests:</span>
+    <span class="kw">runs-on:</span> ubuntu-latest
+    <span class="kw">needs:</span> [build-and-sast, sca]
+    <span class="kw">steps:</span>
+      - <span class="kw">uses:</span> actions/checkout@v4
+      - <span class="kw">uses:</span> actions/setup-dotnet@v4
+        <span class="kw">with:</span>
+          <span class="val">dotnet-version:</span> <span class="str">${{ env.DOTNET_VERSION }}</span>
+
+      - <span class="kw">name:</span> <span class="str">Run Tests with Coverage</span>
+        <span class="kw">run:</span> |
+          dotnet test --collect:"XPlat Code Coverage" \
+            --results-directory ./coverage
+
+      - <span class="kw">name:</span> <span class="str">SonarQube Analysis</span>
+        <span class="kw">uses:</span> sonarsource/sonarqube-scan-action@master
+        <span class="kw">env:</span>
+          <span class="val">SONAR_TOKEN:</span> <span class="str">${{ secrets.SONAR_TOKEN }}</span>
+          <span class="val">SONAR_HOST_URL:</span> <span class="str">${{ secrets.SONAR_HOST_URL }}</span>
+
+      - <span class="kw">name:</span> <span class="str">Quality Gate Check</span>
+        <span class="kw">uses:</span> sonarsource/sonarqube-quality-gate-action@master
+        <span class="kw">timeout-minutes:</span> <span class="val">5</span>
+        <span class="kw">env:</span>
+          <span class="val">SONAR_TOKEN:</span> <span class="str">${{ secrets.SONAR_TOKEN }}</span>
+
+  <span class="cmt"># ────────────────────────────────────────────</span>
+  <span class="cmt"># ETAPE 5 : Build image + scan conteneur</span>
+  <span class="cmt"># ────────────────────────────────────────────</span>
+  <span class="fn">container-scan:</span>
+    <span class="kw">runs-on:</span> ubuntu-latest
+    <span class="kw">needs:</span> tests
+    <span class="kw">steps:</span>
+      - <span class="kw">uses:</span> actions/checkout@v4
+
+      - <span class="kw">name:</span> <span class="str">Build Docker Image</span>
+        <span class="kw">run:</span> docker build -t ${{ env.IMAGE_NAME }}:${{ github.sha }} .
+
+      - <span class="kw">name:</span> <span class="str">Trivy Image Scan</span>
+        <span class="kw">uses:</span> aquasecurity/trivy-action@master
+        <span class="kw">with:</span>
+          <span class="val">image-ref:</span> <span class="str">'${{ env.IMAGE_NAME }}:${{ github.sha }}'</span>
+          <span class="val">format:</span> <span class="str">'sarif'</span>
+          <span class="val">output:</span> <span class="str">'trivy-results.sarif'</span>
+          <span class="val">severity:</span> <span class="str">'CRITICAL,HIGH'</span>
+          <span class="val">exit-code:</span> <span class="str">'1'</span>
+
+      - <span class="kw">name:</span> <span class="str">Generate SBOM</span>
+        <span class="kw">run:</span> |
+          trivy image --format cyclonedx \
+            --output sbom.json \
+            ${{ env.IMAGE_NAME }}:${{ github.sha }}
+
+      - <span class="kw">name:</span> <span class="str">Upload SBOM</span>
+        <span class="kw">uses:</span> actions/upload-artifact@v4
+        <span class="kw">with:</span>
+          <span class="val">name:</span> <span class="str">sbom</span>
+          <span class="val">path:</span> <span class="str">sbom.json</span>
+
+  <span class="cmt"># ────────────────────────────────────────────</span>
+  <span class="cmt"># ETAPE 6 : DAST (sur staging)</span>
+  <span class="cmt"># ────────────────────────────────────────────</span>
+  <span class="fn">dast:</span>
+    <span class="kw">runs-on:</span> ubuntu-latest
+    <span class="kw">needs:</span> container-scan
+    <span class="kw">if:</span> <span class="str">github.ref == 'refs/heads/main'</span>
+    <span class="kw">steps:</span>
+      - <span class="kw">name:</span> <span class="str">Deploy to Staging</span>
+        <span class="kw">run:</span> <span class="cmt"># Deployer sur staging...</span>
+          echo "Deploying to staging..."
+
+      - <span class="kw">name:</span> <span class="str">ZAP Baseline Scan</span>
+        <span class="kw">uses:</span> zaproxy/action-baseline@v0.12.0
+        <span class="kw">with:</span>
+          <span class="val">target:</span> <span class="str">'https://staging.example.com'</span>
+
+  <span class="cmt"># ────────────────────────────────────────────</span>
+  <span class="cmt"># ETAPE 7 : Deploiement production</span>
+  <span class="cmt"># ────────────────────────────────────────────</span>
+  <span class="fn">deploy:</span>
+    <span class="kw">runs-on:</span> ubuntu-latest
+    <span class="kw">needs:</span> dast
+    <span class="kw">if:</span> <span class="str">github.ref == 'refs/heads/main'</span>
+    <span class="kw">environment:</span> production
+    <span class="kw">steps:</span>
+      - <span class="kw">name:</span> <span class="str">Sign Image</span>
+        <span class="kw">run:</span> cosign sign --key env://COSIGN_KEY ${{ env.IMAGE_NAME }}:${{ github.sha }}
+        <span class="kw">env:</span>
+          <span class="val">COSIGN_KEY:</span> <span class="str">${{ secrets.COSIGN_KEY }}</span>
+
+      - <span class="kw">name:</span> <span class="str">Deploy to Production</span>
+        <span class="kw">run:</span> echo "Deploying to production..."</code></pre>
+
+    <h3 id="gitlab-ci">GitLab CI &mdash; Pipeline DevSecOps complet</h3>
+
+<pre><code><span class="cmt"># .gitlab-ci.yml</span>
+<span class="kw">stages:</span>
+  - <span class="str">secret-scan</span>
+  - <span class="str">build</span>
+  - <span class="str">sast</span>
+  - <span class="str">sca</span>
+  - <span class="str">test</span>
+  - <span class="str">container-scan</span>
+  - <span class="str">dast</span>
+  - <span class="str">deploy</span>
+
+<span class="kw">variables:</span>
+  <span class="val">DOTNET_VERSION:</span> <span class="str">"8.0"</span>
+  <span class="val">IMAGE_TAG:</span> <span class="str">"$CI_REGISTRY_IMAGE:$CI_COMMIT_SHA"</span>
+
+<span class="cmt"># ──── Secret Scan ────</span>
+<span class="fn">gitleaks:</span>
+  <span class="kw">stage:</span> secret-scan
+  <span class="kw">image:</span> <span class="str">zricethezav/gitleaks:latest</span>
+  <span class="kw">script:</span>
+    - gitleaks detect --source . --verbose --report-path gitleaks-report.json
+  <span class="kw">artifacts:</span>
+    <span class="kw">paths:</span>
+      - gitleaks-report.json
+    <span class="kw">when:</span> always
+
+<span class="cmt"># ──── Build ────</span>
+<span class="fn">build:</span>
+  <span class="kw">stage:</span> build
+  <span class="kw">image:</span> <span class="str">mcr.microsoft.com/dotnet/sdk:8.0</span>
+  <span class="kw">script:</span>
+    - dotnet restore
+    - dotnet build --no-restore --configuration Release
+    - dotnet publish -c Release -o ./publish
+  <span class="kw">artifacts:</span>
+    <span class="kw">paths:</span>
+      - publish/
+
+<span class="cmt"># ──── SAST ────</span>
+<span class="fn">semgrep:</span>
+  <span class="kw">stage:</span> sast
+  <span class="kw">image:</span> <span class="str">returntocorp/semgrep</span>
+  <span class="kw">script:</span>
+    - semgrep ci --config "p/owasp-top-ten" --config "p/cwe-top-25"
+      --sarif --output semgrep-results.sarif
+  <span class="kw">artifacts:</span>
+    <span class="kw">paths:</span>
+      - semgrep-results.sarif
+
+<span class="cmt"># ──── SCA ────</span>
+<span class="fn">trivy-sca:</span>
+  <span class="kw">stage:</span> sca
+  <span class="kw">image:</span> <span class="str">aquasec/trivy:latest</span>
+  <span class="kw">script:</span>
+    - trivy fs --scanners vuln --severity HIGH,CRITICAL
+      --exit-code 1 --format json --output sca-report.json .
+  <span class="kw">artifacts:</span>
+    <span class="kw">paths:</span>
+      - sca-report.json
+
+<span class="cmt"># ──── Tests ────</span>
+<span class="fn">unit-tests:</span>
+  <span class="kw">stage:</span> test
+  <span class="kw">image:</span> <span class="str">mcr.microsoft.com/dotnet/sdk:8.0</span>
+  <span class="kw">script:</span>
+    - dotnet test --collect:"XPlat Code Coverage"
+      --results-directory ./coverage
+  <span class="kw">artifacts:</span>
+    <span class="kw">paths:</span>
+      - coverage/
+  <span class="kw">coverage:</span> <span class="str">'/Total\s*\|\s*(\d+\.?\d+)%/'</span>
+
+<span class="fn">sonarqube:</span>
+  <span class="kw">stage:</span> test
+  <span class="kw">image:</span> <span class="str">sonarsource/sonar-scanner-cli:latest</span>
+  <span class="kw">variables:</span>
+    <span class="val">SONAR_HOST_URL:</span> <span class="str">"$SONAR_URL"</span>
+    <span class="val">SONAR_TOKEN:</span> <span class="str">"$SONAR_TOKEN"</span>
+  <span class="kw">script:</span>
+    - sonar-scanner -Dsonar.qualitygate.wait=true
+  <span class="kw">allow_failure:</span> <span class="val">false</span>
+
+<span class="cmt"># ──── Container Scan ────</span>
+<span class="fn">container-scan:</span>
+  <span class="kw">stage:</span> container-scan
+  <span class="kw">image:</span> <span class="str">docker:latest</span>
+  <span class="kw">services:</span>
+    - <span class="str">docker:dind</span>
+  <span class="kw">script:</span>
+    - docker build -t $IMAGE_TAG .
+    - docker run --rm
+      -v /var/run/docker.sock:/var/run/docker.sock
+      aquasec/trivy image --exit-code 1
+      --severity CRITICAL,HIGH $IMAGE_TAG
+
+<span class="cmt"># ──── DAST ────</span>
+<span class="fn">zap-dast:</span>
+  <span class="kw">stage:</span> dast
+  <span class="kw">image:</span> <span class="str">ghcr.io/zaproxy/zaproxy:stable</span>
+  <span class="kw">script:</span>
+    - zap-baseline.py -t https://$STAGING_URL -r zap-report.html
+  <span class="kw">artifacts:</span>
+    <span class="kw">paths:</span>
+      - zap-report.html
+  <span class="kw">only:</span>
+    - main
+
+<span class="cmt"># ──── Deploy ────</span>
+<span class="fn">deploy-production:</span>
+  <span class="kw">stage:</span> deploy
+  <span class="kw">script:</span>
+    - echo "Deploying $IMAGE_TAG to production..."
+  <span class="kw">environment:</span>
+    <span class="kw">name:</span> production
+  <span class="kw">when:</span> manual
+  <span class="kw">only:</span>
+    - main</code></pre>
+
+    <h3 id="azure-devops">Azure DevOps &mdash; Pipeline DevSecOps complet</h3>
+
+<pre><code><span class="cmt"># azure-pipelines.yml</span>
+<span class="kw">trigger:</span>
+  <span class="kw">branches:</span>
+    <span class="kw">include:</span>
+      - main
+      - develop
+
+<span class="kw">pool:</span>
+  <span class="val">vmImage:</span> <span class="str">'ubuntu-latest'</span>
+
+<span class="kw">variables:</span>
+  <span class="val">dotnetVersion:</span> <span class="str">'8.0.x'</span>
+  <span class="val">imageName:</span> <span class="str">'myapp'</span>
+
+<span class="kw">stages:</span>
+<span class="cmt"># ──── Stage 1 : Secret Scan ────</span>
+- <span class="kw">stage:</span> <span class="str">SecretScan</span>
+  <span class="kw">jobs:</span>
+  - <span class="kw">job:</span> <span class="str">GitLeaks</span>
+    <span class="kw">steps:</span>
+    - <span class="kw">script:</span> |
+        docker run --rm -v $(Build.SourcesDirectory):/repo \
+          zricethezav/gitleaks:latest detect \
+          --source /repo --verbose
+      <span class="val">displayName:</span> <span class="str">'Secret Scan - GitLeaks'</span>
+
+<span class="cmt"># ──── Stage 2 : Build + SAST + SCA ────</span>
+- <span class="kw">stage:</span> <span class="str">BuildAndAnalyze</span>
+  <span class="kw">dependsOn:</span> SecretScan
+  <span class="kw">jobs:</span>
+  - <span class="kw">job:</span> <span class="str">BuildSAST</span>
+    <span class="kw">steps:</span>
+    - <span class="kw">task:</span> UseDotNet@2
+      <span class="kw">inputs:</span>
+        <span class="val">packageType:</span> <span class="str">'sdk'</span>
+        <span class="val">version:</span> <span class="str">'$(dotnetVersion)'</span>
+
+    - <span class="kw">script:</span> dotnet restore &amp;&amp; dotnet build --no-restore
+      <span class="val">displayName:</span> <span class="str">'Restore &amp; Build'</span>
+
+    - <span class="kw">script:</span> |
+        dotnet list package --vulnerable --include-transitive
+      <span class="val">displayName:</span> <span class="str">'SCA - Vulnerable Packages'</span>
+
+    - <span class="kw">script:</span> |
+        docker run --rm -v $(Build.SourcesDirectory):/src \
+          returntocorp/semgrep semgrep ci \
+          --config "p/owasp-top-ten"
+      <span class="val">displayName:</span> <span class="str">'SAST - Semgrep'</span>
+
+    - <span class="kw">task:</span> SonarQubePrepare@6
+      <span class="kw">inputs:</span>
+        <span class="val">SonarQube:</span> <span class="str">'SonarQubeConnection'</span>
+        <span class="val">scannerMode:</span> <span class="str">'MSBuild'</span>
+        <span class="val">projectKey:</span> <span class="str">'myapp'</span>
+
+    - <span class="kw">task:</span> SonarQubeAnalyze@6
+    - <span class="kw">task:</span> SonarQubePublish@6
+
+<span class="cmt"># ──── Stage 3 : Tests ────</span>
+- <span class="kw">stage:</span> <span class="str">Test</span>
+  <span class="kw">dependsOn:</span> BuildAndAnalyze
+  <span class="kw">jobs:</span>
+  - <span class="kw">job:</span> <span class="str">UnitTests</span>
+    <span class="kw">steps:</span>
+    - <span class="kw">task:</span> DotNetCoreCLI@2
+      <span class="kw">inputs:</span>
+        <span class="val">command:</span> <span class="str">'test'</span>
+        <span class="val">arguments:</span> <span class="str">'--collect:"XPlat Code Coverage"'</span>
+      <span class="val">displayName:</span> <span class="str">'Run Tests with Coverage'</span>
+
+    - <span class="kw">task:</span> PublishCodeCoverageResults@2
+      <span class="kw">inputs:</span>
+        <span class="val">summaryFileLocation:</span> <span class="str">'**/coverage.cobertura.xml'</span>
+
+<span class="cmt"># ──── Stage 4 : Container Scan ────</span>
+- <span class="kw">stage:</span> <span class="str">ContainerScan</span>
+  <span class="kw">dependsOn:</span> Test
+  <span class="kw">jobs:</span>
+  - <span class="kw">job:</span> <span class="str">ScanImage</span>
+    <span class="kw">steps:</span>
+    - <span class="kw">script:</span> docker build -t $(imageName):$(Build.BuildId) .
+      <span class="val">displayName:</span> <span class="str">'Build Docker Image'</span>
+
+    - <span class="kw">script:</span> |
+        docker run --rm \
+          -v /var/run/docker.sock:/var/run/docker.sock \
+          aquasec/trivy image --exit-code 1 \
+          --severity CRITICAL,HIGH \
+          $(imageName):$(Build.BuildId)
+      <span class="val">displayName:</span> <span class="str">'Trivy Image Scan'</span>
+
+<span class="cmt"># ──── Stage 5 : DAST ────</span>
+- <span class="kw">stage:</span> <span class="str">DAST</span>
+  <span class="kw">dependsOn:</span> ContainerScan
+  <span class="kw">condition:</span> <span class="str">eq(variables['Build.SourceBranch'], 'refs/heads/main')</span>
+  <span class="kw">jobs:</span>
+  - <span class="kw">job:</span> <span class="str">ZAPScan</span>
+    <span class="kw">steps:</span>
+    - <span class="kw">script:</span> |
+        docker run --rm ghcr.io/zaproxy/zaproxy:stable \
+          zap-baseline.py -t https://staging.example.com
+      <span class="val">displayName:</span> <span class="str">'OWASP ZAP - DAST Scan'</span>
+
+<span class="cmt"># ──── Stage 6 : Deploy ────</span>
+- <span class="kw">stage:</span> <span class="str">Deploy</span>
+  <span class="kw">dependsOn:</span> DAST
+  <span class="kw">condition:</span> <span class="str">eq(variables['Build.SourceBranch'], 'refs/heads/main')</span>
+  <span class="kw">jobs:</span>
+  - <span class="kw">deployment:</span> <span class="str">Production</span>
+    <span class="kw">environment:</span> <span class="str">'production'</span>
+    <span class="kw">strategy:</span>
+      <span class="kw">runOnce:</span>
+        <span class="kw">deploy:</span>
+          <span class="kw">steps:</span>
+          - <span class="kw">script:</span> echo "Deploying to production..."
+            <span class="val">displayName:</span> <span class="str">'Deploy'</span></code></pre>
+
+    <h3>Synthese visuelle des 3 pipelines</h3>
+
+    <div class="diagram-box">
+<pre><code>  Comparaison des plateformes CI/CD :
+
+  +-------------------+-------------------+-------------------+
+  |  GitHub Actions   |  GitLab CI/CD     |  Azure DevOps     |
+  +===================+===================+===================+
+  | Fichier YAML      | Fichier YAML      | Fichier YAML      |
+  | .github/workflows | .gitlab-ci.yml    | azure-pipelines   |
+  +-------------------+-------------------+-------------------+
+  | Jobs paralleles   | Stages/Jobs       | Stages/Jobs       |
+  | Matrix strategy   | DAG pipelines     | Environments      |
+  +-------------------+-------------------+-------------------+
+  | Marketplace       | Templates CI      | Task extensions   |
+  | (actions)         | (includes)        | (marketplace)     |
+  +-------------------+-------------------+-------------------+
+  | GitHub Secrets    | CI/CD Variables   | Variable Groups   |
+  | Environments      | Environments      | Service Conns     |
+  +-------------------+-------------------+-------------------+
+  | SARIF upload      | Security          | Extensions        |
+  | Security tab      | Dashboard         | SonarQube task    |
+  +-------------------+-------------------+-------------------+
+  | Dependabot        | Dependency        | WhiteSource Bolt  |
+  | integre           | Scanning          | (extension)       |
+  +-------------------+-------------------+-------------------+</code></pre>
+    </div>
+
+
+    <!-- =============================================================== -->
+    <!-- 12. BONNES PRATIQUES                                            -->
+    <!-- =============================================================== -->
+    <h2 id="bonnes-pratiques">12. Bonnes Pratiques Recapitulatives</h2>
+
+    <div class="alert alert-success">
+        <strong>20 regles d'or</strong> pour un pipeline CI/CD securise.
+    </div>
+
+    <ol>
+        <li>
+            <strong>Shift Left :</strong> Integrer les controles de securite le plus tot possible.
+            Un hook pre-commit est plus efficace qu'un scan en production.
+        </li>
+        <li>
+            <strong>Automatiser tout :</strong> Chaque controle de securite doit etre automatise dans le pipeline.
+            Aucune verification manuelle ne doit bloquer le flux.
+        </li>
+        <li>
+            <strong>Scanner les secrets avant chaque commit :</strong> Utiliser des hooks pre-commit
+            (GitLeaks, TruffleHog) pour empecher les secrets d'entrer dans l'historique git.
+        </li>
+        <li>
+            <strong>SAST sur chaque PR :</strong> L'analyse statique doit s'executer sur chaque
+            pull request/merge request et bloquer la fusion si des vulnerabilites critiques sont detectees.
+        </li>
+        <li>
+            <strong>SCA automatise :</strong> Configurer Dependabot ou Renovate pour mettre a jour
+            automatiquement les dependances vulnerables via des pull requests.
+        </li>
+        <li>
+            <strong>DAST regulier :</strong> Executer des scans DAST (OWASP ZAP) sur les environnements
+            de staging, au minimum chaque nuit.
+        </li>
+        <li>
+            <strong>Quality Gate obligatoire :</strong> Configurer un Quality Gate SonarQube qui bloque
+            le pipeline si le code ne respecte pas les seuils de securite et de qualite.
+        </li>
+        <li>
+            <strong>Scanner les images Docker :</strong> Chaque image doit etre scannee (Trivy) avant
+            d'etre poussee dans un registry. Bloquer les images avec des CVE critiques.
+        </li>
+        <li>
+            <strong>Utiliser des images de base minimales :</strong> Preferer Alpine ou distroless
+            plutot que Ubuntu/Debian pour reduire la surface d'attaque.
+        </li>
+        <li>
+            <strong>Ne jamais executer en root :</strong> Les conteneurs et les processus doivent
+            tourner avec un utilisateur non-root.
+        </li>
+        <li>
+            <strong>Generer un SBOM :</strong> Produire un Software Bill of Materials (CycloneDX)
+            pour chaque release pour la tracabilite et la conformite.
+        </li>
+        <li>
+            <strong>Signer les artefacts :</strong> Utiliser cosign/Sigstore pour garantir
+            l'integrite des images deployees.
+        </li>
+        <li>
+            <strong>Gerer les secrets avec un vault :</strong> Utiliser Azure Key Vault, HashiCorp Vault
+            ou AWS Secrets Manager. Jamais de secrets dans le code ou les variables d'environnement en clair.
+        </li>
+        <li>
+            <strong>Rotation des secrets :</strong> Mettre en place une rotation automatique des secrets
+            et revoquer immediatement tout secret expose.
+        </li>
+        <li>
+            <strong>IaC scanning :</strong> Scanner les fichiers Terraform, Kubernetes, Dockerfiles
+            avec Checkov ou tfsec pour detecter les misconfigurations.
+        </li>
+        <li>
+            <strong>Deploiement progressif :</strong> Utiliser des strategies Canary ou Blue-Green
+            pour limiter l'impact d'un probleme en production.
+        </li>
+        <li>
+            <strong>Monitoring post-deploiement :</strong> Surveiller les metriques de securite
+            (taux d'erreurs, comportements anormaux) apres chaque deploiement.
+        </li>
+        <li>
+            <strong>Pipeline comme code :</strong> Les fichiers de pipeline (YAML) doivent etre
+            versionnes dans git et revus comme du code applicatif.
+        </li>
+        <li>
+            <strong>Principe du moindre privilege :</strong> Les service accounts du pipeline
+            ne doivent avoir que les permissions strictement necessaires.
+        </li>
+        <li>
+            <strong>Formation continue :</strong> Former regulierement les developpeurs aux pratiques
+            de securite (OWASP Top 10, secure coding) et organiser des security champions dans chaque equipe.
+        </li>
+    </ol>
+
+    <h3>Recapitulatif visuel</h3>
+
+    <div class="diagram-box">
+<pre><code>  Pipeline DevSecOps - Vue d'ensemble des controles
+
+  PRE-COMMIT        BUILD              TEST               DEPLOY
+  ============     ============       ============       ============
+  [x] GitLeaks     [x] SAST           [x] Unit tests     [x] Sec Gate
+  [x] Lint         [x] SCA            [x] DAST           [x] Sign
+  [x] Format       [x] License        [x] Fuzzing        [x] SBOM
+  [x] Pre-commit   [x] Image scan     [x] API test       [x] Canary
+      hooks        [x] IaC scan       [x] Quality Gate   [x] Monitor
+
+  RESULTAT : Chaque changement est verifie sous 7+ angles de securite
+             avant d'atteindre la production.
+
+  OUTILS RECOMMANDES (stack open source) :
+  +------------+  +--------+  +--------+  +-----------+  +--------+
+  | GitLeaks   |  |Semgrep |  | Trivy  |  | OWASP ZAP |  | cosign |
+  +------------+  +--------+  +--------+  +-----------+  +--------+
+  | TruffleHog |  | CodeQL |  | Grype  |  | Nuclei    |  | syft   |
+  +------------+  +--------+  +--------+  +-----------+  +--------+
+  | pre-commit |  | Sonar  |  | Dep-   |  | Nikto     |  | SBOM   |
+  |   hooks    |  | Qube   |  | Check  |  |           |  |        |
+  +------------+  +--------+  +--------+  +-----------+  +--------+</code></pre>
+    </div>
+
+
+    <!-- =============================================================== -->
+    <!-- 13. REFERENCES                                                  -->
+    <!-- =============================================================== -->
+    <h2 id="references">13. References</h2>
+
+    <h3>Standards et guides</h3>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Ressource</th>
+                <th>Organisation</th>
+                <th>Description</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>OWASP DevSecOps Guideline</strong></td>
+                <td>OWASP</td>
+                <td>Guide complet d'integration securite dans le pipeline CI/CD</td>
+            </tr>
+            <tr>
+                <td><strong>NIST SP 800-218 (SSDF)</strong></td>
+                <td>NIST</td>
+                <td>Secure Software Development Framework &mdash; Pratiques recommandees</td>
+            </tr>
+            <tr>
+                <td><strong>CIS Software Supply Chain Security</strong></td>
+                <td>CIS</td>
+                <td>Benchmarks pour securiser la chaine d'approvisionnement logicielle</td>
+            </tr>
+            <tr>
+                <td><strong>CISA Secure Software Development</strong></td>
+                <td>CISA</td>
+                <td>Guidelines federales americaines pour le developpement securise</td>
+            </tr>
+            <tr>
+                <td><strong>SLSA Framework</strong></td>
+                <td>Google / OpenSSF</td>
+                <td>Supply-chain Levels for Software Artifacts &mdash; Niveaux de maturite</td>
+            </tr>
+            <tr>
+                <td><strong>OWASP Top 10 (2021)</strong></td>
+                <td>OWASP</td>
+                <td>Les 10 vulnerabilites web les plus critiques</td>
+            </tr>
+            <tr>
+                <td><strong>OWASP SAMM</strong></td>
+                <td>OWASP</td>
+                <td>Software Assurance Maturity Model &mdash; Mesurer la maturite securite</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h3>Documentation des outils</h3>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Outil</th>
+                <th>Lien</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td>SonarQube</td><td>https://docs.sonarsource.com/sonarqube/</td></tr>
+            <tr><td>Semgrep</td><td>https://semgrep.dev/docs/</td></tr>
+            <tr><td>Trivy</td><td>https://aquasecurity.github.io/trivy/</td></tr>
+            <tr><td>OWASP ZAP</td><td>https://www.zaproxy.org/docs/</td></tr>
+            <tr><td>GitLeaks</td><td>https://github.com/gitleaks/gitleaks</td></tr>
+            <tr><td>TruffleHog</td><td>https://github.com/trufflesecurity/trufflehog</td></tr>
+            <tr><td>Checkov</td><td>https://www.checkov.io/</td></tr>
+            <tr><td>CodeQL</td><td>https://codeql.github.com/docs/</td></tr>
+            <tr><td>cosign (Sigstore)</td><td>https://docs.sigstore.dev/</td></tr>
+            <tr><td>Dependabot</td><td>https://docs.github.com/en/code-security/dependabot</td></tr>
+            <tr><td>Grype</td><td>https://github.com/anchore/grype</td></tr>
+            <tr><td>Nuclei</td><td>https://docs.projectdiscovery.io/tools/nuclei/</td></tr>
+        </tbody>
+    </table>
+
+    <div class="alert alert-info">
+        <strong>Pour aller plus loin :</strong> Explorez le projet
+        <strong>OWASP DevSecOps Maturity Model (DSOMM)</strong> pour evaluer et ameliorer
+        progressivement la maturite securite de votre pipeline CI/CD.
+    </div>
+
+</main>
+
+<footer>
+    Condorcet 2026 &mdash; Programmation Securisee
+</footer>
+
+</body>
+</html>

@@ -37,7 +37,7 @@
             <div class="card-body">
                 <pre><code>GET /api/no-cors/compte HTTP/1.1
 Host: localhost:5300
-Origin: http://localhost:5301
+Origin: https://localhost:5301
 
 HTTP/1.1 200 OK
 Content-Type: application/json
@@ -60,7 +60,7 @@ document.getElementById('btn-no-cors').addEventListener('click', async () => {
     resultDiv.innerHTML = '<div class="text-muted">Envoi de la requete...</div>';
 
     try {
-        const response = await fetch('http://localhost:5300/api/no-cors/compte');
+        const response = await fetch('https://localhost:5300/api/no-cors/compte');
         const data = await response.json();
         resultDiv.innerHTML = `<div class="alert alert-success">
             <strong>Reponse recue :</strong><br><pre>${JSON.stringify(data, null, 2)}</pre>

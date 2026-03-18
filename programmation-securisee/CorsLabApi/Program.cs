@@ -30,7 +30,7 @@ builder.Services.AddCors(options =>
     // Politique "secure" : whitelist stricte
     options.AddPolicy("Secure", policy =>
     {
-        policy.WithOrigins("http://localhost:5301")
+        policy.WithOrigins("https://localhost:5301")
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials();
@@ -38,6 +38,8 @@ builder.Services.AddCors(options =>
 });
 
 var app = builder.Build();
+
+app.UseCors();
 
 // ============================================================
 // Donnees bancaires simulees en memoire
@@ -77,7 +79,7 @@ void SetSessionCookie(HttpContext ctx)
     {
         HttpOnly = true,
         SameSite = SameSiteMode.None,
-        Secure = false,
+        Secure = true,
         Path = "/",
         MaxAge = TimeSpan.FromHours(1)
     });
@@ -88,7 +90,7 @@ void ClearSessionCookie(HttpContext ctx)
     ctx.Response.Cookies.Delete("session_banque", new CookieOptions
     {
         SameSite = SameSiteMode.None,
-        Secure = false,
+        Secure = true,
         Path = "/"
     });
 }
@@ -170,7 +172,7 @@ app.MapGet("/api/vulnerable/transactions", (HttpContext ctx) =>
 
 // ============================================================
 // Groupe 4 : Secure — whitelist d'origines
-// Seul http://localhost:5301 est autorise
+// Seul https://localhost:5301 est autorise
 // ============================================================
 
 app.MapGet("/api/secure/compte", (HttpContext ctx) =>

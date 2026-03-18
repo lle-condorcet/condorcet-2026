@@ -514,6 +514,10 @@
     <a href="#preflight">Requetes preflight</a>
     <a href="#config">Configuration ASP.NET</a>
     <a href="#bonnes-pratiques">Bonnes pratiques</a>
+    <div class="section-title">En profondeur</div>
+    <a href="#pourquoi-cors">Pourquoi CORS ?</a>
+    <a href="#cors-infra">CORS dans l'infrastructure</a>
+    <a href="#cors-vs-autres">CORS vs Firewall vs WAF</a>
 </nav>
 
 <main>
@@ -539,7 +543,7 @@
 
     <div class="alert alert-warning">
         <strong>Important</strong>
-        <code>http://localhost:5300</code> et <code>http://localhost:5301</code> sont des origines
+        <code>https://localhost:5300</code> et <code>https://localhost:5301</code> sont des origines
         <strong>differentes</strong> car leurs ports different. C'est pour cela que notre labo necessite deux applications.
     </div>
 
@@ -571,9 +575,9 @@
     <h2 id="architecture">Architecture du labo</h2>
 
     <div class="flow">
-        <div class="flow-box browser">CorsLabClient<br><small>http://localhost:5301</small></div>
+        <div class="flow-box browser">CorsLabClient<br><small>https://localhost:5301</small></div>
         <div class="flow-arrow">← fetch() →</div>
-        <div class="flow-box server">CorsLabApi<br><small>http://localhost:5300</small></div>
+        <div class="flow-box server">CorsLabApi<br><small>https://localhost:5300</small></div>
     </div>
 
     <table>
@@ -610,7 +614,7 @@ app.<span class="fn">MapGet</span>(<span class="str">"/api/no-cors/compte"</span
     <pre><code><span class="cmt">// Requete</span>
 GET /api/no-cors/compte HTTP/1.1
 Host: localhost:5300
-Origin: http://localhost:5301
+Origin: https://localhost:5301
 
 <span class="cmt">// Reponse — aucun en-tete CORS</span>
 HTTP/1.1 200 OK
@@ -701,7 +705,7 @@ Content-Type: application/json
     </ol>
 
     <pre><code><span class="cmt">// Code du site malveillant</span>
-<span class="kw">const</span> response = <span class="kw">await</span> <span class="fn">fetch</span>(<span class="str">'http://localhost:5300/api/vulnerable/compte'</span>, {
+<span class="kw">const</span> response = <span class="kw">await</span> <span class="fn">fetch</span>(<span class="str">'https://localhost:5300/api/vulnerable/compte'</span>, {
     credentials: <span class="str">'include'</span>
 });
 <span class="kw">const</span> data = <span class="kw">await</span> response.<span class="fn">json</span>();
@@ -715,7 +719,7 @@ Content-Type: application/json
 
     <pre><code>options.<span class="fn">AddPolicy</span>(<span class="str">"Secure"</span>, policy <span class="kw">=></span>
 {
-    policy.<span class="fn">WithOrigins</span>(<span class="str">"http://localhost:5301"</span>)  <span class="success-hl">// Seule cette origine</span>
+    policy.<span class="fn">WithOrigins</span>(<span class="str">"https://localhost:5301"</span>)  <span class="success-hl">// Seule cette origine</span>
           .<span class="fn">AllowAnyHeader</span>()
           .<span class="fn">AllowAnyMethod</span>()
           .<span class="fn">AllowCredentials</span>();                       <span class="success-hl">// Cookies autorises</span>
@@ -724,8 +728,8 @@ Content-Type: application/json
     <div class="comparison">
         <div class="card good">
             <h4>Origine autorisee</h4>
-            <pre><code>Origin: http://localhost:5301
-<span class="success-hl">→ Access-Control-Allow-Origin: http://localhost:5301</span>
+            <pre><code>Origin: https://localhost:5301
+<span class="success-hl">→ Access-Control-Allow-Origin: https://localhost:5301</span>
 <span class="success-hl">→ Acces autorise</span></code></pre>
         </div>
         <div class="card bad">
@@ -882,7 +886,7 @@ Content-Type: application/json
 
             <!-- Preflight headers -->
             <rect x="185" y="112" width="310" height="56" rx="6" fill="rgba(255,165,2,0.06)" stroke="#ffa502" stroke-width="1" stroke-dasharray="4,3"/>
-            <text x="340" y="129" text-anchor="middle" fill="#8b8fa3" font-size="10">Origin: http://localhost:5301</text>
+            <text x="340" y="129" text-anchor="middle" fill="#8b8fa3" font-size="10">Origin: https://localhost:5301</text>
             <text x="340" y="145" text-anchor="middle" fill="#8b8fa3" font-size="10">Access-Control-Request-Method: DELETE</text>
             <text x="340" y="161" text-anchor="middle" fill="#8b8fa3" font-size="10">Access-Control-Request-Headers: Authorization</text>
 
@@ -893,7 +897,7 @@ Content-Type: application/json
 
             <!-- Preflight response headers -->
             <rect x="185" y="212" width="310" height="72" rx="6" fill="rgba(46,213,115,0.06)" stroke="#2ed573" stroke-width="1" stroke-dasharray="4,3"/>
-            <text x="340" y="229" text-anchor="middle" fill="#2ed573" font-size="10">Access-Control-Allow-Origin: http://localhost:5301</text>
+            <text x="340" y="229" text-anchor="middle" fill="#2ed573" font-size="10">Access-Control-Allow-Origin: https://localhost:5301</text>
             <text x="340" y="245" text-anchor="middle" fill="#2ed573" font-size="10">Access-Control-Allow-Methods: DELETE</text>
             <text x="340" y="261" text-anchor="middle" fill="#2ed573" font-size="10">Access-Control-Allow-Headers: Authorization</text>
             <text x="340" y="277" text-anchor="middle" fill="#2ed573" font-size="10">Access-Control-Allow-Credentials: true</text>
@@ -1092,7 +1096,7 @@ Content-Type: application/json
 
     <h3>Phase "VOL" — Le JavaScript vole les donnees</h3>
     <p>
-        Le script malveillant execute <code>fetch('http://localhost:5300/api/vulnerable/compte', {credentials: 'include'})</code>.
+        Le script malveillant execute <code>fetch('https://localhost:5300/api/vulnerable/compte', {credentials: 'include'})</code>.
         Deux choses critiques se produisent :
     </p>
     <ol>
@@ -1119,9 +1123,9 @@ Content-Type: application/json
 
     <h3>Pourquoi la configuration securisee bloque cette attaque</h3>
     <p>
-        Avec <code>WithOrigins("http://localhost:5301")</code>, le serveur ne renvoie l'en-tete
+        Avec <code>WithOrigins("https://localhost:5301")</code>, le serveur ne renvoie l'en-tete
         <code>Access-Control-Allow-Origin</code> que si l'<code>Origin</code> de la requete correspond
-        exactement a <code>http://localhost:5301</code>. Quand <code>evil.com</code> fait la meme requete,
+        exactement a <code>https://localhost:5301</code>. Quand <code>evil.com</code> fait la meme requete,
         le serveur ne renvoie pas cet en-tete, et le navigateur bloque la lecture —
         meme si la reponse contient les donnees, le JavaScript ne peut pas y acceder.
     </p>
@@ -1279,7 +1283,7 @@ Content-Type: application/json
     </p>
 
     <p><strong>Scenario 4 — Securise (vert) :</strong>
-        Le serveur n'autorise qu'une liste precise d'origines (<code>WithOrigins("http://localhost:5301")</code>).
+        Le serveur n'autorise qu'une liste precise d'origines (<code>WithOrigins("https://localhost:5301")</code>).
         Quand une requete arrive depuis une origine non listee, le serveur ne renvoie tout simplement pas
         d'en-tete <code>Access-Control-Allow-Origin</code>, et le navigateur bloque la lecture.
         Les cookies sont autorises mais uniquement pour les origines de confiance. C'est la seule
@@ -1449,13 +1453,13 @@ Content-Type: application/json
     <pre><code><span class="cmt">// 1. Requete preflight (envoyee automatiquement par le navigateur)</span>
 OPTIONS /api/secure/compte HTTP/1.1
 Host: localhost:5300
-Origin: http://localhost:5301
+Origin: https://localhost:5301
 Access-Control-Request-Method: GET
 Access-Control-Request-Headers: content-type
 
 <span class="cmt">// 2. Reponse preflight du serveur</span>
 HTTP/1.1 204 No Content
-Access-Control-Allow-Origin: http://localhost:5301
+Access-Control-Allow-Origin: https://localhost:5301
 Access-Control-Allow-Methods: GET
 Access-Control-Allow-Headers: content-type
 Access-Control-Allow-Credentials: true
@@ -1463,7 +1467,7 @@ Access-Control-Allow-Credentials: true
 <span class="cmt">// 3. Requete reelle (envoyee seulement si le preflight est OK)</span>
 GET /api/secure/compte HTTP/1.1
 Host: localhost:5300
-Origin: http://localhost:5301
+Origin: https://localhost:5301
 Cookie: session_banque=user_jean_dupont</code></pre>
 
     <!-- ============================================================ -->
@@ -1476,7 +1480,7 @@ Cookie: session_banque=user_jean_dupont</code></pre>
     <span class="cmt">// Politique securisee</span>
     options.<span class="fn">AddPolicy</span>(<span class="str">"Secure"</span>, policy <span class="kw">=></span>
     {
-        policy.<span class="fn">WithOrigins</span>(<span class="str">"http://localhost:5301"</span>)
+        policy.<span class="fn">WithOrigins</span>(<span class="str">"https://localhost:5301"</span>)
               .<span class="fn">AllowAnyHeader</span>()
               .<span class="fn">AllowAnyMethod</span>()
               .<span class="fn">AllowCredentials</span>();
@@ -1514,6 +1518,402 @@ app.<span class="fn">MapGet</span>(<span class="str">"/api/no-cors/compte"</span
         peut toujours acceder a l'API sans restriction CORS. C'est pour cela que CORS ne remplace pas
         l'authentification et l'autorisation cote serveur.
     </div>
+
+    <!-- ============================================================ -->
+    <!-- POURQUOI CORS                                                 -->
+    <!-- ============================================================ -->
+    <h2 id="pourquoi-cors">Pourquoi utiliser CORS concretement ?</h2>
+
+    <p>
+        CORS n'est pas une lubie technique &mdash; c'est la reponse a un besoin reel des architectures modernes.
+        Voici les cas concrets ou CORS est <strong>indispensable</strong>.
+    </p>
+
+    <h3>1. Architecture front-end / back-end separees</h3>
+    <p>
+        Dans une architecture SPA (React, Angular, Vue.js), le front-end est souvent servi depuis un domaine
+        different de l'API :
+    </p>
+<pre><code><span class="cmt">┌─────────────────────────────┐      ┌──────────────────────────────┐
+│  Front-end (SPA)            │      │  API Back-end                │
+│  https://app.monsite.com    │ ───► │  https://api.monsite.com     │
+│                             │      │                              │
+│  React / Angular / Vue      │      │  ASP.NET / Node / Django     │
+└─────────────────────────────┘      └──────────────────────────────┘
+     Origine A                             Origine B
+     → Le navigateur bloque sans CORS !</span></code></pre>
+    <p>
+        Sans CORS configure sur l'API, le navigateur bloque toutes les reponses.
+        C'est le cas d'usage <strong>le plus courant</strong>.
+    </p>
+
+    <h3>2. Microservices et API Gateway</h3>
+    <p>
+        Dans une architecture microservices, un portail web peut devoir appeler plusieurs API
+        sur des sous-domaines differents :
+    </p>
+<pre><code><span class="cmt">https://portal.company.com  appelle :
+   ├── https://auth.company.com/api/login
+   ├── https://orders.company.com/api/orders
+   ├── https://billing.company.com/api/invoices
+   └── https://analytics.company.com/api/stats
+
+→ Chaque sous-domaine = origine differente = CORS necessaire</span></code></pre>
+
+    <h3>3. Widgets et integrations tierces</h3>
+    <p>
+        Un widget integre sur un site client (chatbot, formulaire, carte interactive)
+        doit communiquer avec votre API depuis l'origine du client.
+    </p>
+
+    <h3>4. API publiques</h3>
+    <p>
+        Les API publiques (meteo, taux de change, donnees ouvertes) utilisent
+        <code>Access-Control-Allow-Origin: *</code> pour etre consommables depuis n'importe quel site web.
+    </p>
+
+    <h3>5. Environnements de developpement</h3>
+    <p>
+        En dev, le front-end tourne souvent sur <code>localhost:3000</code> (Vite/Webpack)
+        et l'API sur <code>localhost:5000</code> &mdash; deux origines differentes.
+    </p>
+
+    <div class="alert alert-info">
+        <strong>Regle simple</strong>
+        Si votre front-end et votre API n'ont pas exactement le meme <code>scheme + host + port</code>,
+        vous avez besoin de CORS. C'est aussi simple que cela.
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- CORS DANS L'INFRASTRUCTURE                                    -->
+    <!-- ============================================================ -->
+    <h2 id="cors-infra">CORS au-dela de l'application : Reverse Proxy, CDN, WAF</h2>
+
+    <p>
+        CORS est un mecanisme <strong>HTTP</strong> (des en-tetes de reponse). Il peut donc etre configure
+        a <strong>n'importe quel niveau</strong> de l'infrastructure qui traite des reponses HTTP &mdash; pas
+        uniquement dans le code applicatif.
+    </p>
+
+    <h3>Ou configurer CORS dans la stack ?</h3>
+<pre><code><span class="cmt">┌────────────────────────────────────────────────────────────┐
+│                    NAVIGATEUR                              │
+│  (applique la politique CORS — bloque ou autorise)         │
+└──────────────────────┬─────────────────────────────────────┘
+                       │ Requete HTTP
+                       ▼
+┌────────────────────────────────────────────────────────────┐
+│  CDN / Load Balancer  (Cloudflare, AWS CloudFront, Akamai) │
+│  → Peut ajouter les en-tetes CORS ici                      │
+│  → Utile pour les assets statiques (fonts, images, JS)     │
+└──────────────────────┬─────────────────────────────────────┘
+                       ▼
+┌────────────────────────────────────────────────────────────┐
+│  WAF (Web Application Firewall)                            │
+│  (AWS WAF, Azure Front Door, Cloudflare WAF, ModSecurity)  │
+│  → Peut injecter/modifier les en-tetes CORS                │
+│  → Peut bloquer les origines suspectes en amont             │
+│  → Peut valider les preflight OPTIONS                       │
+└──────────────────────┬─────────────────────────────────────┘
+                       ▼
+┌────────────────────────────────────────────────────────────┐
+│  Reverse Proxy (Nginx, Apache, HAProxy, Traefik, YARP)     │
+│  → Configuration CORS centralisee pour plusieurs services   │
+│  → Evite de dupliquer la config dans chaque microservice    │
+└──────────────────────┬─────────────────────────────────────┘
+                       ▼
+┌────────────────────────────────────────────────────────────┐
+│  API Gateway (Kong, Ocelot, Azure API Management, AWS GW)  │
+│  → Politique CORS en tant que middleware/plugin              │
+│  → Gestion centralisee pour des dizaines d'APIs             │
+└──────────────────────┬─────────────────────────────────────┘
+                       ▼
+┌────────────────────────────────────────────────────────────┐
+│  APPLICATION (ASP.NET Core, Node.js, Django, Spring Boot)  │
+│  → Configuration CORS dans le code (ce qu'on fait ici)      │
+│  → Controle le plus fin (par route, par politique)          │
+└────────────────────────────────────────────────────────────┘</span></code></pre>
+
+    <h3>Nginx — Configuration CORS</h3>
+<pre><code><span class="cmt"># /etc/nginx/conf.d/api.conf</span>
+<span class="kw">server</span> {
+    <span class="kw">listen</span> <span class="val">443</span> ssl;
+    <span class="kw">server_name</span> api.monsite.com;
+
+    <span class="kw">location</span> <span class="str">/api/</span> {
+
+        <span class="cmt"># Gestion du preflight OPTIONS</span>
+        <span class="kw">if</span> ($request_method = <span class="str">'OPTIONS'</span>) {
+            <span class="kw">add_header</span> <span class="str">'Access-Control-Allow-Origin'</span> <span class="str">'https://app.monsite.com'</span>;
+            <span class="kw">add_header</span> <span class="str">'Access-Control-Allow-Methods'</span> <span class="str">'GET, POST, PUT, DELETE'</span>;
+            <span class="kw">add_header</span> <span class="str">'Access-Control-Allow-Headers'</span> <span class="str">'Authorization, Content-Type'</span>;
+            <span class="kw">add_header</span> <span class="str">'Access-Control-Allow-Credentials'</span> <span class="str">'true'</span>;
+            <span class="kw">add_header</span> <span class="str">'Access-Control-Max-Age'</span> <span class="val">86400</span>;
+            <span class="kw">return</span> <span class="val">204</span>;
+        }
+
+        <span class="cmt"># En-tetes CORS sur les reponses normales</span>
+        <span class="kw">add_header</span> <span class="str">'Access-Control-Allow-Origin'</span> <span class="str">'https://app.monsite.com'</span> <span class="kw">always</span>;
+        <span class="kw">add_header</span> <span class="str">'Access-Control-Allow-Credentials'</span> <span class="str">'true'</span> <span class="kw">always</span>;
+
+        <span class="kw">proxy_pass</span> http://backend:5000;
+    }
+}</code></pre>
+
+    <h3>Apache — Configuration CORS</h3>
+<pre><code><span class="cmt"># .htaccess ou VirtualHost</span>
+&lt;<span class="kw">IfModule</span> mod_headers.c&gt;
+    <span class="kw">Header set</span> Access-Control-Allow-Origin <span class="str">"https://app.monsite.com"</span>
+    <span class="kw">Header set</span> Access-Control-Allow-Methods <span class="str">"GET, POST, PUT, DELETE, OPTIONS"</span>
+    <span class="kw">Header set</span> Access-Control-Allow-Headers <span class="str">"Authorization, Content-Type"</span>
+    <span class="kw">Header set</span> Access-Control-Allow-Credentials <span class="str">"true"</span>
+    <span class="kw">Header set</span> Access-Control-Max-Age <span class="str">"86400"</span>
+&lt;/<span class="kw">IfModule</span>&gt;
+
+<span class="cmt"># Gestion du preflight</span>
+&lt;<span class="kw">IfModule</span> mod_rewrite.c&gt;
+    <span class="kw">RewriteEngine</span> On
+    <span class="kw">RewriteCond</span> %{REQUEST_METHOD} OPTIONS
+    <span class="kw">RewriteRule</span> ^(.*)$ $1 [R=204,L]
+&lt;/<span class="kw">IfModule</span>&gt;</code></pre>
+
+    <h3>Traefik — Middleware CORS</h3>
+<pre><code><span class="cmt"># traefik.yml (ou labels Docker)</span>
+<span class="kw">http</span>:
+  <span class="kw">middlewares</span>:
+    <span class="fn">cors-policy</span>:
+      <span class="kw">headers</span>:
+        <span class="kw">accessControlAllowOriginList</span>:
+          - <span class="str">"https://app.monsite.com"</span>
+        <span class="kw">accessControlAllowMethods</span>:
+          - <span class="str">"GET"</span>
+          - <span class="str">"POST"</span>
+          - <span class="str">"PUT"</span>
+          - <span class="str">"DELETE"</span>
+        <span class="kw">accessControlAllowHeaders</span>:
+          - <span class="str">"Authorization"</span>
+          - <span class="str">"Content-Type"</span>
+        <span class="kw">accessControlAllowCredentials</span>: <span class="val">true</span>
+        <span class="kw">accessControlMaxAge</span>: <span class="val">86400</span></code></pre>
+
+    <h3>API Gateway — Kong</h3>
+<pre><code><span class="cmt"># Activer le plugin CORS sur un service Kong</span>
+<span class="fn">curl</span> -X POST http://localhost:8001/services/mon-api/plugins \
+    --data <span class="str">"name=cors"</span> \
+    --data <span class="str">"config.origins=https://app.monsite.com"</span> \
+    --data <span class="str">"config.methods=GET,POST,PUT,DELETE"</span> \
+    --data <span class="str">"config.headers=Authorization,Content-Type"</span> \
+    --data <span class="str">"config.credentials=true"</span> \
+    --data <span class="str">"config.max_age=86400"</span></code></pre>
+
+    <h3>Azure API Management</h3>
+<pre><code><span class="cmt">&lt;!-- Politique CORS dans Azure APIM (inbound policy) --&gt;</span>
+&lt;<span class="kw">cors</span> allow-credentials=<span class="str">"true"</span>&gt;
+    &lt;<span class="kw">allowed-origins</span>&gt;
+        &lt;<span class="kw">origin</span>&gt;https://app.monsite.com&lt;/<span class="kw">origin</span>&gt;
+    &lt;/<span class="kw">allowed-origins</span>&gt;
+    &lt;<span class="kw">allowed-methods</span>&gt;
+        &lt;<span class="kw">method</span>&gt;GET&lt;/<span class="kw">method</span>&gt;
+        &lt;<span class="kw">method</span>&gt;POST&lt;/<span class="kw">method</span>&gt;
+        &lt;<span class="kw">method</span>&gt;PUT&lt;/<span class="kw">method</span>&gt;
+        &lt;<span class="kw">method</span>&gt;DELETE&lt;/<span class="kw">method</span>&gt;
+    &lt;/<span class="kw">allowed-methods</span>&gt;
+    &lt;<span class="kw">allowed-headers</span>&gt;
+        &lt;<span class="kw">header</span>&gt;Authorization&lt;/<span class="kw">header</span>&gt;
+        &lt;<span class="kw">header</span>&gt;Content-Type&lt;/<span class="kw">header</span>&gt;
+    &lt;/<span class="kw">allowed-headers</span>&gt;
+&lt;/<span class="kw">cors</span>&gt;</code></pre>
+
+    <h3>AWS CloudFront + S3</h3>
+<pre><code><span class="cmt">// Configuration CORS sur un bucket S3 (pour assets statiques)</span>
+{
+    <span class="str">"CORSRules"</span>: [{
+        <span class="str">"AllowedOrigins"</span>: [<span class="str">"https://app.monsite.com"</span>],
+        <span class="str">"AllowedMethods"</span>: [<span class="str">"GET"</span>],
+        <span class="str">"AllowedHeaders"</span>: [<span class="str">"*"</span>],
+        <span class="str">"MaxAgeSeconds"</span>: <span class="val">86400</span>
+    }]
+}
+
+<span class="cmt">// CloudFront : ajouter Origin dans la Cache Policy
+// pour que les en-tetes CORS varient selon l'origine</span></code></pre>
+
+    <!-- ============================================================ -->
+    <!-- CORS vs FIREWALL vs WAF                                       -->
+    <!-- ============================================================ -->
+    <h2 id="cors-vs-autres">CORS vs Firewall vs WAF &mdash; Qui fait quoi ?</h2>
+
+    <p>
+        Une confusion frequente est de penser que CORS remplace un firewall ou un WAF.
+        Ces trois mecanismes operent a des <strong>niveaux differents</strong> et sont <strong>complementaires</strong>.
+    </p>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Critere</th>
+                <th>CORS</th>
+                <th>Firewall (L3/L4)</th>
+                <th>WAF (L7)</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Couche OSI</strong></td>
+                <td>Application (L7) &mdash; navigateur</td>
+                <td>Reseau / Transport (L3/L4)</td>
+                <td>Application (L7) &mdash; serveur</td>
+            </tr>
+            <tr>
+                <td><strong>Applique par</strong></td>
+                <td>Le <em>navigateur</em> du client</td>
+                <td>Le routeur / switch / OS</td>
+                <td>Le proxy/serveur</td>
+            </tr>
+            <tr>
+                <td><strong>Protege contre</strong></td>
+                <td>Lecture cross-origin depuis un navigateur</td>
+                <td>Acces reseau non autorise (IP, port)</td>
+                <td>Attaques applicatives (SQLi, XSS, bots)</td>
+            </tr>
+            <tr>
+                <td><strong>Bloque cURL/Postman ?</strong></td>
+                <td style="color: var(--danger);">Non</td>
+                <td style="color: var(--success);">Oui (si IP bloquee)</td>
+                <td style="color: var(--success);">Oui (si regle matchee)</td>
+            </tr>
+            <tr>
+                <td><strong>Bloque un script malveillant dans un navigateur ?</strong></td>
+                <td style="color: var(--success);">Oui (lecture de la reponse)</td>
+                <td style="color: var(--danger);">Non (la requete passe)</td>
+                <td style="color: var(--warning);">Partiellement (selon les regles)</td>
+            </tr>
+            <tr>
+                <td><strong>Granularite</strong></td>
+                <td>Par origine, methode, en-tete</td>
+                <td>Par IP, port, protocole</td>
+                <td>Par pattern HTTP, user-agent, payload</td>
+            </tr>
+            <tr>
+                <td><strong>Configurable par le dev ?</strong></td>
+                <td style="color: var(--success);">Oui</td>
+                <td style="color: var(--danger);">Non (equipe infra/reseau)</td>
+                <td style="color: var(--warning);">Parfois (regles custom)</td>
+            </tr>
+            <tr>
+                <td><strong>Exemples</strong></td>
+                <td>En-tetes HTTP CORS</td>
+                <td>iptables, pf, NSG Azure, Security Groups AWS</td>
+                <td>ModSecurity, AWS WAF, Cloudflare WAF, Azure Front Door</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h3>Analogie : la securite d'un immeuble</h3>
+<pre><code><span class="cmt">┌─────────────────────────────────────────────────────────────┐
+│  FIREWALL = La grille d'entree de l'immeuble               │
+│  → Filtre qui peut ENTRER (adresse IP / port)               │
+│  → Ne regarde pas ce que les gens font une fois entres      │
+│                                                             │
+│  WAF = Le vigile dans le hall                               │
+│  → Inspecte les sacs (payloads HTTP)                        │
+│  → Bloque les comportements suspects (SQLi, XSS, bots)     │
+│  → Peut aussi verifier les badges (tokens, signatures)      │
+│                                                             │
+│  CORS = Le badge d'acces aux etages                         │
+│  → Controle quels VISITEURS (origines) peuvent acceder      │
+│    a quelles DONNEES (reponses)                             │
+│  → Ne bloque pas l'entree, bloque la LECTURE de la reponse  │
+│  → Applique par le visiteur lui-meme (le navigateur)        │
+│  → Un visiteur mal intentionne avec son propre outil         │
+│    (cURL) peut ignorer le badge                             │
+└─────────────────────────────────────────────────────────────┘</span></code></pre>
+
+    <h3>Defense en profondeur : combiner les couches</h3>
+
+    <p>La bonne approche est d'utiliser <strong>toutes les couches ensemble</strong> :</p>
+
+<pre><code><span class="cmt">┌────────────────────────────────────────────────────────────┐
+│  Internet                                                  │
+│      │                                                     │
+│      ▼                                                     │
+│  ┌──────────────────────┐                                  │
+│  │ FIREWALL (L3/L4)     │  Bloquer les IP/ports non        │
+│  │ NSG / Security Group │  necessaires                     │
+│  └──────────┬───────────┘                                  │
+│             ▼                                              │
+│  ┌──────────────────────┐                                  │
+│  │ WAF (L7)             │  Bloquer SQLi, XSS, bots,        │
+│  │ AWS WAF / Cloudflare │  rate limiting                   │
+│  └──────────┬───────────┘                                  │
+│             ▼                                              │
+│  ┌──────────────────────┐                                  │
+│  │ Reverse Proxy        │  TLS termination, CORS headers,  │
+│  │ Nginx / Traefik      │  load balancing                  │
+│  └──────────┬───────────┘                                  │
+│             ▼                                              │
+│  ┌──────────────────────┐                                  │
+│  │ APPLICATION          │  CORS (code), authentication,    │
+│  │ ASP.NET Core         │  authorization, validation       │
+│  └──────────────────────┘                                  │
+└────────────────────────────────────────────────────────────┘</span></code></pre>
+
+    <div class="alert alert-success">
+        <strong>A retenir</strong>
+        CORS protege les <em>utilisateurs du navigateur</em> contre le vol de donnees par des sites tiers.
+        Le firewall protege le <em>serveur</em> contre les acces reseau non autorises.
+        Le WAF protege l'<em>application</em> contre les attaques applicatives.
+        Les trois sont necessaires &mdash; aucun ne remplace les autres.
+    </div>
+
+    <h3>Quand configurer CORS au niveau infra plutot que dans le code ?</h3>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Situation</th>
+                <th>Ou configurer CORS</th>
+                <th>Pourquoi</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Monolithe unique</td>
+                <td>Dans l'application</td>
+                <td>Simple, proche du code, facile a maintenir</td>
+            </tr>
+            <tr>
+                <td>Microservices (5+ APIs)</td>
+                <td>API Gateway ou Reverse Proxy</td>
+                <td>Evite de dupliquer la config dans chaque service</td>
+            </tr>
+            <tr>
+                <td>Assets statiques (fonts, images)</td>
+                <td>CDN (CloudFront, Cloudflare)</td>
+                <td>Les fichiers statiques n'ont pas de code applicatif</td>
+            </tr>
+            <tr>
+                <td>API heritee (legacy) sans acces au code</td>
+                <td>Reverse Proxy (Nginx)</td>
+                <td>Ajouter CORS sans modifier l'application</td>
+            </tr>
+            <tr>
+                <td>Multi-cloud / multi-techno</td>
+                <td>WAF ou API Gateway</td>
+                <td>Politique uniforme quel que soit le langage backend</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="alert alert-danger">
+        <strong>Piege courant</strong>
+        Si CORS est configure a <em>plusieurs niveaux</em> (ex: Nginx + ASP.NET), les en-tetes peuvent
+        etre <strong>dupliques</strong> (<code>Access-Control-Allow-Origin</code> apparait deux fois),
+        ce qui provoque une erreur CORS dans le navigateur.
+        Choisissez <strong>un seul niveau</strong> pour gerer CORS, ou assurez-vous que les niveaux
+        intermediaires ne rajoutent pas d'en-tetes en double.
+    </div>
+
 </main>
 
 <footer>

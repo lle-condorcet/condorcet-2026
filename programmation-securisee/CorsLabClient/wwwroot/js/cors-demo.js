@@ -1,6 +1,6 @@
 // cors-demo.js — Fonctions partagees pour les demonstrations CORS
 
-const CORS_API_BASE = 'http://localhost:5300';
+const CORS_API_BASE = 'https://localhost:5300';
 
 // Verification du statut d'authentification au chargement de la page
 document.addEventListener('DOMContentLoaded', async () => {

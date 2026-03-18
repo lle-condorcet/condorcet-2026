@@ -45,7 +45,7 @@
                 <p>Imaginez que vous visitez un site malveillant. Ce site execute le code suivant
                 pour voler vos donnees bancaires :</p>
                 <pre><code><span class="text-muted">// Code execute par le site malveillant</span>
-fetch('http://localhost:5300/api/vulnerable/compte', {
+fetch('https://localhost:5300/api/vulnerable/compte', {
     credentials: 'include'  <span class="text-danger">// Envoie le cookie session_banque</span>
 })
 .then(r => r.json())
@@ -85,7 +85,7 @@ Content-Type: application/json
 
 @section Scripts {
 <script>
-const API = 'http://localhost:5300';
+const API = 'https://localhost:5300';
 
 document.getElementById('btn-login').addEventListener('click', async () => {
     const resultDiv = document.getElementById('result-auth');
