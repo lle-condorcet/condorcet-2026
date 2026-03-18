@@ -1,0 +1,120 @@
+@model PatternViewModel
+@{
+    ViewData["Title"] = "Stockage en clair";
+}
+
+<div class="row justify-content-center mt-3">
+    <div class="col-lg-11">
+        <h2 class="fw-bold text-danger mb-3">Pattern 1 : @Model.PatternName</h2>
+
+        <div class="alert alert-danger">
+            <strong>VULNERABLE :</strong> @Model.PatternDescription
+        </div>
+
+        <!-- Application View -->
+        <div class="card border-danger mb-4">
+            <div class="card-header bg-danger text-white fw-bold">
+                Vue Application (donnees lues via EF Core)
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-dark table-striped mb-0">
+                        <thead>
+                            <tr>
+                                <th>ID</th><th>Nom</th><th>Prenom</th>
+                                <th>Numero National</th><th>Salaire</th><th>Compte Bancaire</th><th>Email</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var row in Model.AppRows)
+                            {
+                                <tr>
+                                    <td>@row["Id"]</td>
+                                    <td>@row["Nom"]</td>
+                                    <td>@row["Prenom"]</td>
+                                    <td><span class="text-danger fw-bold">@row["NumeroNational"]</span></td>
+                                    <td><span class="text-danger fw-bold">@row["Salaire"]</span></td>
+                                    <td><span class="text-danger fw-bold">@row["CompteBancaire"]</span></td>
+                                    <td>@row["Email"]</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Database View -->
+        <div class="card border-danger mb-4">
+            <div class="card-header bg-dark text-danger fw-bold">
+                Vue Base de Donnees (contenu reel de la table Oracle)
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-dark table-striped mb-0">
+                        <thead>
+                            <tr>
+                                <th>Id</th><th>Nom</th><th>Prenom</th>
+                                <th>NumeroNational</th><th>Salaire</th><th>CompteBancaire</th><th>Email</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var row in Model.DbRows)
+                            {
+                                <tr>
+                                    <td>@row["Id"]</td>
+                                    <td>@row["Nom"]</td>
+                                    <td>@row["Prenom"]</td>
+                                    <td><span class="text-danger">@row["NumeroNational"]</span></td>
+                                    <td><span class="text-danger">@row["Salaire"]</span></td>
+                                    <td><span class="text-danger">@row["CompteBancaire"]</span></td>
+                                    <td>@row["Email"]</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="alert alert-warning">
+            <strong>Constat :</strong> Les deux tableaux sont <strong>identiques</strong>. Un attaquant ayant acces
+            a la base de donnees (backup vole, SQL injection, acces DBA) voit directement toutes les donnees sensibles.
+        </div>
+
+        <!-- Attack scenarios -->
+        <div class="card border-secondary mb-4">
+            <div class="card-header bg-secondary text-white fw-bold">Scenarios d'attaque</div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <h6 class="text-danger">Vol de backup (RMAN)</h6>
+                        <p class="small">Un backup RMAN copie contient toutes les donnees en clair. Aucune protection.</p>
+                    </div>
+                    <div class="col-md-4">
+                        <h6 class="text-danger">SQL Injection</h6>
+                        <p class="small"><code>SELECT * FROM EMPLOYES_CLAIR</code> retourne directement les donnees sensibles.</p>
+                    </div>
+                    <div class="col-md-4">
+                        <h6 class="text-danger">DBA malveillant</h6>
+                        <p class="small">Un administrateur de base de donnees peut lire toutes les donnees via SQL*Plus ou SQL Developer.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SQL Query example -->
+        <div class="card border-secondary mb-4">
+            <div class="card-header bg-secondary text-white fw-bold">Requete SQL executee</div>
+            <div class="card-body">
+<pre class="bg-dark text-light p-3 rounded mb-0"><code><span class="text-info">SELECT</span> "Id", "Nom", "Prenom", "NumeroNational", "Salaire", "CompteBancaire", "Email"
+<span class="text-info">FROM</span> "EMPLOYES_CLAIR"
+
+<span class="text-muted">-- Resultat : toutes les colonnes sont lisibles en clair
+-- Numero National : 85.07.15-123.45  (visible!)
+-- Salaire : 4250 EUR/mois            (visible!)
+-- Compte : BE68 5390 0754 7034       (visible!)</span></code></pre>
+            </div>
+        </div>
+    </div>
+</div>

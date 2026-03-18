@@ -1,0 +1,367 @@
+@{
+    ViewData["Title"] = "pgcrypto";
+}
+
+<div class="row justify-content-center mt-3">
+    <div class="col-lg-11">
+        <h2 class="fw-bold text-warning mb-3">Pattern 4 : pgcrypto (Extension PostgreSQL)</h2>
+
+        <div class="alert alert-warning">
+            <strong>EXTENSION NATIVE POSTGRESQL :</strong> pgcrypto est une extension de PostgreSQL
+            qui fournit des fonctions de chiffrement directement dans le moteur de base de donnees.
+            Le chiffrement et le dechiffrement se font <strong>cote serveur</strong>, dans les requetes SQL.
+        </div>
+
+        <!-- Architecture -->
+        <div class="card border-warning mb-4">
+            <div class="card-header bg-warning text-dark fw-bold">Architecture pgcrypto</div>
+            <div class="card-body">
+<pre class="bg-dark text-light p-3 rounded mb-3"><code>
+   ┌──────────────────────┐         ┌──────────────────────────┐
+   │   APPLICATION .NET   │         │      POSTGRESQL           │
+   │                      │         │                          │
+   │  Code C# envoie      │         │  Extension pgcrypto      │
+   │  des requetes SQL    │         │  activee                 │
+   │  avec fonctions      │         │                          │
+   │  pgcrypto            │         │  pgp_sym_encrypt()       │
+   │         │            │         │  pgp_sym_decrypt()       │
+   │         │            │ ──────► │  pgp_pub_encrypt()       │
+   │         │            │         │  pgp_pub_decrypt()       │
+   │         │            │ ◄────── │  crypt() / gen_salt()    │
+   │         │            │         │  gen_random_bytes()      │
+   │         │            │         │                          │
+   │  Donnees en clair    │         │  Donnees chiffrees       │
+   │  dans l'application  │         │  sur disque et en table  │
+   └──────────────────────┘         └──────────────────────────┘
+
+   Note : La cle de chiffrement transite dans la requete SQL.
+   Le DBA peut intercepter la cle via les logs de requetes.
+</code></pre>
+            </div>
+        </div>
+
+        <!-- Installation -->
+        <div class="card border-secondary mb-4">
+            <div class="card-header bg-secondary text-white fw-bold">Etape 1 : Activer l'extension pgcrypto</div>
+            <div class="card-body">
+<pre class="bg-dark text-light p-3 rounded mb-0"><code><span class="text-muted">-- Activer pgcrypto dans votre base de donnees</span>
+<span class="text-info">CREATE EXTENSION IF NOT EXISTS</span> pgcrypto;
+
+<span class="text-muted">-- Verifier l'installation</span>
+<span class="text-info">SELECT</span> * <span class="text-info">FROM</span> pg_extension <span class="text-info">WHERE</span> extname = <span class="text-warning">'pgcrypto'</span>;</code></pre>
+            </div>
+        </div>
+
+        <!-- Symmetric encryption -->
+        <div class="row g-4 mb-4">
+            <div class="col-md-6">
+                <div class="card border-info h-100">
+                    <div class="card-header bg-info text-white fw-bold">Chiffrement symetrique (PGP)</div>
+                    <div class="card-body">
+                        <p>Utilise <strong>pgp_sym_encrypt / pgp_sym_decrypt</strong> avec une passphrase partagee.</p>
+                        <h6 class="text-success">Fonctions :</h6>
+<pre class="bg-dark text-light p-3 rounded mb-2" style="font-size: 0.8rem;"><code><span class="text-muted">-- Chiffrement</span>
+<span class="text-info">INSERT INTO</span> employes (nom, salaire_chiffre)
+<span class="text-info">VALUES</span> (
+  <span class="text-warning">'Dupont'</span>,
+  pgp_sym_encrypt(
+    <span class="text-warning">'4250 EUR/mois'</span>,
+    <span class="text-warning">'ma_cle_secrete'</span>
+  )
+);
+
+<span class="text-muted">-- Dechiffrement</span>
+<span class="text-info">SELECT</span> nom,
+  pgp_sym_decrypt(
+    salaire_chiffre,
+    <span class="text-warning">'ma_cle_secrete'</span>
+  ) <span class="text-info">AS</span> salaire
+<span class="text-info">FROM</span> employes;</code></pre>
+                        <p class="small text-muted">Usage : chiffrement de colonnes sensibles (salaires, donnees medicales, IBAN)</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card border-success h-100">
+                    <div class="card-header bg-success text-white fw-bold">Chiffrement asymetrique (PGP)</div>
+                    <div class="card-body">
+                        <p>Utilise <strong>pgp_pub_encrypt / pgp_pub_decrypt</strong> avec une paire de cles publique/privee.</p>
+                        <h6 class="text-success">Fonctions :</h6>
+<pre class="bg-dark text-light p-3 rounded mb-2" style="font-size: 0.8rem;"><code><span class="text-muted">-- Chiffrement avec cle publique</span>
+<span class="text-info">INSERT INTO</span> employes (nn_chiffre)
+<span class="text-info">VALUES</span> (
+  pgp_pub_encrypt(
+    <span class="text-warning">'85.07.15-123.45'</span>,
+    dearmor(<span class="text-warning">'-----BEGIN PGP PUBLIC KEY...'</span>)
+  )
+);
+
+<span class="text-muted">-- Dechiffrement avec cle privee</span>
+<span class="text-info">SELECT</span>
+  pgp_pub_decrypt(
+    nn_chiffre,
+    dearmor(<span class="text-warning">'-----BEGIN PGP PRIVATE KEY...'</span>)
+  ) <span class="text-info">AS</span> numero_national
+<span class="text-info">FROM</span> employes;</code></pre>
+                        <p class="small text-muted">Usage : separation des droits (ecriture sans cle privee, lecture avec cle privee)</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Hashing -->
+        <div class="card border-secondary mb-4">
+            <div class="card-header bg-secondary text-white fw-bold">Hachage securise avec crypt() et gen_salt()</div>
+            <div class="card-body">
+                <p>Pour les <strong>mots de passe</strong>, pgcrypto fournit des fonctions de hachage avec sel automatique :</p>
+<pre class="bg-dark text-light p-3 rounded mb-3"><code><span class="text-muted">-- Hacher un mot de passe avec bcrypt (recommande)</span>
+<span class="text-info">INSERT INTO</span> utilisateurs (login, password_hash)
+<span class="text-info">VALUES</span> (
+  <span class="text-warning">'alice'</span>,
+  crypt(<span class="text-warning">'mon_mot_de_passe'</span>, gen_salt(<span class="text-warning">'bf'</span>))  <span class="text-muted">-- bf = bcrypt</span>
+);
+
+<span class="text-muted">-- Verifier un mot de passe</span>
+<span class="text-info">SELECT</span> * <span class="text-info">FROM</span> utilisateurs
+<span class="text-info">WHERE</span> login = <span class="text-warning">'alice'</span>
+  <span class="text-info">AND</span> password_hash = crypt(<span class="text-warning">'mon_mot_de_passe'</span>, password_hash);
+
+<span class="text-muted">-- Algorithmes disponibles pour gen_salt() :</span>
+<span class="text-muted">-- 'bf'  = bcrypt (recommande, cout adaptatif)</span>
+<span class="text-muted">-- 'md5' = MD5 (deconseille)</span>
+<span class="text-muted">-- 'xdes' = Extended DES</span>
+<span class="text-muted">-- 'des' = DES standard (deconseille)</span></code></pre>
+
+                <h6 class="mt-3">Generation d'octets aleatoires</h6>
+<pre class="bg-dark text-light p-3 rounded mb-0"><code><span class="text-muted">-- Generer 32 octets aleatoires (pour cles, tokens, etc.)</span>
+<span class="text-info">SELECT</span> gen_random_bytes(<span class="text-warning">32</span>);
+
+<span class="text-muted">-- Generer un UUID v4 aleatoire</span>
+<span class="text-info">SELECT</span> gen_random_uuid();</code></pre>
+            </div>
+        </div>
+
+        <!-- Column-level encryption example -->
+        <div class="card border-secondary mb-4">
+            <div class="card-header bg-secondary text-white fw-bold">Exemple complet : chiffrement par colonne</div>
+            <div class="card-body">
+<pre class="bg-dark text-light p-3 rounded mb-3"><code><span class="text-muted">-- Creer la table avec colonnes bytea pour les donnees chiffrees</span>
+<span class="text-info">CREATE TABLE</span> employes_pgcrypto (
+    id <span class="text-primary">SERIAL</span> PRIMARY KEY,
+    nom <span class="text-primary">VARCHAR</span>(100),
+    prenom <span class="text-primary">VARCHAR</span>(100),
+    numero_national <span class="text-primary">BYTEA</span>,       <span class="text-muted">-- chiffre avec pgp_sym_encrypt</span>
+    salaire <span class="text-primary">BYTEA</span>,               <span class="text-muted">-- chiffre avec pgp_sym_encrypt</span>
+    compte_bancaire <span class="text-primary">BYTEA</span>,       <span class="text-muted">-- chiffre avec pgp_sym_encrypt</span>
+    email <span class="text-primary">VARCHAR</span>(200)
+);
+
+<span class="text-muted">-- Inserer avec chiffrement</span>
+<span class="text-info">INSERT INTO</span> employes_pgcrypto (nom, prenom, numero_national, salaire, compte_bancaire, email)
+<span class="text-info">VALUES</span> (
+    <span class="text-warning">'Dupont'</span>,
+    <span class="text-warning">'Alice'</span>,
+    pgp_sym_encrypt(<span class="text-warning">'85.07.15-123.45'</span>, <span class="text-warning">'cle_secrete'</span>),
+    pgp_sym_encrypt(<span class="text-warning">'4250 EUR/mois'</span>, <span class="text-warning">'cle_secrete'</span>),
+    pgp_sym_encrypt(<span class="text-warning">'BE68 5390 0754 7034'</span>, <span class="text-warning">'cle_secrete'</span>),
+    <span class="text-warning">'alice.dupont@company.be'</span>
+);
+
+<span class="text-muted">-- Lire avec dechiffrement</span>
+<span class="text-info">SELECT</span> nom, prenom,
+    pgp_sym_decrypt(numero_national, <span class="text-warning">'cle_secrete'</span>) <span class="text-info">AS</span> numero_national,
+    pgp_sym_decrypt(salaire, <span class="text-warning">'cle_secrete'</span>) <span class="text-info">AS</span> salaire,
+    pgp_sym_decrypt(compte_bancaire, <span class="text-warning">'cle_secrete'</span>) <span class="text-info">AS</span> compte_bancaire,
+    email
+<span class="text-info">FROM</span> employes_pgcrypto;</code></pre>
+            </div>
+        </div>
+
+        <!-- Comparison: deterministic vs symmetric -->
+        <div class="row g-4 mb-4">
+            <div class="col-md-6">
+                <div class="card border-info h-100">
+                    <div class="card-header bg-info text-white fw-bold">crypt() / gen_salt() (Hachage de mots de passe)</div>
+                    <div class="card-body">
+                        <p>Hachage <strong>deterministe avec sel</strong> — ideal pour les mots de passe.</p>
+                        <h6 class="text-success">Avantages :</h6>
+                        <ul class="small">
+                            <li>Verification possible avec <code>WHERE hash = crypt(input, hash)</code></li>
+                            <li>Sel unique par valeur (pas de patterns deductibles)</li>
+                            <li>Cout adaptatif avec bcrypt (protection brute-force)</li>
+                        </ul>
+                        <h6 class="text-danger">Inconvenients :</h6>
+                        <ul class="small">
+                            <li>Irreversible (pas de dechiffrement possible)</li>
+                            <li>Pas adapte pour les donnees a recuperer (salaires, IBAN)</li>
+                        </ul>
+                        <p class="small text-muted">Usage : mots de passe, tokens d'authentification</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card border-success h-100">
+                    <div class="card-header bg-success text-white fw-bold">pgp_sym_encrypt() (Chiffrement de donnees)</div>
+                    <div class="card-body">
+                        <p>Chiffrement <strong>symetrique reversible</strong> — ideal pour les donnees sensibles.</p>
+                        <h6 class="text-success">Avantages :</h6>
+                        <ul class="small">
+                            <li>Donnees recuperables avec la cle</li>
+                            <li>Chiffrement aleatoire (pas de patterns)</li>
+                            <li>Standard OpenPGP</li>
+                        </ul>
+                        <h6 class="text-danger">Inconvenients :</h6>
+                        <ul class="small">
+                            <li>Pas de <code>WHERE</code> sur les colonnes chiffrees</li>
+                            <li>La cle transite dans les requetes SQL</li>
+                            <li>Le DBA peut intercepter la cle via les logs</li>
+                        </ul>
+                        <p class="small text-muted">Usage : numeros nationaux, salaires, IBAN, donnees medicales</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Comparison table -->
+        <div class="card border-secondary mb-4">
+            <div class="card-header bg-secondary text-white fw-bold">Comparaison des 4 patterns</div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-dark table-striped mb-0">
+                        <thead>
+                            <tr>
+                                <th>Critere</th>
+                                <th class="text-danger">En Clair</th>
+                                <th class="text-success">Value Converter</th>
+                                <th class="text-info">AES-256 Manuel</th>
+                                <th class="text-warning">pgcrypto</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Donnees protegees en DB</td>
+                                <td class="text-danger">Non</td>
+                                <td class="text-success">Oui</td>
+                                <td class="text-success">Oui</td>
+                                <td class="text-success">Oui</td>
+                            </tr>
+                            <tr>
+                                <td>Protection contre DBA</td>
+                                <td class="text-danger">Non</td>
+                                <td class="text-danger">Non (cles sur le serveur app)</td>
+                                <td class="text-danger">Non (cles sur le serveur app)</td>
+                                <td class="text-danger">Non (cles dans les requetes SQL)</td>
+                            </tr>
+                            <tr>
+                                <td>Requetes WHERE</td>
+                                <td class="text-success">Oui</td>
+                                <td class="text-danger">Non</td>
+                                <td class="text-danger">Non</td>
+                                <td class="text-warning">crypt() seulement (hachage)</td>
+                            </tr>
+                            <tr>
+                                <td>Transparent pour le code</td>
+                                <td class="text-success">Oui</td>
+                                <td class="text-success">Oui</td>
+                                <td class="text-success">Oui (via Value Converter)</td>
+                                <td class="text-danger">Non (SQL explicite)</td>
+                            </tr>
+                            <tr>
+                                <td>Gestion des cles</td>
+                                <td>N/A</td>
+                                <td>Automatique (Data Protection)</td>
+                                <td>Manuelle</td>
+                                <td>Passphrase dans les requetes SQL</td>
+                            </tr>
+                            <tr>
+                                <td>Portabilite</td>
+                                <td class="text-success">Toute DB</td>
+                                <td class="text-success">Toute DB avec EF Core</td>
+                                <td class="text-success">Toute plateforme</td>
+                                <td class="text-danger">PostgreSQL uniquement</td>
+                            </tr>
+                            <tr>
+                                <td>Complexite</td>
+                                <td class="text-success">Aucune</td>
+                                <td class="text-success">Faible</td>
+                                <td class="text-warning">Moyenne</td>
+                                <td class="text-success">Faible (SQL natif)</td>
+                            </tr>
+                            <tr>
+                                <td>RGPD / Compliance</td>
+                                <td class="text-danger">Non conforme</td>
+                                <td class="text-warning">Acceptable</td>
+                                <td class="text-warning">Acceptable</td>
+                                <td class="text-warning">Acceptable (attention aux logs)</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- TDE bonus -->
+        <div class="card border-secondary mb-4">
+            <div class="card-header bg-dark text-light fw-bold">Bonus : TDE (Transparent Data Encryption) dans PostgreSQL</div>
+            <div class="card-body">
+                <p>PostgreSQL propose plusieurs approches pour le chiffrement "at rest" :</p>
+
+                <h6 class="text-info mt-3">1. pg_tde - Extension TDE pour PostgreSQL</h6>
+                <p>L'extension <strong>pg_tde</strong> (par Percona) apporte le chiffrement transparent des donnees
+                au niveau des fichiers de donnees, similaire au TDE de SQL Server.</p>
+<pre class="bg-dark text-light p-3 rounded mb-3"><code><span class="text-muted">-- Installer et activer pg_tde</span>
+<span class="text-info">CREATE EXTENSION</span> pg_tde;
+
+<span class="text-muted">-- Configurer la cle de chiffrement principale</span>
+<span class="text-info">SELECT</span> pg_tde_set_master_key(<span class="text-warning">'master-key'</span>, <span class="text-warning">'file'</span>);
+
+<span class="text-muted">-- Creer une table avec chiffrement TDE</span>
+<span class="text-info">CREATE TABLE</span> donnees_sensibles (
+    id <span class="text-primary">SERIAL</span> PRIMARY KEY,
+    contenu <span class="text-primary">TEXT</span>
+) <span class="text-info">USING</span> tde_heap;  <span class="text-muted">-- Utilise le stockage chiffre</span>
+
+<span class="text-muted">-- Les requetes restent identiques - chiffrement transparent</span>
+<span class="text-info">SELECT</span> * <span class="text-info">FROM</span> donnees_sensibles;</code></pre>
+
+                <h6 class="text-info mt-3">2. Chiffrement au niveau du systeme de fichiers</h6>
+                <p>PostgreSQL recommande egalement le chiffrement au niveau du volume/disque :</p>
+<pre class="bg-dark text-light p-3 rounded mb-3"><code><span class="text-muted"># Linux : LUKS (dm-crypt) pour chiffrer le volume</span>
+cryptsetup luksFormat /dev/sdb1
+cryptsetup luksOpen /dev/sdb1 pg_data_encrypted
+mkfs.ext4 /dev/mapper/pg_data_encrypted
+
+<span class="text-muted"># Monter et configurer PostgreSQL pour utiliser ce volume</span>
+mount /dev/mapper/pg_data_encrypted /var/lib/postgresql/data</code></pre>
+
+                <div class="row g-3 mt-2">
+                    <div class="col-md-6">
+                        <h6 class="text-success">Avantages TDE / chiffrement at-rest</h6>
+                        <ul class="small">
+                            <li>Zero changement dans l'application</li>
+                            <li>Protege les fichiers de donnees et les backups</li>
+                            <li>Aucun impact sur les requetes</li>
+                            <li>pg_tde : chiffrement par table possible</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-danger">Limites TDE / chiffrement at-rest</h6>
+                        <ul class="small">
+                            <li>Ne protege PAS contre un DBA</li>
+                            <li>Donnees en clair en memoire</li>
+                            <li>pg_tde est encore en developpement actif</li>
+                            <li>Leger overhead I/O (3-5%)</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="alert alert-info">
+            <strong>Recommandation :</strong> En production avec PostgreSQL, combinez les approches :
+            <strong>Chiffrement at-rest</strong> (LUKS ou pg_tde pour les fichiers) +
+            <strong>pgcrypto / chiffrement applicatif</strong> (pour les colonnes sensibles) +
+            <strong>Row-Level Security</strong> (controle d'acces par ligne avec les policies PostgreSQL).
+        </div>
+    </div>
+</div>

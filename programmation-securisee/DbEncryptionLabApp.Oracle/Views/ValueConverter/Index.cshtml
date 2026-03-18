@@ -1,0 +1,149 @@
+@model PatternViewModel
+@{
+    ViewData["Title"] = "Value Converters";
+}
+
+<div class="row justify-content-center mt-3">
+    <div class="col-lg-11">
+        <h2 class="fw-bold text-success mb-3">Pattern 2 : @Model.PatternName</h2>
+
+        <div class="alert alert-success">
+            <strong>SECURISE :</strong> @Model.PatternDescription
+        </div>
+
+        <!-- Application View (decrypted) -->
+        <div class="card border-success mb-4">
+            <div class="card-header bg-success text-white fw-bold">
+                Vue Application (donnees dechiffrees automatiquement par EF Core)
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-dark table-striped mb-0">
+                        <thead>
+                            <tr>
+                                <th>ID</th><th>Nom</th><th>Prenom</th>
+                                <th>Numero National</th><th>Salaire</th><th>Compte Bancaire</th><th>Email</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var row in Model.AppRows)
+                            {
+                                <tr>
+                                    <td>@row["Id"]</td>
+                                    <td>@row["Nom"]</td>
+                                    <td>@row["Prenom"]</td>
+                                    <td><span class="text-success fw-bold">@row["NumeroNational"]</span></td>
+                                    <td><span class="text-success fw-bold">@row["Salaire"]</span></td>
+                                    <td><span class="text-success fw-bold">@row["CompteBancaire"]</span></td>
+                                    <td>@row["Email"]</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Database View (encrypted) -->
+        <div class="card border-danger mb-4">
+            <div class="card-header bg-dark text-danger fw-bold">
+                Vue Base de Donnees (contenu reel chiffre dans Oracle)
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-dark table-striped mb-0" style="font-size: 0.82rem;">
+                        <thead>
+                            <tr>
+                                <th>Id</th><th>Nom</th><th>Prenom</th>
+                                <th>NumeroNational</th><th>Salaire</th><th>CompteBancaire</th><th>Email</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var row in Model.DbRows)
+                            {
+                                <tr>
+                                    <td>@row["Id"]</td>
+                                    <td>@row["Nom"]</td>
+                                    <td>@row["Prenom"]</td>
+                                    <td><code class="text-danger encrypted-text">@row["NumeroNational"]</code></td>
+                                    <td><code class="text-danger encrypted-text">@row["Salaire"]</code></td>
+                                    <td><code class="text-danger encrypted-text">@row["CompteBancaire"]</code></td>
+                                    <td>@row["Email"]</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- How it works -->
+        <div class="row g-4 mb-4">
+            <div class="col-md-6">
+                <div class="card border-info h-100">
+                    <div class="card-header bg-info text-white fw-bold">Comment ca fonctionne</div>
+                    <div class="card-body">
+                        <ol>
+                            <li>On definit un <strong>ValueConverter&lt;string, string&gt;</strong></li>
+                            <li>La conversion <code>Protect()</code> est appliquee a chaque <code>INSERT/UPDATE</code></li>
+                            <li>La conversion <code>Unprotect()</code> est appliquee a chaque <code>SELECT</code></li>
+                            <li>Le code metier ne manipule que des donnees en clair</li>
+                            <li>Les cles sont gerees automatiquement par Data Protection</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card border-warning h-100">
+                    <div class="card-header bg-warning text-dark fw-bold">Colonnes protegees</div>
+                    <div class="card-body">
+                        <table class="table table-dark table-sm mb-0">
+                            <thead><tr><th>Colonne</th><th>Chiffree ?</th></tr></thead>
+                            <tbody>
+                                <tr><td>Nom</td><td><span class="text-warning">Non</span></td></tr>
+                                <tr><td>Prenom</td><td><span class="text-warning">Non</span></td></tr>
+                                <tr><td>NumeroNational</td><td><span class="text-success">Oui</span></td></tr>
+                                <tr><td>Salaire</td><td><span class="text-success">Oui</span></td></tr>
+                                <tr><td>CompteBancaire</td><td><span class="text-success">Oui</span></td></tr>
+                                <tr><td>Email</td><td><span class="text-warning">Non</span></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Code -->
+        <div class="card border-secondary mb-4">
+            <div class="card-header bg-secondary text-white fw-bold">Code : DbContext avec Value Converters</div>
+            <div class="card-body">
+<pre class="bg-dark text-light p-3 rounded mb-0"><code><span class="text-info">// 1. Creer le protector avec un "purpose" unique</span>
+_protector = provider.CreateProtector(<span class="text-warning">"DbEncryptionLab.ValueConverter"</span>);
+
+<span class="text-info">// 2. Definir le converter</span>
+<span class="text-primary">var</span> dpConverter = <span class="text-primary">new</span> ValueConverter&lt;<span class="text-primary">string</span>, <span class="text-primary">string</span>&gt;(
+    v => _protector.Protect(v),       <span class="text-muted">// Ecriture en DB → chiffrer</span>
+    v => _protector.Unprotect(v)      <span class="text-muted">// Lecture depuis DB → dechiffrer</span>
+);
+
+<span class="text-info">// 3. Appliquer aux proprietes sensibles</span>
+modelBuilder.Entity&lt;EmployeValueConverter&gt;(entity =>
+{
+    entity.Property(e => e.NumeroNational).HasConversion(dpConverter);
+    entity.Property(e => e.Salaire).HasConversion(dpConverter);
+    entity.Property(e => e.CompteBancaire).HasConversion(dpConverter);
+});</code></pre>
+            </div>
+        </div>
+
+        <div class="alert alert-warning">
+            <strong>Limitations :</strong>
+            <ul class="mb-0 mt-1">
+                <li>Impossible de faire un <code>WHERE</code> sur les colonnes chiffrees (chaque chiffrement produit un resultat different)</li>
+                <li>Pas d'index possible sur les colonnes chiffrees</li>
+                <li>Les cles Data Protection doivent etre sauvegardees (perte = donnees irrecuperables)</li>
+                <li>Le chiffrement/dechiffrement se fait dans l'application (overhead CPU)</li>
+            </ul>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,1369 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DB Encryption Lab (Oracle) - Chiffrement en Base de Donn&eacute;es</title>
+    <style>
+        :root {
+            --bg: #0f1117;
+            --surface: #1a1d27;
+            --surface-2: #242736;
+            --accent: #ffa502;
+            --accent-light: #ffbe33;
+            --danger: #ff4757;
+            --success: #2ed573;
+            --warning: #ffa502;
+            --info: #1e90ff;
+            --text: #e4e6eb;
+            --text-muted: #8b8fa3;
+            --border: #2e3142;
+            --code-bg: #12131a;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+        }
+
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 260px;
+            height: 100vh;
+            background: var(--surface);
+            border-right: 1px solid var(--border);
+            padding: 2rem 1.5rem;
+            overflow-y: auto;
+            z-index: 100;
+        }
+
+        nav .logo { font-size: 1.4rem; font-weight: 800; margin-bottom: 2rem; }
+        nav .logo span { color: var(--accent); }
+        nav .section-title {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--text-muted);
+            margin: 1.5rem 0 0.5rem;
+        }
+        nav a {
+            display: block;
+            color: var(--text-muted);
+            text-decoration: none;
+            padding: 0.3rem 0;
+            font-size: 0.9rem;
+            transition: color 0.2s;
+        }
+        nav a:hover { color: var(--accent); }
+
+        main {
+            margin-left: 260px;
+            max-width: 900px;
+            padding: 3rem 4rem;
+        }
+
+        h1 { font-size: 2.2rem; font-weight: 800; margin-bottom: 0.5rem; }
+        h1 span { color: var(--accent); }
+
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            margin-bottom: 3rem;
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin: 3rem 0 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--accent);
+        }
+
+        h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            margin: 2rem 0 0.8rem;
+            color: var(--accent-light);
+        }
+
+        p { margin-bottom: 1rem; }
+
+        code {
+            background: var(--code-bg);
+            padding: 0.15rem 0.4rem;
+            border-radius: 4px;
+            font-size: 0.88em;
+            color: var(--accent-light);
+        }
+
+        pre {
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.2rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-size: 0.88rem;
+            line-height: 1.6;
+        }
+
+        pre code { background: none; padding: 0; color: var(--text); }
+
+        .kw { color: #c678dd; }
+        .str { color: #98c379; }
+        .cmt { color: #5c6370; }
+        .fn { color: #61afef; }
+        .val { color: #d19a66; }
+        .danger-hl { color: #ff4757; }
+        .success-hl { color: #2ed573; }
+
+        .alert {
+            padding: 1rem 1.2rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            border-left: 4px solid;
+        }
+
+        .alert-danger { background: rgba(255, 71, 87, 0.1); border-color: var(--danger); }
+        .alert-success { background: rgba(46, 213, 115, 0.1); border-color: var(--success); }
+        .alert-warning { background: rgba(255, 165, 2, 0.1); border-color: var(--warning); }
+        .alert-info { background: rgba(30, 144, 255, 0.1); border-color: var(--info); }
+
+        .comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.5rem;
+        }
+
+        .card.bad { border-color: var(--danger); }
+        .card.good { border-color: var(--success); }
+
+        .card h4 { font-size: 1rem; margin-bottom: 1rem; }
+        .card.bad h4 { color: var(--danger); }
+        .card.good h4 { color: var(--success); }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+
+        th, td {
+            padding: 0.6rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th {
+            background: var(--surface-2);
+            font-weight: 600;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        ul, ol { margin: 0.5rem 0 1rem 1.5rem; }
+        li { margin-bottom: 0.3rem; }
+        strong { color: var(--text); }
+
+        footer {
+            margin-left: 260px;
+            padding: 2rem 4rem;
+            border-top: 1px solid var(--border);
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        @media (max-width: 768px) {
+            nav { display: none; }
+            main, footer { margin-left: 0; padding: 1.5rem; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ============================== NAV ============================== -->
+<nav>
+    <div class="logo"><span>DB</span> Encryption Lab <small style="color: var(--text-muted); font-size: 0.6rem;">(Oracle)</small></div>
+
+    <div class="section-title">Introduction</div>
+    <a href="#intro">Pourquoi chiffrer ?</a>
+    <a href="#prerequis">Prerequis</a>
+
+    <div class="section-title">Patterns</div>
+    <a href="#pattern1">1. Stockage en Clair</a>
+    <a href="#pattern2">2. Value Converters + DPAPI</a>
+    <a href="#pattern3">3. AES-256-CBC + HMAC</a>
+    <a href="#pattern4">4. TDE + DBMS_CRYPTO</a>
+    <a href="#pattern5">5. Oracle Data Redaction</a>
+
+    <div class="section-title">Synthese</div>
+    <a href="#comparaison">Comparaison complete</a>
+    <a href="#reference">Reference et Bonnes Pratiques</a>
+</nav>
+
+<!-- ============================== MAIN ============================== -->
+<main>
+
+    <!-- ============================================================= -->
+    <!-- INTRODUCTION                                                   -->
+    <!-- ============================================================= -->
+    <h1 id="intro">Chiffrement en <span>Base de Donnees</span></h1>
+    <p class="subtitle">Oracle Database &amp; EF Core &mdash; Du stockage en clair au chiffrement de niveau entreprise</p>
+
+    <p>
+        Dans une architecture moderne, la base de donnees est souvent la cible principale d'un attaquant.
+        Elle contient les donnees les plus sensibles : numeros de securite sociale, salaires, coordonnees
+        bancaires, donnees medicales. La <strong>defense en profondeur</strong> exige de proteger ces donnees
+        meme si un attaquant parvient a acceder au serveur de base de donnees.
+    </p>
+
+    <div class="alert alert-warning">
+        <strong>RGPD (Article 32)</strong> &mdash; Le reglement europeen impose la mise en oeuvre de mesures
+        techniques appropriees, dont le <em>chiffrement</em>, pour garantir la securite des donnees personnelles.
+    </div>
+
+    <p>Ce laboratoire presente <strong>5 patterns progressifs</strong> de protection des donnees en base :</p>
+    <ol>
+        <li><strong>Stockage en clair</strong> &mdash; le probleme a resoudre</li>
+        <li><strong>Value Converters + Data Protection API</strong> &mdash; chiffrement applicatif simple</li>
+        <li><strong>AES-256-CBC + HMAC-SHA256</strong> &mdash; chiffrement applicatif avance</li>
+        <li><strong>TDE + DBMS_CRYPTO</strong> &mdash; chiffrement natif Oracle (colonne et tablespace)</li>
+        <li><strong>Oracle Data Redaction</strong> &mdash; masquage dynamique base sur des politiques</li>
+    </ol>
+
+    <!-- ============================================================= -->
+    <!-- PREREQUIS                                                      -->
+    <!-- ============================================================= -->
+    <h2 id="prerequis">Prerequis</h2>
+
+    <h3>Outils requis</h3>
+    <ul>
+        <li><strong>.NET 10 SDK</strong> (ou version superieure)</li>
+        <li><strong>Oracle Database</strong> &mdash; Free (23ai), XE, ou Enterprise Edition</li>
+        <li><strong>SQL*Plus / SQL Developer</strong> &mdash; recommande pour inspecter les donnees chiffrees et administrer le Wallet</li>
+        <li><strong>Oracle.EntityFrameworkCore</strong> &mdash; Provider EF Core pour Oracle (<code>Oracle.EntityFrameworkCore</code> NuGet)</li>
+        <li>Un editeur de code (Visual Studio, VS Code, Rider)</li>
+    </ul>
+
+    <h3>Lancer le laboratoire</h3>
+<pre><code><span class="cmt"># Cloner le projet et restaurer les dependances</span>
+<span class="fn">dotnet</span> restore
+
+<span class="cmt"># Lancer l'application web (API sur le port 5320, client sur 5321)</span>
+<span class="fn">dotnet</span> run
+
+<span class="cmt"># Ouvrir le navigateur</span>
+<span class="cmt"># API   : https://localhost:5320</span>
+<span class="cmt"># Client: https://localhost:5321</span></code></pre>
+
+    <div class="alert alert-info">
+        <strong>Astuce :</strong> L'application cree automatiquement la base de donnees et les tables au
+        premier lancement grace a <code>EnsureCreated()</code>. Aucune migration manuelle n'est necessaire.
+        Assurez-vous que l'instance Oracle est demarree et que le listener ecoute sur le port configure.
+    </div>
+
+    <!-- ============================================================= -->
+    <!-- PATTERN 1 : STOCKAGE EN CLAIR                                  -->
+    <!-- ============================================================= -->
+    <h2 id="pattern1">Pattern 1 : Stockage en Clair <span style="color: var(--danger);">(Vulnerable)</span></h2>
+
+    <p>
+        Le premier reflexe de nombreux developpeurs est de stocker les donnees telles quelles dans la base.
+        C'est rapide, simple, et <strong>catastrophiquement dangereux</strong> pour les donnees sensibles.
+    </p>
+
+    <h3>Le modele (Patient)</h3>
+<pre><code><span class="kw">public class</span> <span class="fn">Patient</span>
+{
+    <span class="kw">public int</span> Id { <span class="kw">get</span>; <span class="kw">set</span>; }
+    <span class="kw">public string</span> Nom { <span class="kw">get</span>; <span class="kw">set</span>; } = <span class="str">""</span>;
+    <span class="kw">public string</span> NumeroSecu { <span class="kw">get</span>; <span class="kw">set</span>; } = <span class="str">""</span>;     <span class="cmt">// Numero de securite sociale</span>
+    <span class="kw">public string</span> Diagnostic { <span class="kw">get</span>; <span class="kw">set</span>; } = <span class="str">""</span>;    <span class="cmt">// Donnee medicale sensible</span>
+    <span class="kw">public string</span> IBAN { <span class="kw">get</span>; <span class="kw">set</span>; } = <span class="str">""</span>;          <span class="cmt">// Coordonnees bancaires</span>
+    <span class="kw">public decimal</span> Salaire { <span class="kw">get</span>; <span class="kw">set</span>; }              <span class="cmt">// Remuneration</span>
+}</code></pre>
+
+    <h3>Ce que voit un attaquant dans la base</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>NOM</th>
+                <th>NUMERO_SECU</th>
+                <th>DIAGNOSTIC</th>
+                <th>IBAN</th>
+                <th>SALAIRE</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>1</td>
+                <td><span class="danger-hl">Jean Dupont</span></td>
+                <td><span class="danger-hl">1 85 12 75 108 234 56</span></td>
+                <td><span class="danger-hl">Diabete type 2</span></td>
+                <td><span class="danger-hl">FR76 1234 5678 9012 3456</span></td>
+                <td><span class="danger-hl">3200.00</span></td>
+            </tr>
+            <tr>
+                <td>2</td>
+                <td><span class="danger-hl">Marie Martin</span></td>
+                <td><span class="danger-hl">2 91 03 69 042 567 89</span></td>
+                <td><span class="danger-hl">Hypertension</span></td>
+                <td><span class="danger-hl">FR76 9876 5432 1098 7654</span></td>
+                <td><span class="danger-hl">4100.00</span></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="alert alert-danger">
+        <strong>Toutes les donnees sont lisibles !</strong> Un simple <code>SELECT * FROM PATIENTS</code>
+        expose l'integralite des informations sensibles.
+    </div>
+
+    <h3>Scenarios d'attaque</h3>
+    <ul>
+        <li><strong>Vol de backup</strong> &mdash; Les fichiers de datafile (<code>.dbf</code>) et les exports Data Pump contiennent les donnees en clair. Un disque dur vole = toutes les donnees exposees.</li>
+        <li><strong>Injection SQL</strong> &mdash; Un attaquant qui exploite une faille SQL Injection peut lire directement toutes les colonnes.</li>
+        <li><strong>DBA malveillant</strong> &mdash; Un administrateur de base de donnees a un acces complet et non audite aux donnees.</li>
+        <li><strong>Compromission du serveur</strong> &mdash; Si le serveur Oracle est compromis, aucune couche de protection supplementaire n'existe.</li>
+    </ul>
+
+    <h3>Le DbContext basique (aucune protection)</h3>
+<pre><code><span class="kw">public class</span> <span class="fn">ClearTextDbContext</span> : <span class="fn">DbContext</span>
+{
+    <span class="kw">public</span> <span class="fn">DbSet</span>&lt;<span class="fn">Patient</span>&gt; Patients { <span class="kw">get</span>; <span class="kw">set</span>; }
+
+    <span class="kw">protected override void</span> <span class="fn">OnConfiguring</span>(<span class="fn">DbContextOptionsBuilder</span> options)
+    {
+        options.<span class="fn">UseOracle</span>(
+            <span class="str">@"User Id=lab_user;Password=lab_password;Data Source=localhost:1521/FREEPDB1"</span>
+        );
+    }
+
+    <span class="cmt">// Aucune protection - les donnees sont stockees telles quelles</span>
+    <span class="cmt">// C'est le comportement par defaut d'EF Core</span>
+}</code></pre>
+
+    <!-- ============================================================= -->
+    <!-- PATTERN 2 : VALUE CONVERTERS + DATA PROTECTION API             -->
+    <!-- ============================================================= -->
+    <h2 id="pattern2">Pattern 2 : Value Converters + Data Protection API</h2>
+
+    <p>
+        La premiere solution consiste a utiliser le systeme de <strong>Data Protection</strong> integre a
+        ASP.NET Core, combine avec les <strong>Value Converters</strong> d'EF Core pour chiffrer/dechiffrer
+        automatiquement les donnees lors de la lecture et de l'ecriture.
+    </p>
+
+    <h3>Qu'est-ce que la Data Protection API ?</h3>
+    <p>
+        La Data Protection API est un framework de chiffrement integre a ASP.NET Core. Elle gere
+        automatiquement les cles de chiffrement, leur rotation, et fournit une API simple basee sur
+        le concept de <strong>purpose strings</strong> (chaines de contexte).
+    </p>
+
+    <ul>
+        <li><strong>Purpose string</strong> : identifie le contexte de chiffrement (ex: <code>"PatientData.NumeroSecu"</code>). Deux purpose strings differentes produisent des cles differentes.</li>
+        <li><strong>Gestion des cles</strong> : les cles sont stockees par defaut dans <code>%LOCALAPPDATA%\ASP.NET\DataProtection-Keys</code>.</li>
+        <li><strong>Rotation automatique</strong> : les cles sont automatiquement renouvelees tous les 90 jours.</li>
+    </ul>
+
+    <h3>Creation du ValueConverter</h3>
+<pre><code><span class="kw">public static class</span> <span class="fn">EncryptedConverter</span>
+{
+    <span class="kw">public static</span> <span class="fn">ValueConverter</span>&lt;<span class="kw">string</span>, <span class="kw">string</span>&gt; <span class="fn">Create</span>(
+        <span class="fn">IDataProtectionProvider</span> provider,
+        <span class="kw">string</span> purpose)
+    {
+        <span class="kw">var</span> protector = provider.<span class="fn">CreateProtector</span>(purpose);
+
+        <span class="kw">return new</span> <span class="fn">ValueConverter</span>&lt;<span class="kw">string</span>, <span class="kw">string</span>&gt;(
+            v =&gt; protector.<span class="fn">Protect</span>(v),        <span class="cmt">// Ecriture : chiffre</span>
+            v =&gt; protector.<span class="fn">Unprotect</span>(v)      <span class="cmt">// Lecture : dechiffre</span>
+        );
+    }
+}</code></pre>
+
+    <h3>Application dans OnModelCreating</h3>
+<pre><code><span class="kw">protected override void</span> <span class="fn">OnModelCreating</span>(<span class="fn">ModelBuilder</span> modelBuilder)
+{
+    <span class="kw">var</span> converter = <span class="fn">EncryptedConverter</span>.<span class="fn">Create</span>(
+        _provider, <span class="str">"PatientData"</span>);
+
+    modelBuilder.<span class="fn">Entity</span>&lt;<span class="fn">Patient</span>&gt;(entity =&gt;
+    {
+        entity.<span class="fn">Property</span>(e =&gt; e.NumeroSecu)
+              .<span class="fn">HasConversion</span>(converter)
+              .<span class="fn">HasMaxLength</span>(<span class="val">500</span>);  <span class="cmt">// Le texte chiffre est plus long</span>
+
+        entity.<span class="fn">Property</span>(e =&gt; e.Diagnostic)
+              .<span class="fn">HasConversion</span>(converter)
+              .<span class="fn">HasMaxLength</span>(<span class="val">500</span>);
+
+        entity.<span class="fn">Property</span>(e =&gt; e.IBAN)
+              .<span class="fn">HasConversion</span>(converter)
+              .<span class="fn">HasMaxLength</span>(<span class="val">500</span>);
+    });
+}</code></pre>
+
+    <h3>Resultat : Vue application vs Vue base de donnees</h3>
+    <div class="comparison">
+        <div class="card good">
+            <h4>Vue Application (dechiffree)</h4>
+<pre><code>Nom: Jean Dupont
+Secu: 1 85 12 75 108 234 56
+Diagnostic: Diabete type 2
+IBAN: FR76 1234 5678 9012 3456</code></pre>
+        </div>
+        <div class="card good">
+            <h4>Vue Base de Donnees Oracle (chiffree)</h4>
+<pre><code>NOM: Jean Dupont
+NUMERO_SECU: CfDJ8N...aX2kQ==
+DIAGNOSTIC: CfDJ8N...bY7mR==
+IBAN: CfDJ8N...cZ9nS==</code></pre>
+        </div>
+    </div>
+
+    <h3>Limitations importantes</h3>
+    <div class="alert alert-warning">
+        <strong>Attention :</strong> Les Value Converters chiffrent les donnees <em>cote application</em>.
+        Cela implique des limitations significatives.
+    </div>
+
+    <ul>
+        <li><strong>Pas de clause WHERE</strong> &mdash; Impossible de faire <code>WHERE NUMERO_SECU = '...'</code> car la valeur chiffree change a chaque chiffrement (IV aleatoire cote DPAPI).</li>
+        <li><strong>Pas d'indexation</strong> &mdash; Les index sur les colonnes chiffrees sont inutiles.</li>
+        <li><strong>Dependance aux cles</strong> &mdash; Si les cles de Data Protection sont perdues, les donnees sont <strong>irrecuperables</strong>.</li>
+        <li><strong>Tri impossible</strong> &mdash; <code>ORDER BY</code> sur les colonnes chiffrees donne des resultats incoherents.</li>
+    </ul>
+
+    <h3>DbContext complet avec Data Protection</h3>
+<pre><code><span class="kw">public class</span> <span class="fn">EncryptedDbContext</span> : <span class="fn">DbContext</span>
+{
+    <span class="kw">private readonly</span> <span class="fn">IDataProtectionProvider</span> _provider;
+
+    <span class="kw">public</span> <span class="fn">EncryptedDbContext</span>(
+        <span class="fn">DbContextOptions</span>&lt;<span class="fn">EncryptedDbContext</span>&gt; options,
+        <span class="fn">IDataProtectionProvider</span> provider) : <span class="kw">base</span>(options)
+    {
+        _provider = provider;
+    }
+
+    <span class="kw">public</span> <span class="fn">DbSet</span>&lt;<span class="fn">Patient</span>&gt; Patients { <span class="kw">get</span>; <span class="kw">set</span>; }
+
+    <span class="kw">protected override void</span> <span class="fn">OnModelCreating</span>(<span class="fn">ModelBuilder</span> modelBuilder)
+    {
+        <span class="kw">var</span> converter = <span class="fn">EncryptedConverter</span>.<span class="fn">Create</span>(
+            _provider, <span class="str">"PatientData"</span>);
+
+        modelBuilder.<span class="fn">Entity</span>&lt;<span class="fn">Patient</span>&gt;(entity =&gt;
+        {
+            entity.<span class="fn">Property</span>(e =&gt; e.NumeroSecu)
+                  .<span class="fn">HasConversion</span>(converter).<span class="fn">HasMaxLength</span>(<span class="val">500</span>);
+            entity.<span class="fn">Property</span>(e =&gt; e.Diagnostic)
+                  .<span class="fn">HasConversion</span>(converter).<span class="fn">HasMaxLength</span>(<span class="val">500</span>);
+            entity.<span class="fn">Property</span>(e =&gt; e.IBAN)
+                  .<span class="fn">HasConversion</span>(converter).<span class="fn">HasMaxLength</span>(<span class="val">500</span>);
+        });
+    }
+}</code></pre>
+
+    <!-- ============================================================= -->
+    <!-- PATTERN 3 : AES-256-CBC + HMAC-SHA256                          -->
+    <!-- ============================================================= -->
+    <h2 id="pattern3">Pattern 3 : AES-256-CBC + HMAC-SHA256</h2>
+
+    <p>
+        Pour un controle total sur le chiffrement, on peut implementer manuellement un service
+        utilisant <strong>AES-256 en mode CBC</strong> avec un <strong>HMAC-SHA256</strong> pour
+        garantir l'integrite. C'est le pattern <strong>Encrypt-then-MAC</strong>, considere
+        comme la reference en cryptographie symetrique.
+    </p>
+
+    <h3>Pourquoi un chiffrement manuel ?</h3>
+    <ul>
+        <li><strong>Portabilite</strong> &mdash; Fonctionne avec n'importe quelle base de donnees (Oracle, PostgreSQL, MySQL, SQLite, etc.)</li>
+        <li><strong>Controle des cles</strong> &mdash; Vous decidez ou et comment stocker les cles</li>
+        <li><strong>Audit</strong> &mdash; Le code est inspectable et verifiable par un auditeur de securite</li>
+        <li><strong>Independance</strong> &mdash; Pas de dependance a un framework specifique</li>
+    </ul>
+
+    <h3>Flux de chiffrement</h3>
+<pre><code><span class="cmt">┌─────────────────────────────────────────────────────────────────┐
+│                    ENCRYPT-THEN-MAC FLOW                        │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  Texte clair                                                    │
+│      │                                                          │
+│      ▼                                                          │
+│  ┌──────────────────────┐                                       │
+│  │  AES-256-CBC(key, IV)│  ◄── IV aleatoire (16 bytes)         │
+│  └──────────┬───────────┘                                       │
+│             │                                                   │
+│             ▼                                                   │
+│  ┌──────────────────────┐                                       │
+│  │  IV + Ciphertext     │                                       │
+│  └──────────┬───────────┘                                       │
+│             │                                                   │
+│             ▼                                                   │
+│  ┌──────────────────────────────┐                               │
+│  │  HMAC-SHA256(hmac_key,      │  ◄── Cle HMAC separee         │
+│  │            IV + Ciphertext) │                                │
+│  └──────────┬───────────────────┘                               │
+│             │                                                   │
+│             ▼                                                   │
+│  ┌──────────────────────────────┐                               │
+│  │  Base64(IV + Ciphertext     │                                │
+│  │         + HMAC tag)         │  → Stocke en base              │
+│  └──────────────────────────────┘                               │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘</span></code></pre>
+
+    <h3>Le pattern Encrypt-then-MAC</h3>
+    <p>
+        Il existe trois facons de combiner chiffrement et MAC :
+    </p>
+    <table>
+        <thead>
+            <tr>
+                <th>Methode</th>
+                <th>Ordre</th>
+                <th>Securite</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>MAC-then-Encrypt</strong></td>
+                <td>HMAC(clair) puis Encrypt(clair + MAC)</td>
+                <td><span class="danger-hl">Vulnerable (padding oracle)</span></td>
+            </tr>
+            <tr>
+                <td><strong>Encrypt-and-MAC</strong></td>
+                <td>Encrypt(clair) + HMAC(clair)</td>
+                <td><span class="danger-hl">Fuite potentielle via MAC</span></td>
+            </tr>
+            <tr>
+                <td><strong>Encrypt-then-MAC</strong></td>
+                <td>Encrypt(clair) puis HMAC(chiffre)</td>
+                <td><span class="success-hl">Recommande (prouve sur)</span></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h3>Protection contre les attaques temporelles : FixedTimeEquals</h3>
+    <p>
+        Lors de la verification du HMAC, il est crucial d'utiliser une comparaison a
+        <strong>temps constant</strong>. Une comparaison classique (<code>==</code>) s'arrete
+        au premier octet different, ce qui permet a un attaquant de deviner le HMAC
+        octet par octet en mesurant le temps de reponse.
+    </p>
+
+    <div class="comparison">
+        <div class="card bad">
+            <h4>Comparaison classique (vulnerable)</h4>
+<pre><code><span class="cmt">// DANGEREUX : timing attack possible</span>
+<span class="kw">if</span> (computedMac.<span class="fn">SequenceEqual</span>(storedMac))
+{
+    <span class="cmt">// S'arrete au 1er octet different</span>
+    <span class="cmt">// → fuite d'information temporelle</span>
+}</code></pre>
+        </div>
+        <div class="card good">
+            <h4>Comparaison a temps constant (sure)</h4>
+<pre><code><span class="cmt">// SUR : temps constant quel que soit</span>
+<span class="cmt">// le nombre d'octets corrects</span>
+<span class="kw">if</span> (<span class="fn">CryptographicOperations</span>
+    .<span class="fn">FixedTimeEquals</span>(computedMac, storedMac))
+{
+    <span class="cmt">// Compare TOUS les octets</span>
+}</code></pre>
+        </div>
+    </div>
+
+    <h3>Service AesEncryptionService complet</h3>
+<pre><code><span class="kw">public class</span> <span class="fn">AesEncryptionService</span>
+{
+    <span class="kw">private readonly byte</span>[] _encryptionKey; <span class="cmt">// 32 bytes = AES-256</span>
+    <span class="kw">private readonly byte</span>[] _hmacKey;       <span class="cmt">// 32 bytes pour HMAC-SHA256</span>
+
+    <span class="kw">public</span> <span class="fn">AesEncryptionService</span>(<span class="kw">string</span> encKey, <span class="kw">string</span> hmacKey)
+    {
+        _encryptionKey = <span class="fn">Convert</span>.<span class="fn">FromBase64String</span>(encKey);
+        _hmacKey = <span class="fn">Convert</span>.<span class="fn">FromBase64String</span>(hmacKey);
+
+        <span class="kw">if</span> (_encryptionKey.Length != <span class="val">32</span>)
+            <span class="kw">throw new</span> <span class="fn">ArgumentException</span>(<span class="str">"La cle AES doit faire 256 bits (32 octets)"</span>);
+        <span class="kw">if</span> (_hmacKey.Length != <span class="val">32</span>)
+            <span class="kw">throw new</span> <span class="fn">ArgumentException</span>(<span class="str">"La cle HMAC doit faire 256 bits (32 octets)"</span>);
+    }
+
+    <span class="kw">public string</span> <span class="fn">Encrypt</span>(<span class="kw">string</span> plainText)
+    {
+        <span class="kw">using var</span> aes = <span class="fn">Aes</span>.<span class="fn">Create</span>();
+        aes.Key = _encryptionKey;
+        aes.Mode = <span class="fn">CipherMode</span>.CBC;
+        aes.Padding = <span class="fn">PaddingMode</span>.PKCS7;
+        aes.<span class="fn">GenerateIV</span>();  <span class="cmt">// IV aleatoire a chaque chiffrement</span>
+
+        <span class="kw">using var</span> encryptor = aes.<span class="fn">CreateEncryptor</span>();
+        <span class="kw">var</span> plainBytes = <span class="fn">Encoding</span>.UTF8.<span class="fn">GetBytes</span>(plainText);
+        <span class="kw">var</span> cipherBytes = encryptor.<span class="fn">TransformFinalBlock</span>(
+            plainBytes, <span class="val">0</span>, plainBytes.Length);
+
+        <span class="cmt">// Concatener IV + Ciphertext</span>
+        <span class="kw">var</span> ivAndCipher = <span class="kw">new byte</span>[aes.IV.Length + cipherBytes.Length];
+        <span class="fn">Buffer</span>.<span class="fn">BlockCopy</span>(aes.IV, <span class="val">0</span>, ivAndCipher, <span class="val">0</span>, aes.IV.Length);
+        <span class="fn">Buffer</span>.<span class="fn">BlockCopy</span>(cipherBytes, <span class="val">0</span>, ivAndCipher, aes.IV.Length, cipherBytes.Length);
+
+        <span class="cmt">// Calculer HMAC sur IV + Ciphertext (Encrypt-then-MAC)</span>
+        <span class="kw">using var</span> hmac = <span class="kw">new</span> <span class="fn">HMACSHA256</span>(_hmacKey);
+        <span class="kw">var</span> mac = hmac.<span class="fn">ComputeHash</span>(ivAndCipher);
+
+        <span class="cmt">// Resultat final : IV + Ciphertext + MAC</span>
+        <span class="kw">var</span> result = <span class="kw">new byte</span>[ivAndCipher.Length + mac.Length];
+        <span class="fn">Buffer</span>.<span class="fn">BlockCopy</span>(ivAndCipher, <span class="val">0</span>, result, <span class="val">0</span>, ivAndCipher.Length);
+        <span class="fn">Buffer</span>.<span class="fn">BlockCopy</span>(mac, <span class="val">0</span>, result, ivAndCipher.Length, mac.Length);
+
+        <span class="kw">return</span> <span class="fn">Convert</span>.<span class="fn">ToBase64String</span>(result);
+    }
+
+    <span class="kw">public string</span> <span class="fn">Decrypt</span>(<span class="kw">string</span> cipherText)
+    {
+        <span class="kw">var</span> fullBytes = <span class="fn">Convert</span>.<span class="fn">FromBase64String</span>(cipherText);
+
+        <span class="cmt">// Separer les composants : IV(16) + Ciphertext(N) + MAC(32)</span>
+        <span class="kw">const int</span> ivLength = <span class="val">16</span>;
+        <span class="kw">const int</span> macLength = <span class="val">32</span>;
+        <span class="kw">var</span> ivAndCipherLength = fullBytes.Length - macLength;
+
+        <span class="kw">var</span> ivAndCipher = fullBytes[..ivAndCipherLength];
+        <span class="kw">var</span> storedMac = fullBytes[ivAndCipherLength..];
+
+        <span class="cmt">// Verifier le HMAC AVANT de dechiffrer (crucial !)</span>
+        <span class="kw">using var</span> hmac = <span class="kw">new</span> <span class="fn">HMACSHA256</span>(_hmacKey);
+        <span class="kw">var</span> computedMac = hmac.<span class="fn">ComputeHash</span>(ivAndCipher);
+
+        <span class="kw">if</span> (!<span class="fn">CryptographicOperations</span>.<span class="fn">FixedTimeEquals</span>(computedMac, storedMac))
+            <span class="kw">throw new</span> <span class="fn">CryptographicException</span>(<span class="str">"Integrite compromise : HMAC invalide"</span>);
+
+        <span class="cmt">// Extraire IV et Ciphertext</span>
+        <span class="kw">var</span> iv = ivAndCipher[..ivLength];
+        <span class="kw">var</span> cipherBytes = ivAndCipher[ivLength..];
+
+        <span class="kw">using var</span> aes = <span class="fn">Aes</span>.<span class="fn">Create</span>();
+        aes.Key = _encryptionKey;
+        aes.IV = iv;
+        aes.Mode = <span class="fn">CipherMode</span>.CBC;
+        aes.Padding = <span class="fn">PaddingMode</span>.PKCS7;
+
+        <span class="kw">using var</span> decryptor = aes.<span class="fn">CreateDecryptor</span>();
+        <span class="kw">var</span> plainBytes = decryptor.<span class="fn">TransformFinalBlock</span>(
+            cipherBytes, <span class="val">0</span>, cipherBytes.Length);
+
+        <span class="kw">return</span> <span class="fn">Encoding</span>.UTF8.<span class="fn">GetString</span>(plainBytes);
+    }
+}</code></pre>
+
+    <h3>Integration avec EF Core via ValueConverter</h3>
+<pre><code><span class="kw">protected override void</span> <span class="fn">OnModelCreating</span>(<span class="fn">ModelBuilder</span> modelBuilder)
+{
+    <span class="kw">var</span> aesConverter = <span class="kw">new</span> <span class="fn">ValueConverter</span>&lt;<span class="kw">string</span>, <span class="kw">string</span>&gt;(
+        v =&gt; _aesService.<span class="fn">Encrypt</span>(v),     <span class="cmt">// Ecriture</span>
+        v =&gt; _aesService.<span class="fn">Decrypt</span>(v)      <span class="cmt">// Lecture</span>
+    );
+
+    modelBuilder.<span class="fn">Entity</span>&lt;<span class="fn">Patient</span>&gt;(entity =&gt;
+    {
+        entity.<span class="fn">Property</span>(e =&gt; e.NumeroSecu)
+              .<span class="fn">HasConversion</span>(aesConverter)
+              .<span class="fn">HasMaxLength</span>(<span class="val">500</span>);
+        entity.<span class="fn">Property</span>(e =&gt; e.Diagnostic)
+              .<span class="fn">HasConversion</span>(aesConverter)
+              .<span class="fn">HasMaxLength</span>(<span class="val">500</span>);
+        entity.<span class="fn">Property</span>(e =&gt; e.IBAN)
+              .<span class="fn">HasConversion</span>(aesConverter)
+              .<span class="fn">HasMaxLength</span>(<span class="val">500</span>);
+    });
+}</code></pre>
+
+    <h3>Gestion des cles</h3>
+    <div class="alert alert-danger">
+        <strong>Ne jamais stocker les cles dans le code source !</strong> Utilisez des variables d'environnement,
+        Oracle Key Vault, ou un fichier de configuration protege par ACL.
+    </div>
+
+<pre><code><span class="cmt">// Generation de cles securisees (a executer une seule fois)</span>
+<span class="kw">var</span> encKey = <span class="kw">new byte</span>[<span class="val">32</span>];
+<span class="kw">var</span> hmacKey = <span class="kw">new byte</span>[<span class="val">32</span>];
+<span class="fn">RandomNumberGenerator</span>.<span class="fn">Fill</span>(encKey);
+<span class="fn">RandomNumberGenerator</span>.<span class="fn">Fill</span>(hmacKey);
+<span class="fn">Console</span>.<span class="fn">WriteLine</span>(<span class="str">$"EncKey: {Convert.ToBase64String(encKey)}"</span>);
+<span class="fn">Console</span>.<span class="fn">WriteLine</span>(<span class="str">$"HmacKey: {Convert.ToBase64String(hmacKey)}"</span>);
+
+<span class="cmt">// Dans appsettings.json (ou mieux : variables d'environnement)</span>
+{
+  <span class="str">"Encryption"</span>: {
+    <span class="str">"AesKey"</span>: <span class="str">"votre-cle-base64-ici"</span>,
+    <span class="str">"HmacKey"</span>: <span class="str">"votre-cle-hmac-base64-ici"</span>
+  }
+}</code></pre>
+
+    <!-- ============================================================= -->
+    <!-- PATTERN 4 : TDE + DBMS_CRYPTO                                  -->
+    <!-- ============================================================= -->
+    <h2 id="pattern4">Pattern 4 : TDE + DBMS_CRYPTO (Oracle)</h2>
+
+    <p>
+        Oracle propose deux mecanismes natifs de chiffrement complementaires :
+        <strong>TDE (Transparent Data Encryption)</strong> pour le chiffrement au repos, et
+        <strong>DBMS_CRYPTO</strong> pour le chiffrement programmatique cote serveur.
+        Combines, ils offrent une protection de niveau entreprise.
+    </p>
+
+    <h3>Architecture : Hierarchie des cles Oracle TDE</h3>
+<pre><code><span class="cmt">┌─────────────────────────────────────────────────────────────────┐
+│                 ORACLE TDE - HIERARCHIE DES CLES                │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  ┌───────────────────────────────┐                              │
+│  │  Oracle Wallet / OKV          │  Stockage securise           │
+│  │  (fichier .p12 ou HSM)        │  de la Master Key            │
+│  └──────────────┬────────────────┘                              │
+│                 │                                                │
+│                 ▼                                                │
+│  ┌───────────────────────────────┐                              │
+│  │  Master Encryption Key (MEK)  │  Cle maitre unique           │
+│  │  (1 par base de donnees)      │  par PDB/CDB                 │
+│  └──────────────┬────────────────┘                              │
+│                 │  chiffre                                       │
+│                 ▼                                                │
+│  ┌───────────────────────────────┐                              │
+│  │  Table Key / Column Key       │  Cle specifique              │
+│  │  (1 par table ou colonne)     │  par objet chiffre           │
+│  └──────────────┬────────────────┘                              │
+│                 │  chiffre                                       │
+│                 ▼                                                │
+│  ┌───────────────────────────────┐                              │
+│  │  Donnees (colonne ou          │  Donnees chiffrees           │
+│  │  tablespace entier)           │  sur disque                  │
+│  └───────────────────────────────┘                              │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘</span></code></pre>
+
+    <h3>Etape 1 : Configurer le Wallet (Keystore)</h3>
+<pre><code><span class="cmt">-- Creer le repertoire du wallet</span>
+<span class="cmt">-- mkdir -p /opt/oracle/admin/FREE/wallet</span>
+
+<span class="cmt">-- Creer le keystore (wallet) avec un mot de passe</span>
+<span class="kw">ALTER SYSTEM SET</span> ENCRYPTION WALLET OPEN
+    IDENTIFIED <span class="kw">BY</span> <span class="str">"MonMotDePasseWallet!123"</span>;
+
+<span class="cmt">-- Ou avec la syntaxe ADMINISTER KEY MANAGEMENT (12c+)</span>
+<span class="kw">ADMINISTER KEY MANAGEMENT
+    CREATE KEYSTORE</span> <span class="str">'/opt/oracle/admin/FREE/wallet'</span>
+    IDENTIFIED <span class="kw">BY</span> <span class="str">"MonMotDePasseWallet!123"</span>;
+
+<span class="cmt">-- Ouvrir le keystore</span>
+<span class="kw">ADMINISTER KEY MANAGEMENT
+    SET KEYSTORE OPEN</span>
+    IDENTIFIED <span class="kw">BY</span> <span class="str">"MonMotDePasseWallet!123"</span>;
+
+<span class="cmt">-- Creer la Master Encryption Key</span>
+<span class="kw">ADMINISTER KEY MANAGEMENT
+    SET KEY</span>
+    IDENTIFIED <span class="kw">BY</span> <span class="str">"MonMotDePasseWallet!123"</span>
+    <span class="kw">WITH BACKUP</span>;</code></pre>
+
+    <h3>Etape 2 : TDE au niveau colonne (Column-level)</h3>
+<pre><code><span class="cmt">-- Creer une table avec des colonnes chiffrees par TDE</span>
+<span class="kw">CREATE TABLE</span> PATIENTS_TDE (
+    ID          <span class="kw">NUMBER</span> GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    NOM         <span class="kw">VARCHAR2</span>(<span class="val">100</span>),
+    NUMERO_SECU <span class="kw">VARCHAR2</span>(<span class="val">50</span>)  <span class="kw">ENCRYPT</span>,
+    DIAGNOSTIC  <span class="kw">VARCHAR2</span>(<span class="val">500</span>) <span class="kw">ENCRYPT</span>,
+    IBAN        <span class="kw">VARCHAR2</span>(<span class="val">50</span>)  <span class="kw">ENCRYPT</span>,
+    SALAIRE     <span class="kw">NUMBER</span>(<span class="val">10</span>,<span class="val">2</span>)  <span class="kw">ENCRYPT</span>
+);
+
+<span class="cmt">-- Ou chiffrer une colonne existante</span>
+<span class="kw">ALTER TABLE</span> PATIENTS
+    <span class="kw">MODIFY</span> (NUMERO_SECU <span class="kw">ENCRYPT</span>);
+
+<span class="cmt">-- Specifier l'algorithme (AES256 par defaut)</span>
+<span class="kw">ALTER TABLE</span> PATIENTS
+    <span class="kw">MODIFY</span> (DIAGNOSTIC <span class="kw">ENCRYPT USING</span> <span class="str">'AES256'</span>);
+
+<span class="cmt">-- Ajouter un salt (valeur aleatoire) pour plus de securite</span>
+<span class="kw">ALTER TABLE</span> PATIENTS
+    <span class="kw">MODIFY</span> (IBAN <span class="kw">ENCRYPT USING</span> <span class="str">'AES256'</span> SALT);</code></pre>
+
+    <h3>Etape 3 : TDE au niveau tablespace (Tablespace-level)</h3>
+<pre><code><span class="cmt">-- Creer un tablespace entierement chiffre</span>
+<span class="kw">CREATE TABLESPACE</span> TS_ENCRYPTED
+    DATAFILE <span class="str">'/opt/oracle/oradata/FREE/ts_encrypted01.dbf'</span>
+    SIZE <span class="val">100</span>M
+    AUTOEXTEND <span class="kw">ON</span>
+    <span class="kw">ENCRYPTION USING</span> <span class="str">'AES256'</span>
+    <span class="kw">DEFAULT STORAGE</span> (<span class="kw">ENCRYPT</span>);
+
+<span class="cmt">-- Toutes les tables creees dans ce tablespace seront chiffrees</span>
+<span class="kw">CREATE TABLE</span> PATIENTS_SECURE (
+    ID          <span class="kw">NUMBER</span> GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    NOM         <span class="kw">VARCHAR2</span>(<span class="val">100</span>),
+    NUMERO_SECU <span class="kw">VARCHAR2</span>(<span class="val">50</span>),
+    DIAGNOSTIC  <span class="kw">VARCHAR2</span>(<span class="val">500</span>)
+) <span class="kw">TABLESPACE</span> TS_ENCRYPTED;</code></pre>
+
+    <h3>Column-level TDE vs Tablespace-level TDE</h3>
+    <div class="comparison">
+        <div class="card">
+            <h4 style="color: var(--info);">TDE au niveau colonne</h4>
+            <ul>
+                <li><span class="success-hl">+</span> Granularite fine : chiffrement selectif</li>
+                <li><span class="success-hl">+</span> Moins d'impact sur les performances</li>
+                <li><span class="success-hl">+</span> Compatible avec les index (sans SALT)</li>
+                <li><span class="danger-hl">-</span> Limite aux types scalaires (pas de LOB)</li>
+                <li><span class="danger-hl">-</span> Maximum 2 colonnes par table avec SALT</li>
+                <li><span class="danger-hl">-</span> Pas de chiffrement des index eux-memes</li>
+            </ul>
+            <p><em>Usage : quelques colonnes sensibles a proteger</em></p>
+        </div>
+        <div class="card">
+            <h4 style="color: var(--accent);">TDE au niveau tablespace</h4>
+            <ul>
+                <li><span class="success-hl">+</span> Tout est chiffre automatiquement</li>
+                <li><span class="success-hl">+</span> Supporte tous les types (LOB inclus)</li>
+                <li><span class="success-hl">+</span> Index et donnees temporaires chiffres</li>
+                <li><span class="success-hl">+</span> Meilleure performance (bulk encryption)</li>
+                <li><span class="danger-hl">-</span> Pas de granularite (tout ou rien)</li>
+                <li><span class="danger-hl">-</span> Espace disque supplementaire</li>
+            </ul>
+            <p><em>Usage : protection globale de toutes les donnees</em></p>
+        </div>
+    </div>
+
+    <h3>DBMS_CRYPTO : Chiffrement programmatique</h3>
+    <p>
+        Le package <strong>DBMS_CRYPTO</strong> permet de chiffrer et dechiffrer des donnees
+        directement dans du code PL/SQL. Il offre un controle total sur les algorithmes
+        et les cles utilises.
+    </p>
+
+<pre><code><span class="cmt">-- Fonctions principales de DBMS_CRYPTO</span>
+
+<span class="cmt">-- ENCRYPT : chiffrement symetrique</span>
+<span class="kw">DECLARE</span>
+    l_clair     <span class="kw">VARCHAR2</span>(<span class="val">200</span>) := <span class="str">'1 85 12 75 108 234 56'</span>;
+    l_cle       <span class="kw">RAW</span>(<span class="val">32</span>);       <span class="cmt">-- Cle AES-256 (32 octets)</span>
+    l_iv        <span class="kw">RAW</span>(<span class="val">16</span>);       <span class="cmt">-- Vecteur d'initialisation</span>
+    l_chiffre   <span class="kw">RAW</span>(<span class="val">2000</span>);
+    l_dechiffre <span class="kw">RAW</span>(<span class="val">2000</span>);
+    l_algo      <span class="kw">PLS_INTEGER</span>;
+<span class="kw">BEGIN</span>
+    <span class="cmt">-- Definir l'algorithme : AES256 + CBC + PKCS5</span>
+    l_algo := <span class="fn">DBMS_CRYPTO</span>.ENCRYPT_AES256
+            + <span class="fn">DBMS_CRYPTO</span>.CHAIN_CBC
+            + <span class="fn">DBMS_CRYPTO</span>.PAD_PKCS5;
+
+    <span class="cmt">-- Generer une cle aleatoire</span>
+    l_cle := <span class="fn">DBMS_CRYPTO</span>.<span class="fn">RANDOMBYTES</span>(<span class="val">32</span>);
+    l_iv  := <span class="fn">DBMS_CRYPTO</span>.<span class="fn">RANDOMBYTES</span>(<span class="val">16</span>);
+
+    <span class="cmt">-- Chiffrer</span>
+    l_chiffre := <span class="fn">DBMS_CRYPTO</span>.<span class="fn">ENCRYPT</span>(
+        src => <span class="fn">UTL_I18N</span>.<span class="fn">STRING_TO_RAW</span>(l_clair, <span class="str">'AL32UTF8'</span>),
+        typ => l_algo,
+        key => l_cle,
+        iv  => l_iv
+    );
+
+    <span class="cmt">-- Dechiffrer</span>
+    l_dechiffre := <span class="fn">DBMS_CRYPTO</span>.<span class="fn">DECRYPT</span>(
+        src => l_chiffre,
+        typ => l_algo,
+        key => l_cle,
+        iv  => l_iv
+    );
+
+    <span class="fn">DBMS_OUTPUT</span>.<span class="fn">PUT_LINE</span>(<span class="str">'Clair    : '</span> || l_clair);
+    <span class="fn">DBMS_OUTPUT</span>.<span class="fn">PUT_LINE</span>(<span class="str">'Chiffre  : '</span> || <span class="fn">RAWTOHEX</span>(l_chiffre));
+    <span class="fn">DBMS_OUTPUT</span>.<span class="fn">PUT_LINE</span>(<span class="str">'Dechiffre: '</span> ||
+        <span class="fn">UTL_I18N</span>.<span class="fn">RAW_TO_CHAR</span>(l_dechiffre, <span class="str">'AL32UTF8'</span>));
+<span class="kw">END</span>;
+/</code></pre>
+
+    <h3>DBMS_CRYPTO : HASH et MAC</h3>
+<pre><code><span class="cmt">-- Fonctions de hachage et MAC disponibles</span>
+
+<span class="kw">DECLARE</span>
+    l_donnee <span class="kw">RAW</span>(<span class="val">2000</span>);
+    l_cle    <span class="kw">RAW</span>(<span class="val">32</span>);
+    l_hash   <span class="kw">RAW</span>(<span class="val">64</span>);
+    l_mac    <span class="kw">RAW</span>(<span class="val">64</span>);
+<span class="kw">BEGIN</span>
+    l_donnee := <span class="fn">UTL_I18N</span>.<span class="fn">STRING_TO_RAW</span>(<span class="str">'Donnee sensible'</span>, <span class="str">'AL32UTF8'</span>);
+    l_cle    := <span class="fn">DBMS_CRYPTO</span>.<span class="fn">RANDOMBYTES</span>(<span class="val">32</span>);
+
+    <span class="cmt">-- Hachage SHA-256</span>
+    l_hash := <span class="fn">DBMS_CRYPTO</span>.<span class="fn">HASH</span>(
+        src => l_donnee,
+        typ => <span class="fn">DBMS_CRYPTO</span>.HASH_SH256
+    );
+
+    <span class="cmt">-- MAC (Message Authentication Code) HMAC-SHA256</span>
+    l_mac := <span class="fn">DBMS_CRYPTO</span>.<span class="fn">MAC</span>(
+        src => l_donnee,
+        typ => <span class="fn">DBMS_CRYPTO</span>.HMAC_SH256,
+        key => l_cle
+    );
+
+    <span class="fn">DBMS_OUTPUT</span>.<span class="fn">PUT_LINE</span>(<span class="str">'Hash SHA-256  : '</span> || <span class="fn">RAWTOHEX</span>(l_hash));
+    <span class="fn">DBMS_OUTPUT</span>.<span class="fn">PUT_LINE</span>(<span class="str">'HMAC-SHA256   : '</span> || <span class="fn">RAWTOHEX</span>(l_mac));
+<span class="kw">END</span>;
+/</code></pre>
+
+    <h3>EF Core avec Oracle : TDE est transparent</h3>
+    <div class="alert alert-success">
+        <strong>Transparence totale :</strong> Avec TDE active, le DbContext et les modeles
+        EF Core n'ont <strong>aucune modification</strong>. Le chiffrement est gere automatiquement par
+        Oracle au niveau du stockage. Vos requetes LINQ restent identiques.
+    </div>
+
+<pre><code><span class="cmt">// Ce code fonctionne tel quel avec TDE actif</span>
+<span class="kw">var</span> patient = <span class="kw">new</span> <span class="fn">Patient</span>
+{
+    Nom = <span class="str">"Jean Dupont"</span>,
+    NumeroSecu = <span class="str">"1 85 12 75 108 234 56"</span>,
+    Diagnostic = <span class="str">"Diabete type 2"</span>,
+    IBAN = <span class="str">"FR76 1234 5678 9012 3456"</span>
+};
+
+_context.Patients.<span class="fn">Add</span>(patient);
+<span class="kw">await</span> _context.<span class="fn">SaveChangesAsync</span>();
+
+<span class="cmt">// Requete avec filtre (fonctionne normalement, TDE est transparent)</span>
+<span class="kw">var</span> found = <span class="kw">await</span> _context.Patients
+    .<span class="fn">Where</span>(p =&gt; p.NumeroSecu == <span class="str">"1 85 12 75 108 234 56"</span>)
+    .<span class="fn">FirstOrDefaultAsync</span>();</code></pre>
+
+    <h3>Verification de l'etat TDE</h3>
+<pre><code><span class="cmt">-- Verifier quelles colonnes sont chiffrees</span>
+<span class="kw">SELECT</span> TABLE_NAME, COLUMN_NAME, ENCRYPTION_ALG, SALT
+<span class="kw">FROM</span> DBA_ENCRYPTED_COLUMNS
+<span class="kw">WHERE</span> OWNER = <span class="str">'LAB_USER'</span>;
+
+<span class="cmt">-- Verifier les tablespaces chiffres</span>
+<span class="kw">SELECT</span> TABLESPACE_NAME, ENCRYPTED
+<span class="kw">FROM</span> DBA_TABLESPACES
+<span class="kw">WHERE</span> ENCRYPTED = <span class="str">'YES'</span>;
+
+<span class="cmt">-- Verifier l'etat du wallet/keystore</span>
+<span class="kw">SELECT</span> WRL_TYPE, STATUS, WALLET_TYPE
+<span class="kw">FROM</span> V$ENCRYPTION_WALLET;</code></pre>
+
+    <h3>Limitations</h3>
+    <ul>
+        <li><strong>Oracle uniquement</strong> &mdash; TDE et DBMS_CRYPTO sont specifiques a Oracle Database.</li>
+        <li><strong>Editions requises</strong> &mdash; TDE necessite l'Advanced Security Option (Enterprise Edition) ou Oracle Database 23ai Free.</li>
+        <li><strong>Wallet obligatoire</strong> &mdash; Le wallet doit etre ouvert au demarrage de la base. S'il est ferme, les donnees chiffrees sont inaccessibles.</li>
+        <li><strong>Pas de protection contre le DBA</strong> &mdash; Un DBA connecte voit les donnees en clair (TDE est transparent pour les requetes SQL).</li>
+        <li><strong>DBMS_CRYPTO cote serveur</strong> &mdash; Les cles transitent par le serveur, contrairement a Always Encrypted (SQL Server) ou le chiffrement est cote client.</li>
+    </ul>
+
+    <!-- ============================================================= -->
+    <!-- PATTERN 5 : ORACLE DATA REDACTION                              -->
+    <!-- ============================================================= -->
+    <h2 id="pattern5">Pattern 5 : Oracle Data Redaction (DBMS_REDACT)</h2>
+
+    <p>
+        <strong>Oracle Data Redaction</strong> est une fonctionnalite de masquage dynamique des donnees.
+        Contrairement au chiffrement, les donnees sont stockees en clair mais <strong>masquees a la volee</strong>
+        lors de la lecture, en fonction de politiques definies par l'administrateur.
+        C'est un complement ideal au chiffrement TDE.
+    </p>
+
+    <h3>Types de redaction</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Type</th>
+                <th>Description</th>
+                <th>Exemple</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Full Redaction</strong></td>
+                <td>Remplacement total de la valeur</td>
+                <td><code>'1 85 12 75...'</code> &rarr; <code>' '</code> (vide)</td>
+            </tr>
+            <tr>
+                <td><strong>Partial Redaction</strong></td>
+                <td>Masquage partiel (debut, milieu ou fin)</td>
+                <td><code>'FR76 1234 5678'</code> &rarr; <code>'FR76 XXXX XXXX'</code></td>
+            </tr>
+            <tr>
+                <td><strong>Random Redaction</strong></td>
+                <td>Remplacement par une valeur aleatoire</td>
+                <td><code>'Jean Dupont'</code> &rarr; <code>'Kx9mPqR'</code></td>
+            </tr>
+            <tr>
+                <td><strong>Regex Redaction</strong></td>
+                <td>Masquage base sur une expression reguliere</td>
+                <td><code>'jean@mail.fr'</code> &rarr; <code>'xxxx@mail.fr'</code></td>
+            </tr>
+            <tr>
+                <td><strong>No Redaction</strong></td>
+                <td>Aucun masquage (pour tests)</td>
+                <td><code>'Jean Dupont'</code> &rarr; <code>'Jean Dupont'</code></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h3>Creer une politique de redaction complete</h3>
+<pre><code><span class="cmt">-- Full Redaction sur le numero de securite sociale</span>
+<span class="kw">BEGIN</span>
+    <span class="fn">DBMS_REDACT</span>.<span class="fn">ADD_POLICY</span>(
+        object_schema  => <span class="str">'LAB_USER'</span>,
+        object_name    => <span class="str">'PATIENTS'</span>,
+        column_name    => <span class="str">'NUMERO_SECU'</span>,
+        policy_name    => <span class="str">'REDACT_SECU'</span>,
+        function_type  => <span class="fn">DBMS_REDACT</span>.FULL,
+        expression     => <span class="str">'SYS_CONTEXT(''USERENV'',''SESSION_USER'') != ''LAB_ADMIN'''</span>
+    );
+<span class="kw">END</span>;
+/
+
+<span class="cmt">-- Partial Redaction sur l'IBAN (masquer les 12 derniers caracteres)</span>
+<span class="kw">BEGIN</span>
+    <span class="fn">DBMS_REDACT</span>.<span class="fn">ADD_POLICY</span>(
+        object_schema       => <span class="str">'LAB_USER'</span>,
+        object_name         => <span class="str">'PATIENTS'</span>,
+        column_name         => <span class="str">'IBAN'</span>,
+        policy_name         => <span class="str">'REDACT_IBAN'</span>,
+        function_type       => <span class="fn">DBMS_REDACT</span>.PARTIAL,
+        function_parameters => <span class="str">'VVVVVVVVVVVVVVFFFFFFFFFFFF,VVVVVVVVVVVVVVFFFFFFFFFFFF,X,5,12'</span>,
+        expression          => <span class="str">'SYS_CONTEXT(''USERENV'',''SESSION_USER'') != ''LAB_ADMIN'''</span>
+    );
+<span class="kw">END</span>;
+/
+
+<span class="cmt">-- Random Redaction sur le diagnostic</span>
+<span class="kw">BEGIN</span>
+    <span class="fn">DBMS_REDACT</span>.<span class="fn">ADD_POLICY</span>(
+        object_schema  => <span class="str">'LAB_USER'</span>,
+        object_name    => <span class="str">'PATIENTS'</span>,
+        column_name    => <span class="str">'DIAGNOSTIC'</span>,
+        policy_name    => <span class="str">'REDACT_DIAG'</span>,
+        function_type  => <span class="fn">DBMS_REDACT</span>.RANDOM,
+        expression     => <span class="str">'SYS_CONTEXT(''USERENV'',''SESSION_USER'') != ''LAB_ADMIN'''</span>
+    );
+<span class="kw">END</span>;
+/</code></pre>
+
+    <h3>Resultat : Vue admin vs Vue utilisateur standard</h3>
+    <div class="comparison">
+        <div class="card good">
+            <h4>Vue LAB_ADMIN (donnees completes)</h4>
+<pre><code>NOM: Jean Dupont
+NUMERO_SECU: 1 85 12 75 108 234 56
+DIAGNOSTIC: Diabete type 2
+IBAN: FR76 1234 5678 9012 3456</code></pre>
+        </div>
+        <div class="card good">
+            <h4>Vue LAB_USER (donnees masquees)</h4>
+<pre><code>NOM: Jean Dupont
+NUMERO_SECU:
+DIAGNOSTIC: Kx9mPqR2vB
+IBAN: FR76 XXXX XXXX XXXX XXXX</code></pre>
+        </div>
+    </div>
+
+    <h3>Gestion des politiques</h3>
+<pre><code><span class="cmt">-- Modifier une politique existante</span>
+<span class="kw">BEGIN</span>
+    <span class="fn">DBMS_REDACT</span>.<span class="fn">ALTER_POLICY</span>(
+        object_schema  => <span class="str">'LAB_USER'</span>,
+        object_name    => <span class="str">'PATIENTS'</span>,
+        policy_name    => <span class="str">'REDACT_SECU'</span>,
+        action         => <span class="fn">DBMS_REDACT</span>.MODIFY_EXPRESSION,
+        expression     => <span class="str">'1=1'</span>  <span class="cmt">-- Masquer pour TOUS les utilisateurs</span>
+    );
+<span class="kw">END</span>;
+/
+
+<span class="cmt">-- Desactiver une politique</span>
+<span class="kw">BEGIN</span>
+    <span class="fn">DBMS_REDACT</span>.<span class="fn">ALTER_POLICY</span>(
+        object_schema  => <span class="str">'LAB_USER'</span>,
+        object_name    => <span class="str">'PATIENTS'</span>,
+        policy_name    => <span class="str">'REDACT_SECU'</span>,
+        action         => <span class="fn">DBMS_REDACT</span>.DISABLE
+    );
+<span class="kw">END</span>;
+/
+
+<span class="cmt">-- Supprimer une politique</span>
+<span class="kw">BEGIN</span>
+    <span class="fn">DBMS_REDACT</span>.<span class="fn">DROP_POLICY</span>(
+        object_schema  => <span class="str">'LAB_USER'</span>,
+        object_name    => <span class="str">'PATIENTS'</span>,
+        policy_name    => <span class="str">'REDACT_SECU'</span>
+    );
+<span class="kw">END</span>;
+/
+
+<span class="cmt">-- Consulter les politiques en place</span>
+<span class="kw">SELECT</span> OBJECT_OWNER, OBJECT_NAME, POLICY_NAME,
+       COLUMN_NAME, FUNCTION_TYPE, EXPRESSION
+<span class="kw">FROM</span> REDACTION_POLICIES
+<span class="kw">WHERE</span> OBJECT_OWNER = <span class="str">'LAB_USER'</span>;</code></pre>
+
+    <h3>Ce que Data Redaction protege (et ne protege pas)</h3>
+    <div class="alert alert-warning">
+        <strong>Attention :</strong> Data Redaction n'est <strong>pas du chiffrement</strong>.
+        Les donnees restent en clair sur le disque. Un DBA avec des privileges eleves
+        ou un acces direct aux fichiers de donnees peut contourner la redaction.
+    </div>
+
+    <ul>
+        <li><span class="success-hl">Protege</span> : requetes SELECT standard des utilisateurs non privilegies</li>
+        <li><span class="success-hl">Protege</span> : acces via des applications connectees avec un utilisateur restreint</li>
+        <li><span class="danger-hl">Ne protege pas</span> : acces DBA (SYSDBA, EXEMPT REDACTION POLICY)</li>
+        <li><span class="danger-hl">Ne protege pas</span> : donnees sur disque (utiliser TDE en complement)</li>
+        <li><span class="danger-hl">Ne protege pas</span> : exports Data Pump par un utilisateur privilegie</li>
+    </ul>
+
+    <h3>Quand utiliser Data Redaction ?</h3>
+    <ul>
+        <li>Masquer les donnees sensibles pour les developpeurs et testeurs</li>
+        <li>Conformite reglementaire (affichage restreint des donnees PII)</li>
+        <li>Applications multi-tenants avec differents niveaux d'acces</li>
+        <li>En complement de TDE pour une defense en profondeur</li>
+    </ul>
+
+    <!-- ============================================================= -->
+    <!-- COMPARAISON COMPLETE                                           -->
+    <!-- ============================================================= -->
+    <h2 id="comparaison">Comparaison Complete des Patterns</h2>
+
+    <p>
+        Le tableau suivant compare les 5 patterns selon des criteres de securite,
+        fonctionnalite et complexite.
+    </p>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Critere</th>
+                <th>En Clair</th>
+                <th>DPAPI + VC</th>
+                <th>AES + HMAC</th>
+                <th>TDE + DBMS_CRYPTO</th>
+                <th>Data Redaction</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Protection en base</strong></td>
+                <td><span class="danger-hl">Aucune</span></td>
+                <td><span class="success-hl">Oui</span></td>
+                <td><span class="success-hl">Oui</span></td>
+                <td><span class="success-hl">Oui (disque)</span></td>
+                <td><span class="success-hl">Oui (requetes)</span></td>
+            </tr>
+            <tr>
+                <td><strong>Protection contre DBA</strong></td>
+                <td><span class="danger-hl">Non</span></td>
+                <td><span class="success-hl">Oui</span></td>
+                <td><span class="success-hl">Oui</span></td>
+                <td><span class="danger-hl">Non</span></td>
+                <td><span class="danger-hl">Non*</span></td>
+            </tr>
+            <tr>
+                <td><strong>Requetes WHERE</strong></td>
+                <td><span class="success-hl">Oui</span></td>
+                <td><span class="danger-hl">Non</span></td>
+                <td><span class="danger-hl">Non</span></td>
+                <td><span class="success-hl">Oui (TDE)</span></td>
+                <td><span class="success-hl">Oui</span></td>
+            </tr>
+            <tr>
+                <td><strong>Transparent pour le code</strong></td>
+                <td><span class="success-hl">Oui</span></td>
+                <td><span class="danger-hl">Non (VC)</span></td>
+                <td><span class="danger-hl">Non (VC)</span></td>
+                <td><span class="success-hl">Oui</span></td>
+                <td><span class="success-hl">Oui</span></td>
+            </tr>
+            <tr>
+                <td><strong>Gestion des cles</strong></td>
+                <td>N/A</td>
+                <td>DPAPI auto</td>
+                <td>Manuelle</td>
+                <td>Wallet / OKV</td>
+                <td>N/A (politiques)</td>
+            </tr>
+            <tr>
+                <td><strong>Portabilite</strong></td>
+                <td><span class="success-hl">Toutes BDD</span></td>
+                <td><span class="success-hl">Toutes BDD</span></td>
+                <td><span class="success-hl">Toutes BDD</span></td>
+                <td><span class="danger-hl">Oracle</span></td>
+                <td><span class="danger-hl">Oracle</span></td>
+            </tr>
+            <tr>
+                <td><strong>Complexite</strong></td>
+                <td>Nulle</td>
+                <td>Faible</td>
+                <td>Moyenne</td>
+                <td>Moyenne</td>
+                <td>Faible</td>
+            </tr>
+            <tr>
+                <td><strong>Conformite RGPD</strong></td>
+                <td><span class="danger-hl">Non</span></td>
+                <td><span class="success-hl">Oui</span></td>
+                <td><span class="success-hl">Oui</span></td>
+                <td><span class="success-hl">Oui</span></td>
+                <td><span class="success-hl">Partiel</span></td>
+            </tr>
+            <tr>
+                <td><strong>Performance</strong></td>
+                <td><span class="success-hl">Maximale</span></td>
+                <td>Bonne</td>
+                <td>Bonne</td>
+                <td><span class="success-hl">Excellente</span></td>
+                <td><span class="success-hl">Excellente</span></td>
+            </tr>
+        </tbody>
+    </table>
+    <p style="color: var(--text-muted); font-size: 0.85rem;">
+        * Data Redaction peut etre contournee par un utilisateur avec le privilege <code>EXEMPT REDACTION POLICY</code>.
+    </p>
+
+    <h3>Quel pattern choisir ?</h3>
+
+    <div class="alert alert-info">
+        <strong>Matrice de decision :</strong>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Besoin</th>
+                <th>Pattern recommande</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Prototype / donnees non sensibles</td>
+                <td>Pattern 1 (en clair) avec plan de migration</td>
+            </tr>
+            <tr>
+                <td>Application ASP.NET Core simple, peu de colonnes sensibles</td>
+                <td>Pattern 2 (Data Protection API + Value Converters)</td>
+            </tr>
+            <tr>
+                <td>Application multi-BDD, besoin d'audit crypto</td>
+                <td>Pattern 3 (AES-256 + HMAC)</td>
+            </tr>
+            <tr>
+                <td>Oracle + chiffrement au repos + chiffrement programmatique</td>
+                <td>Pattern 4 (TDE + DBMS_CRYPTO)</td>
+            </tr>
+            <tr>
+                <td>Masquage des donnees pour differents profils utilisateurs</td>
+                <td>Pattern 5 (Data Redaction) + TDE en complement</td>
+            </tr>
+            <tr>
+                <td>Securite maximale</td>
+                <td><strong>Combinaison : TDE + AES applicatif + Data Redaction + VPD</strong></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <!-- ============================================================= -->
+    <!-- REFERENCE ET BONNES PRATIQUES                                  -->
+    <!-- ============================================================= -->
+    <h2 id="reference">Reference et Bonnes Pratiques</h2>
+
+    <h3>Gestion des cles</h3>
+    <p>
+        La securite du chiffrement repose entierement sur la protection des cles.
+        Une cle compromise rend tout le chiffrement inutile.
+    </p>
+    <ul>
+        <li><strong>Oracle Wallet</strong> &mdash; Fichier PKCS#12 protege par mot de passe, stockant les cles maitres TDE. Peut etre configure en auto-login pour un demarrage automatique.</li>
+        <li><strong>Oracle Key Vault (OKV)</strong> &mdash; Solution centralisee de gestion de cles pour les environnements multi-bases. Supporte la rotation automatique et l'audit complet.</li>
+        <li><strong>HSM (Hardware Security Module)</strong> &mdash; Pour les environnements les plus sensibles, les cles ne quittent jamais le materiel dedie. Oracle TDE supporte les HSM via PKCS#11.</li>
+        <li><strong>Rotation des cles</strong> &mdash; Utilisez <code>ADMINISTER KEY MANAGEMENT SET KEY</code> pour effectuer une rotation de la Master Key sans interruption de service.</li>
+        <li><strong>Separation des responsabilites</strong> &mdash; L'equipe qui gere le Wallet ne devrait pas etre la meme que celle qui gere la base de donnees.</li>
+        <li><strong>Sauvegarde du Wallet</strong> &mdash; Toujours maintenir une copie securisee du fichier Wallet hors site (disaster recovery).</li>
+    </ul>
+
+    <h3>Defense en profondeur</h3>
+    <p>
+        Le chiffrement n'est qu'une couche de la strategie de securite. Pour une protection complete,
+        combinez plusieurs mecanismes Oracle :
+    </p>
+    <ol>
+        <li><strong>TDE</strong> &mdash; Chiffrement au repos (fichiers de donnees et backups RMAN)</li>
+        <li><strong>DBMS_CRYPTO</strong> &mdash; Chiffrement programmatique pour les donnees critiques</li>
+        <li><strong>VPD (Virtual Private Database)</strong> &mdash; Chaque utilisateur ne voit que ses propres donnees via des predicats automatiques</li>
+        <li><strong>Oracle Net Encryption / TLS 1.3</strong> &mdash; Chiffrement des donnees en transit</li>
+        <li><strong>Oracle Audit Vault</strong> &mdash; Journalisation de tous les acces aux donnees sensibles</li>
+        <li><strong>Data Redaction</strong> &mdash; Masquage dynamique des donnees pour les utilisateurs non autorises</li>
+        <li><strong>Database Vault</strong> &mdash; Restriction des acces DBA aux donnees applicatives</li>
+    </ol>
+
+    <h3>Implications RGPD</h3>
+    <div class="alert alert-warning">
+        <strong>Article 32 du RGPD :</strong> Le chiffrement est explicitement cite comme mesure technique
+        appropriee. En cas de violation de donnees, les donnees chiffrees sont considerees comme non compromises
+        si les cles n'ont pas ete exposees (Article 34 &mdash; exemption de notification).
+    </div>
+
+    <ul>
+        <li><strong>Pseudonymisation</strong> &mdash; Le chiffrement des identifiants est une forme de pseudonymisation acceptee par le RGPD.</li>
+        <li><strong>Droit a l'effacement</strong> &mdash; La destruction de la cle de chiffrement peut constituer un effacement cryptographique (crypto-shredding). Avec Oracle TDE, supprimer la Master Key rend les donnees definitivement inaccessibles.</li>
+        <li><strong>Notification de violation</strong> &mdash; Si les donnees chiffrees sont volees mais que les cles (Wallet) sont sures, l'obligation de notification aux personnes concernees peut etre levee.</li>
+    </ul>
+
+    <h3>Liens et ressources</h3>
+    <ul>
+        <li><a href="https://docs.oracle.com/en/database/oracle/oracle-database/23/asoag/introduction-to-transparent-data-encryption.html" style="color: var(--info);">Oracle Docs &mdash; Transparent Data Encryption (TDE)</a></li>
+        <li><a href="https://docs.oracle.com/en/database/oracle/oracle-database/23/arpls/DBMS_CRYPTO.html" style="color: var(--info);">Oracle Docs &mdash; DBMS_CRYPTO Reference</a></li>
+        <li><a href="https://docs.oracle.com/en/database/oracle/oracle-database/23/arpls/DBMS_REDACT.html" style="color: var(--info);">Oracle Docs &mdash; DBMS_REDACT Reference</a></li>
+        <li><a href="https://docs.oracle.com/en/database/oracle/oracle-database/23/dbseg/configuring-transparent-data-encryption.html" style="color: var(--info);">Oracle Docs &mdash; Configuring TDE (Wallets &amp; Keys)</a></li>
+        <li><a href="https://docs.oracle.com/en/database/oracle/key-vault/" style="color: var(--info);">Oracle Docs &mdash; Oracle Key Vault (OKV)</a></li>
+        <li><a href="https://learn.microsoft.com/en-us/aspnet/core/security/data-protection/introduction" style="color: var(--info);">Microsoft Docs &mdash; ASP.NET Core Data Protection</a></li>
+        <li><a href="https://cheatsheetseries.owasp.org/cheatsheets/Cryptographic_Storage_Cheat_Sheet.html" style="color: var(--info);">OWASP &mdash; Cryptographic Storage Cheat Sheet</a></li>
+        <li><a href="https://cheatsheetseries.owasp.org/cheatsheets/Key_Management_Cheat_Sheet.html" style="color: var(--info);">OWASP &mdash; Key Management Cheat Sheet</a></li>
+        <li><a href="https://www.cnil.fr/fr/la-cnil-publie-une-recommandation-relative-aux-mesures-de-journalisation" style="color: var(--info);">CNIL &mdash; Recommandations sur la journalisation</a></li>
+    </ul>
+
+</main>
+
+<!-- ============================== FOOTER ============================== -->
+<footer>
+    Condorcet 2026 &mdash; Programmation Securisee
+</footer>
+
+</body>
+</html>

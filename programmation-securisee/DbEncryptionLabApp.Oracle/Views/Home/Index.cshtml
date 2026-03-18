@@ -1,0 +1,126 @@
+@{
+    ViewData["Title"] = "Accueil";
+}
+
+<div class="row justify-content-center mt-3">
+    <div class="col-lg-10">
+        <h1 class="fw-bold mb-2">Chiffrement en Base de Donnees <span class="text-warning">Oracle Database</span></h1>
+        <p class="text-muted fs-5 mb-4">
+            Laboratoire comparatif des differents patterns de chiffrement avec Entity Framework Core
+        </p>
+
+        <div class="alert alert-info">
+            <strong>Objectif :</strong> Comparer 4 strategies de chiffrement de donnees sensibles en base de donnees,
+            comprendre leurs avantages, limites et cas d'usage. Chaque pattern utilise les <strong>memes donnees</strong>
+            pour faciliter la comparaison.
+        </div>
+
+        <div class="row g-4 mt-2">
+            <!-- Pattern 1: Clear Text -->
+            <div class="col-md-6">
+                <div class="card border-danger h-100">
+                    <div class="card-header bg-danger text-white fw-bold">
+                        Pattern 1 : Stockage en Clair
+                    </div>
+                    <div class="card-body">
+                        <p class="card-text">
+                            Aucun chiffrement. Les donnees sensibles (numeros nationaux, salaires, IBAN)
+                            sont visibles en clair dans la base de donnees.
+                        </p>
+                        <ul class="small text-muted">
+                            <li>Vulnerable aux fuites de backup</li>
+                            <li>Vulnerable aux SQL injections</li>
+                            <li>DBA peut lire toutes les donnees</li>
+                        </ul>
+                        <a asp-controller="ClearText" asp-action="Index" class="btn btn-outline-danger">
+                            Voir la demo
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pattern 2: Value Converter -->
+            <div class="col-md-6">
+                <div class="card border-success h-100">
+                    <div class="card-header bg-success text-white fw-bold">
+                        Pattern 2 : Value Converters + Data Protection
+                    </div>
+                    <div class="card-body">
+                        <p class="card-text">
+                            Chiffrement transparent via les Value Converters d'EF Core. L'API Data Protection
+                            gere automatiquement les cles et la rotation.
+                        </p>
+                        <ul class="small text-muted">
+                            <li>Transparent pour le code metier</li>
+                            <li>Gestion automatique des cles</li>
+                            <li>Pas de requetes WHERE sur colonnes chiffrees</li>
+                        </ul>
+                        <a asp-controller="ValueConverter" asp-action="Index" class="btn btn-outline-success">
+                            Voir la demo
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pattern 3: AES-256 -->
+            <div class="col-md-6">
+                <div class="card border-info h-100">
+                    <div class="card-header bg-info text-white fw-bold">
+                        Pattern 3 : AES-256-CBC + HMAC-SHA256
+                    </div>
+                    <div class="card-body">
+                        <p class="card-text">
+                            Chiffrement manuel avec AES-256 et authentification HMAC.
+                            Controle total sur l'algorithme, les cles et le format.
+                        </p>
+                        <ul class="small text-muted">
+                            <li>Controle total sur le chiffrement</li>
+                            <li>Portable entre plateformes</li>
+                            <li>Responsabilite de la gestion des cles</li>
+                        </ul>
+                        <a asp-controller="AesEncryption" asp-action="Index" class="btn btn-outline-info">
+                            Voir la demo
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pattern 4: TDE + DBMS_CRYPTO -->
+            <div class="col-md-6">
+                <div class="card border-warning h-100">
+                    <div class="card-header bg-warning text-dark fw-bold">
+                        Pattern 4 : TDE + DBMS_CRYPTO (Oracle)
+                    </div>
+                    <div class="card-body">
+                        <p class="card-text">
+                            Fonctionnalites natives d'Oracle Database. TDE chiffre de maniere transparente au niveau
+                            colonne ou tablespace. DBMS_CRYPTO offre le chiffrement applicatif cote serveur.
+                        </p>
+                        <ul class="small text-muted">
+                            <li>TDE : chiffrement transparent (zero changement code)</li>
+                            <li>Gestion des cles via Oracle Wallet / OKV</li>
+                            <li>DBMS_CRYPTO : chiffrement PL/SQL cote serveur</li>
+                        </ul>
+                        <a asp-controller="AlwaysEncrypted" asp-action="Index" class="btn btn-outline-warning">
+                            Voir la demo
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Comparison link -->
+        <div class="text-center mt-4 mb-4">
+            <a asp-controller="Comparison" asp-action="Index" class="btn btn-lg btn-outline-light">
+                Voir la comparaison cote a cote de tous les patterns
+            </a>
+        </div>
+
+        <div class="alert alert-warning mt-3">
+            <strong>Note pedagogique :</strong> Ce labo utilise des donnees fictives.
+            Les cles de chiffrement sont stockees dans <code>appsettings.json</code> pour simplifier le labo.
+            En production, utilisez <strong>Oracle Wallet</strong>, <strong>Oracle Key Vault (OKV)</strong>,
+            ou un <strong>HSM</strong> pour la gestion des cles.
+        </div>
+    </div>
+</div>

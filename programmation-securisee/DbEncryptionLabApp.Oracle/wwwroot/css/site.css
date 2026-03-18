@@ -1,0 +1,16 @@
+body {
+    background-color: #1a1a2e;
+    color: #e4e6eb;
+}
+
+.table-dark {
+    --bs-table-bg: #16213e;
+}
+
+pre {
+    background-color: #0f3460 !important;
+}
+
+footer {
+    color: #8b8fa3;
+}

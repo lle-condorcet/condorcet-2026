@@ -1,0 +1,2333 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sécurisation des Bases de Données — Comparatif</title>
+    <style>
+        :root {
+            --bg: #0f1117;
+            --surface: #1a1d27;
+            --surface-2: #242736;
+            --accent: #ffa502;
+            --accent-light: #ffbe33;
+            --danger: #ff4757;
+            --success: #2ed573;
+            --warning: #ffa502;
+            --info: #1e90ff;
+            --text: #e4e6eb;
+            --text-muted: #8b8fa3;
+            --border: #2e3142;
+            --code-bg: #12131a;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+        }
+
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 260px;
+            height: 100vh;
+            background: var(--surface);
+            border-right: 1px solid var(--border);
+            padding: 2rem 1.5rem;
+            overflow-y: auto;
+            z-index: 100;
+        }
+
+        nav .logo { font-size: 1.4rem; font-weight: 800; margin-bottom: 2rem; }
+        nav .logo span { color: var(--accent); }
+        nav .section-title {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--text-muted);
+            margin: 1.5rem 0 0.5rem;
+        }
+        nav a {
+            display: block;
+            color: var(--text-muted);
+            text-decoration: none;
+            padding: 0.3rem 0;
+            font-size: 0.9rem;
+            transition: color 0.2s;
+        }
+        nav a:hover { color: var(--accent); }
+
+        main {
+            margin-left: 260px;
+            max-width: 900px;
+            padding: 3rem 4rem;
+        }
+
+        h1 { font-size: 2.2rem; font-weight: 800; margin-bottom: 0.5rem; }
+        h1 span { color: var(--accent); }
+
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            margin-bottom: 3rem;
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin: 3rem 0 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--accent);
+        }
+
+        h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            margin: 2rem 0 0.8rem;
+            color: var(--accent-light);
+        }
+
+        p { margin-bottom: 1rem; }
+
+        code {
+            background: var(--code-bg);
+            padding: 0.15rem 0.4rem;
+            border-radius: 4px;
+            font-size: 0.88em;
+            color: var(--accent-light);
+        }
+
+        pre {
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.2rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-size: 0.88rem;
+            line-height: 1.6;
+        }
+
+        pre code { background: none; padding: 0; color: var(--text); }
+
+        .kw { color: #c678dd; }
+        .str { color: #98c379; }
+        .cmt { color: #5c6370; }
+        .fn { color: #61afef; }
+        .val { color: #d19a66; }
+        .danger-hl { color: #ff4757; }
+        .success-hl { color: #2ed573; }
+
+        .alert {
+            padding: 1rem 1.2rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            border-left: 4px solid;
+        }
+
+        .alert-danger { background: rgba(255, 71, 87, 0.1); border-color: var(--danger); }
+        .alert-success { background: rgba(46, 213, 115, 0.1); border-color: var(--success); }
+        .alert-warning { background: rgba(255, 165, 2, 0.1); border-color: var(--warning); }
+        .alert-info { background: rgba(30, 144, 255, 0.1); border-color: var(--info); }
+
+        .comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+
+        .comparison-3 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.5rem;
+        }
+
+        .card.bad { border-color: var(--danger); }
+        .card.good { border-color: var(--success); }
+        .card.warn { border-color: var(--warning); }
+        .card.info { border-color: var(--info); }
+
+        .card h4 { font-size: 1rem; margin-bottom: 1rem; }
+        .card.bad h4 { color: var(--danger); }
+        .card.good h4 { color: var(--success); }
+        .card.warn h4 { color: var(--warning); }
+        .card.info h4 { color: var(--info); }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+
+        th, td {
+            padding: 0.6rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th {
+            background: var(--surface-2);
+            font-weight: 600;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .status-yes { color: #2ed573; }
+        .status-partial { color: #ffa502; }
+        .status-no { color: #ff4757; }
+
+        ul, ol { margin: 0.5rem 0 1rem 1.5rem; }
+        li { margin-bottom: 0.3rem; }
+        strong { color: var(--text); }
+
+        footer {
+            margin-left: 260px;
+            padding: 2rem 4rem;
+            border-top: 1px solid var(--border);
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        @media (max-width: 768px) {
+            nav { display: none; }
+            main, footer { margin-left: 0; padding: 1.5rem; }
+            .comparison-3 { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ============================== NAV ============================== -->
+<nav>
+    <div class="logo"><span>DB</span> Security</div>
+
+    <div class="section-title">Introduction</div>
+    <a href="#pourquoi">Pourquoi sécuriser ?</a>
+    <a href="#menaces">Modèle de menaces</a>
+    <a href="#piliers">Les 3 piliers</a>
+
+    <div class="section-title">Chiffrement</div>
+    <a href="#tde">Au repos (TDE)</a>
+    <a href="#tls">En transit (TLS)</a>
+    <a href="#applicatif">Applicatif</a>
+    <a href="#colonnes">Colonnes sensibles</a>
+
+    <div class="section-title">Contrôle d'accès</div>
+    <a href="#auth">Authentification</a>
+    <a href="#autorisation">Autorisation</a>
+    <a href="#rls">Row-Level Security</a>
+    <a href="#masking">Dynamic Data Masking</a>
+
+    <div class="section-title">Opérations</div>
+    <a href="#audit">Audit et journalisation</a>
+    <a href="#reseau">Réseau et configuration</a>
+
+    <div class="section-title">Conformité</div>
+    <a href="#rgpd">Conformité RGPD</a>
+
+    <div class="section-title">Bilan</div>
+    <a href="#synthese">Synthèse comparative</a>
+    <a href="#recommandations">Recommandations</a>
+    <a href="#references">Références</a>
+</nav>
+
+<!-- ============================== MAIN ============================== -->
+<main>
+
+<h1>Sécurisation des <span>Bases de Données</span> — Comparatif</h1>
+<p class="subtitle">SQL Server vs PostgreSQL vs Oracle — Guide complet des mécanismes de protection</p>
+
+<!-- ============================================================= -->
+<!-- INTRODUCTION                                                    -->
+<!-- ============================================================= -->
+
+<h2 id="pourquoi">1. Pourquoi sécuriser une base de données ?</h2>
+
+<p>
+    La base de données est le cœur d'un système d'information. Elle contient les données métier,
+    les informations personnelles des utilisateurs, les secrets commerciaux et bien souvent les
+    identifiants d'accès à d'autres systèmes. Une compromission de la base de données peut avoir
+    des conséquences catastrophiques : perte financière, atteinte à la réputation, sanctions
+    réglementaires (RGPD, PCI-DSS, HIPAA) et responsabilité juridique.
+</p>
+
+<p>
+    La sécurisation de la base de données s'inscrit dans une stratégie de <strong>défense en profondeur</strong>
+    (<em>defense in depth</em>). Même si le pare-feu, le WAF et l'application sont correctement
+    configurés, la base de données doit disposer de ses propres mécanismes de protection. Un attaquant
+    qui parvient à contourner les couches supérieures doit encore faire face à des contrôles au
+    niveau des données elles-mêmes.
+</p>
+
+<div class="alert alert-danger">
+    <strong>Statistique alarmante :</strong> Selon le rapport IBM Cost of a Data Breach 2024, le coût
+    moyen d'une violation de données est de 4,88 millions USD. Les violations impliquant des bases de
+    données non chiffrées sont parmi les plus coûteuses, car elles ne bénéficient pas de l'exemption
+    de notification prévue par le RGPD.
+</div>
+
+<h3 id="menaces">Modèle de menaces</h3>
+
+<p>Pour concevoir une architecture de sécurité efficace, il faut d'abord identifier les menaces :</p>
+
+<table>
+    <thead>
+        <tr>
+            <th>Menace</th>
+            <th>Description</th>
+            <th>Contre-mesure principale</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><strong>DBA malveillant</strong></td>
+            <td>Un administrateur abuse de ses privilèges pour accéder ou exfiltrer des données sensibles</td>
+            <td>Chiffrement client-side (Always Encrypted), séparation des rôles, audit</td>
+        </tr>
+        <tr>
+            <td><strong>Backup volé</strong></td>
+            <td>Un fichier de sauvegarde est dérobé et restauré sur un autre serveur</td>
+            <td>TDE (Transparent Data Encryption), chiffrement des backups</td>
+        </tr>
+        <tr>
+            <td><strong>SQL Injection</strong></td>
+            <td>Un attaquant injecte du SQL via l'application pour extraire ou modifier des données</td>
+            <td>Requêtes paramétrées, moindre privilège, RLS, WAF</td>
+        </tr>
+        <tr>
+            <td><strong>Man-in-the-Middle</strong></td>
+            <td>Interception du trafic réseau entre l'application et la base de données</td>
+            <td>TLS/SSL obligatoire, vérification des certificats</td>
+        </tr>
+        <tr>
+            <td><strong>Accès physique</strong></td>
+            <td>Vol ou accès non autorisé aux disques/serveurs physiques</td>
+            <td>TDE, chiffrement disque (BitLocker, LUKS), contrôle d'accès physique</td>
+        </tr>
+        <tr>
+            <td><strong>Insider threat</strong></td>
+            <td>Un employé autorisé accède à des données au-delà de son besoin légitime</td>
+            <td>RLS, Dynamic Data Masking, moindre privilège, audit</td>
+        </tr>
+        <tr>
+            <td><strong>Escalade de privilèges</strong></td>
+            <td>Un utilisateur exploite une faille pour obtenir des droits administrateur</td>
+            <td>Hardening, patches, séparation des rôles, audit</td>
+        </tr>
+    </tbody>
+</table>
+
+<h3 id="piliers">Les 3 piliers de la sécurité (CIA Triad)</h3>
+
+<div class="comparison-3">
+    <div class="card info">
+        <h4>Confidentialité</h4>
+        <p>Seules les personnes autorisées peuvent accéder aux données. Mécanismes : chiffrement, contrôle d'accès, masking.</p>
+    </div>
+    <div class="card good">
+        <h4>Intégrité</h4>
+        <p>Les données ne peuvent pas être modifiées de manière non autorisée. Mécanismes : contraintes, audit, hachage, signatures.</p>
+    </div>
+    <div class="card warn">
+        <h4>Disponibilité</h4>
+        <p>Les données restent accessibles aux utilisateurs autorisés. Mécanismes : haute disponibilité, backups, réplication.</p>
+    </div>
+</div>
+
+<!-- ============================================================= -->
+<!-- CHIFFREMENT AU REPOS (TDE)                                      -->
+<!-- ============================================================= -->
+
+<h2 id="tde">2. Chiffrement au repos — Transparent Data Encryption (TDE)</h2>
+
+<p>
+    Le chiffrement au repos (encryption at rest) protège les données lorsqu'elles sont stockées sur
+    disque : fichiers de données, journaux de transactions, sauvegardes. Si un attaquant obtient un
+    accès physique au disque ou vole un fichier de backup, les données restent illisibles sans la clé
+    de chiffrement.
+</p>
+
+<div class="alert alert-info">
+    <strong>Transparent :</strong> Le mot « transparent » signifie que les applications existantes
+    n'ont pas besoin d'être modifiées. Le chiffrement/déchiffrement est effectué automatiquement par
+    le moteur de base de données au niveau des pages d'I/O.
+</div>
+
+<h3>SQL Server — TDE</h3>
+
+<p>
+    SQL Server propose TDE depuis la version 2008, disponible uniquement dans les éditions
+    <strong>Enterprise</strong> et <strong>Developer</strong> (et Azure SQL Database pour toutes les
+    éditions). Le mécanisme repose sur une hiérarchie de clés :
+</p>
+
+<ul>
+    <li><strong>Service Master Key (SMK)</strong> — protégée par DPAPI, générée automatiquement</li>
+    <li><strong>Database Master Key (DMK)</strong> — protégée par le SMK</li>
+    <li><strong>Certificate</strong> — contient la clé asymétrique</li>
+    <li><strong>Database Encryption Key (DEK)</strong> — clé symétrique AES-256 qui chiffre réellement les données</li>
+</ul>
+
+<pre><code><span class="cmt">-- 1. Créer la master key dans master</span>
+<span class="kw">USE</span> master;
+<span class="kw">CREATE</span> <span class="kw">MASTER KEY</span> <span class="kw">ENCRYPTION BY</span> <span class="kw">PASSWORD</span> = <span class="str">'P@ssw0rd!Str0ng'</span>;
+
+<span class="cmt">-- 2. Créer le certificat serveur</span>
+<span class="kw">CREATE</span> CERTIFICATE TDE_Cert
+    <span class="kw">WITH</span> SUBJECT = <span class="str">'TDE Certificate'</span>;
+
+<span class="cmt">-- 3. Créer la clé de chiffrement dans la base cible</span>
+<span class="kw">USE</span> MaBaseDeDonnees;
+<span class="kw">CREATE</span> <span class="kw">DATABASE ENCRYPTION KEY</span>
+    <span class="kw">WITH</span> ALGORITHM = AES_256
+    <span class="kw">ENCRYPTION BY</span> SERVER CERTIFICATE TDE_Cert;
+
+<span class="cmt">-- 4. Activer TDE</span>
+<span class="kw">ALTER DATABASE</span> MaBaseDeDonnees
+    <span class="kw">SET ENCRYPTION ON</span>;
+</code></pre>
+
+<p>Points importants :</p>
+<ul>
+    <li>Les fichiers <code>.mdf</code>, <code>.ldf</code> et les backups sont chiffrés</li>
+    <li><code>tempdb</code> est automatiquement chiffré dès qu'une base TDE existe sur l'instance</li>
+    <li>Impact sur les performances : environ <strong>3-5% d'overhead I/O</strong></li>
+    <li>Le certificat <strong>doit</strong> être sauvegardé — sans lui, les backups sont irrécupérables</li>
+    <li>TDE ne protège pas les données en mémoire ni contre un DBA connecté</li>
+</ul>
+
+<h3>PostgreSQL — Chiffrement au repos</h3>
+
+<p>
+    PostgreSQL n'offre historiquement <strong>pas de TDE natif</strong> au niveau du moteur. Cependant,
+    plusieurs solutions existent :
+</p>
+
+<ul>
+    <li><strong>pg_tde (Percona)</strong> — Extension relativement récente qui fournit un TDE au niveau
+        des colonnes et des tablespaces. En développement actif.</li>
+    <li><strong>Chiffrement au niveau du système de fichiers</strong> — LUKS/dm-crypt sous Linux,
+        BitLocker sous Windows, FileVault sous macOS. Protège l'intégralité du volume.</li>
+    <li><strong>Services cloud managés</strong> — AWS RDS chiffre automatiquement au repos avec
+        KMS, Azure Database for PostgreSQL offre le chiffrement via des clés gérées par Azure.</li>
+    <li><strong>pgcrypto</strong> — Chiffrement applicatif (au niveau des colonnes), mais ce n'est
+        pas du TDE au sens strict.</li>
+</ul>
+
+<pre><code><span class="cmt">-- Chiffrement au niveau du système de fichiers (Linux)</span>
+<span class="cmt">-- Créer un volume chiffré LUKS</span>
+$ sudo cryptsetup luksFormat /dev/sdb1
+$ sudo cryptsetup luksOpen /dev/sdb1 pg_encrypted
+$ sudo mkfs.ext4 /dev/mapper/pg_encrypted
+$ sudo mount /dev/mapper/pg_encrypted /var/lib/postgresql/data
+
+<span class="cmt">-- pg_tde (Percona) — activation</span>
+<span class="kw">CREATE EXTENSION</span> pg_tde;
+<span class="kw">SELECT</span> pg_tde_set_master_key(<span class="str">'master-key'</span>, <span class="str">'file'</span>);
+<span class="kw">CREATE TABLE</span> secrets (
+    id <span class="val">serial</span>,
+    data <span class="val">text</span>
+) <span class="kw">USING</span> tde_heap;
+</code></pre>
+
+<div class="alert alert-warning">
+    <strong>Attention :</strong> Le chiffrement au niveau du filesystem (LUKS, BitLocker) ne protège
+    pas contre un DBA connecté ni contre le vol d'un backup non chiffré. Il protège uniquement contre
+    le vol physique du disque.
+</div>
+
+<h3>Oracle — TDE</h3>
+
+<p>
+    Oracle possède l'implémentation TDE la plus mature du marché, disponible depuis Oracle 10g R2
+    (2005). Initialement réservée à l'option <strong>Advanced Security</strong> (coût supplémentaire),
+    TDE est incluse dans <strong>toutes les éditions depuis Oracle 21c</strong>.
+</p>
+
+<p>Oracle TDE offre deux niveaux de chiffrement :</p>
+
+<ul>
+    <li><strong>Column-level TDE</strong> — chiffrement sélectif de colonnes individuelles</li>
+    <li><strong>Tablespace-level TDE</strong> — chiffrement de l'intégralité d'un tablespace (recommandé pour les performances)</li>
+</ul>
+
+<pre><code><span class="cmt">-- Configuration du Wallet (Oracle 19c+)</span>
+<span class="kw">ADMINISTER KEY MANAGEMENT</span>
+    <span class="kw">CREATE KEYSTORE</span> <span class="str">'/opt/oracle/wallet'</span>
+    <span class="kw">IDENTIFIED BY</span> <span class="str">"WalletP@ss123"</span>;
+
+<span class="kw">ADMINISTER KEY MANAGEMENT</span>
+    <span class="kw">SET KEYSTORE OPEN</span>
+    <span class="kw">IDENTIFIED BY</span> <span class="str">"WalletP@ss123"</span>;
+
+<span class="kw">ADMINISTER KEY MANAGEMENT</span>
+    <span class="kw">SET KEY</span>
+    <span class="kw">IDENTIFIED BY</span> <span class="str">"WalletP@ss123"</span>
+    <span class="kw">WITH BACKUP</span>;
+
+<span class="cmt">-- TDE au niveau colonne</span>
+<span class="kw">ALTER TABLE</span> employes
+    <span class="kw">MODIFY</span> (salaire <span class="kw">ENCRYPT</span>);
+
+<span class="cmt">-- TDE au niveau tablespace</span>
+<span class="kw">CREATE TABLESPACE</span> ts_secure
+    <span class="kw">DATAFILE</span> <span class="str">'/opt/oracle/data/ts_secure.dbf'</span>
+    <span class="kw">SIZE</span> <span class="val">100</span>M
+    <span class="kw">ENCRYPTION USING</span> <span class="str">'AES256'</span>
+    <span class="kw">DEFAULT STORAGE</span> (<span class="kw">ENCRYPT</span>);
+</code></pre>
+
+<p>
+    Oracle utilise un <strong>Oracle Wallet</strong> (fichier PKCS#12) ou
+    <strong>Oracle Key Vault (OKV)</strong> pour le stockage centralisé des clés dans les
+    environnements multi-serveurs. L'auto-login wallet permet d'ouvrir automatiquement le keystore
+    au démarrage de l'instance.
+</p>
+
+<h3>Tableau comparatif — TDE</h3>
+
+<table>
+    <thead>
+        <tr>
+            <th>Caractéristique</th>
+            <th>SQL Server</th>
+            <th>PostgreSQL</th>
+            <th>Oracle</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>TDE natif</td>
+            <td class="status-yes">✅ Oui (depuis 2008)</td>
+            <td class="status-partial">⚠️ pg_tde (extension)</td>
+            <td class="status-yes">✅ Oui (depuis 10gR2)</td>
+        </tr>
+        <tr>
+            <td>Granularité</td>
+            <td>Base de données entière</td>
+            <td>Colonne / tablespace (pg_tde)</td>
+            <td>Colonne / tablespace</td>
+        </tr>
+        <tr>
+            <td>Algorithme</td>
+            <td>AES-128/192/256, 3DES</td>
+            <td>AES-128/256 (pg_tde)</td>
+            <td>AES-128/192/256, 3DES</td>
+        </tr>
+        <tr>
+            <td>Gestion des clés</td>
+            <td>DPAPI / Azure Key Vault / EKM</td>
+            <td>Fichier / Vault (pg_tde)</td>
+            <td>Oracle Wallet / OKV</td>
+        </tr>
+        <tr>
+            <td>Overhead I/O</td>
+            <td>~3-5%</td>
+            <td>~1-3% (filesystem), variable (pg_tde)</td>
+            <td>~2-5% (tablespace), ~5-10% (colonne)</td>
+        </tr>
+        <tr>
+            <td>Backups chiffrés</td>
+            <td class="status-yes">✅ Automatique</td>
+            <td class="status-no">❌ Séparé (pg_basebackup + filesystem)</td>
+            <td class="status-yes">✅ Automatique (RMAN)</td>
+        </tr>
+        <tr>
+            <td>Édition requise</td>
+            <td>Enterprise / Developer</td>
+            <td>Toutes (open source)</td>
+            <td>Toutes (depuis 21c)</td>
+        </tr>
+        <tr>
+            <td>Transparent pour l'application</td>
+            <td class="status-yes">✅ Oui</td>
+            <td class="status-partial">⚠️ Partiellement (dépend de la solution)</td>
+            <td class="status-yes">✅ Oui</td>
+        </tr>
+    </tbody>
+</table>
+
+<!-- ============================================================= -->
+<!-- CHIFFREMENT EN TRANSIT (TLS/SSL)                                -->
+<!-- ============================================================= -->
+
+<h2 id="tls">3. Chiffrement en transit — TLS/SSL</h2>
+
+<p>
+    Le chiffrement en transit protège les données qui circulent entre l'application et le serveur de
+    base de données. Sans TLS, un attaquant sur le réseau peut intercepter les requêtes SQL, les
+    résultats, les identifiants de connexion et les données sensibles en clair. L'attaque
+    <em>man-in-the-middle</em> (MITM) est triviale sur un réseau local non sécurisé.
+</p>
+
+<h3>SQL Server — TLS</h3>
+
+<ul>
+    <li>Support TLS 1.2 et TLS 1.3 (depuis SQL Server 2022)</li>
+    <li>Configuration via <strong>SQL Server Configuration Manager</strong> : onglet « Force Encryption »</li>
+    <li>Certificat installé dans le magasin de certificats Windows</li>
+    <li>Chaîne de connexion côté client : <code>Encrypt=True;TrustServerCertificate=False</code></li>
+    <li>Depuis SQL Server 2022, <code>Encrypt=True</code> est le comportement par défaut pour les nouveaux drivers</li>
+</ul>
+
+<pre><code><span class="cmt">// Chaîne de connexion .NET — TLS activé</span>
+<span class="str">"Server=sql-prod;Database=AppDB;User Id=app;Password=***;Encrypt=True;TrustServerCertificate=False;"</span>
+</code></pre>
+
+<h3>PostgreSQL — TLS</h3>
+
+<ul>
+    <li>Configuration dans <code>postgresql.conf</code> :</li>
+</ul>
+
+<pre><code><span class="cmt"># postgresql.conf</span>
+ssl = <span class="val">on</span>
+ssl_cert_file = <span class="str">'/etc/ssl/certs/server.crt'</span>
+ssl_key_file = <span class="str">'/etc/ssl/private/server.key'</span>
+ssl_ca_file = <span class="str">'/etc/ssl/certs/ca.crt'</span>
+ssl_min_protocol_version = <span class="str">'TLSv1.2'</span>
+</code></pre>
+
+<ul>
+    <li>Contrôle d'accès dans <code>pg_hba.conf</code> avec <code>hostssl</code> pour forcer TLS</li>
+    <li>Côté client : <code>sslmode=verify-full</code> (le plus sécurisé — vérifie le certificat et le hostname)</li>
+    <li>Modes sslmode disponibles : <code>disable</code>, <code>allow</code>, <code>prefer</code>,
+        <code>require</code>, <code>verify-ca</code>, <code>verify-full</code></li>
+    <li>Authentification par mot de passe : <strong>SCRAM-SHA-256</strong> recommandé (défaut depuis PostgreSQL 14)</li>
+</ul>
+
+<pre><code><span class="cmt"># pg_hba.conf — forcer SSL pour toutes les connexions distantes</span>
+hostssl  all  all  0.0.0.0/0  scram-sha-256
+</code></pre>
+
+<h3>Oracle — Chiffrement réseau</h3>
+
+<p>
+    Oracle offre deux mécanismes de chiffrement réseau, configurables via <code>sqlnet.ora</code> :
+</p>
+
+<ul>
+    <li><strong>Oracle Native Network Encryption</strong> — chiffrement AES256 sans certificat TLS,
+        intégré dans Oracle Net Services. Simple à configurer.</li>
+    <li><strong>TLS standard</strong> — avec certificats x.509, via Oracle Wallet</li>
+</ul>
+
+<pre><code><span class="cmt"># sqlnet.ora — chiffrement natif Oracle</span>
+SQLNET.ENCRYPTION_SERVER = REQUIRED
+SQLNET.ENCRYPTION_TYPES_SERVER = (AES256, AES192)
+SQLNET.CRYPTO_CHECKSUM_SERVER = REQUIRED
+SQLNET.CRYPTO_CHECKSUM_TYPES_SERVER = (SHA256)
+
+<span class="cmt"># sqlnet.ora — TLS avec certificats</span>
+WALLET_LOCATION =
+  (SOURCE =
+    (METHOD = FILE)
+    (METHOD_DATA =
+      (DIRECTORY = /opt/oracle/wallet)))
+SSL_CLIENT_AUTHENTICATION = TRUE
+SSL_VERSION = 1.2
+</code></pre>
+
+<div class="alert alert-info">
+    <strong>Particularité Oracle :</strong> Le chiffrement natif Oracle Net est plus simple à déployer
+    que TLS (pas de PKI à gérer), mais il n'est pas basé sur un standard ouvert. Pour la conformité
+    et l'interopérabilité, TLS est recommandé.
+</div>
+
+<h3>Tableau comparatif — Chiffrement en transit</h3>
+
+<table>
+    <thead>
+        <tr>
+            <th>Caractéristique</th>
+            <th>SQL Server</th>
+            <th>PostgreSQL</th>
+            <th>Oracle</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>TLS 1.2</td>
+            <td class="status-yes">✅</td>
+            <td class="status-yes">✅</td>
+            <td class="status-yes">✅</td>
+        </tr>
+        <tr>
+            <td>TLS 1.3</td>
+            <td class="status-yes">✅ (SQL 2022+)</td>
+            <td class="status-yes">✅ (PG 12+)</td>
+            <td class="status-partial">⚠️ (21c+, limité)</td>
+        </tr>
+        <tr>
+            <td>Chiffrement natif (non-TLS)</td>
+            <td class="status-no">❌</td>
+            <td class="status-no">❌</td>
+            <td class="status-yes">✅ Oracle Net Encryption</td>
+        </tr>
+        <tr>
+            <td>Force encryption</td>
+            <td>Configuration Manager</td>
+            <td>pg_hba.conf (hostssl)</td>
+            <td>sqlnet.ora (REQUIRED)</td>
+        </tr>
+        <tr>
+            <td>Vérification certificat client</td>
+            <td>TrustServerCertificate=False</td>
+            <td>sslmode=verify-full</td>
+            <td>SSL_CLIENT_AUTHENTICATION</td>
+        </tr>
+        <tr>
+            <td>Auth par mot de passe sécurisée</td>
+            <td>Salted hash interne</td>
+            <td class="status-yes">✅ SCRAM-SHA-256</td>
+            <td>Verifier-based (12c+)</td>
+        </tr>
+    </tbody>
+</table>
+
+<!-- ============================================================= -->
+<!-- CHIFFREMENT APPLICATIF                                          -->
+<!-- ============================================================= -->
+
+<h2 id="applicatif">4. Chiffrement applicatif (dans le code)</h2>
+
+<p>
+    Le chiffrement applicatif (application-level encryption) permet de chiffrer les données
+    <strong>avant</strong> qu'elles n'atteignent la base de données, ou de les chiffrer au sein
+    du moteur SQL avec des fonctions dédiées. Contrairement au TDE, ce type de chiffrement peut
+    protéger contre un <strong>DBA malveillant</strong> — à condition que les clés soient gérées
+    côté client.
+</p>
+
+<h3>SQL Server — Always Encrypted</h3>
+
+<p>
+    <strong>Always Encrypted</strong> est la solution phare de SQL Server pour le chiffrement
+    côté client. Les données sont chiffrées et déchiffrées par le driver ADO.NET / ODBC / JDBC,
+    jamais par le moteur SQL Server lui-même. Le DBA ne voit que des données chiffrées.
+</p>
+
+<ul>
+    <li><strong>Column Master Key (CMK)</strong> — stockée dans le magasin de certificats Windows,
+        Azure Key Vault ou un HSM. Jamais accessible au serveur SQL.</li>
+    <li><strong>Column Encryption Key (CEK)</strong> — chiffre les données, elle-même protégée par la CMK</li>
+    <li><strong>Chiffrement déterministe</strong> — même texte en clair = même texte chiffré.
+        Permet l'égalité (WHERE, JOIN, GROUP BY) mais pas LIKE.</li>
+    <li><strong>Chiffrement aléatoire</strong> — plus sécurisé, mais aucune opération côté serveur possible</li>
+</ul>
+
+<pre><code><span class="cmt">-- Créer une CMK</span>
+<span class="kw">CREATE COLUMN MASTER KEY</span> CMK_Auto
+<span class="kw">WITH</span> (
+    KEY_STORE_PROVIDER_NAME = <span class="str">'MSSQL_CERTIFICATE_STORE'</span>,
+    KEY_PATH = <span class="str">'CurrentUser/My/AB123...'</span>
+);
+
+<span class="cmt">-- Créer une CEK</span>
+<span class="kw">CREATE COLUMN ENCRYPTION KEY</span> CEK_Auto
+<span class="kw">WITH VALUES</span> (
+    COLUMN_MASTER_KEY = CMK_Auto,
+    ALGORITHM = <span class="str">'RSA_OAEP'</span>,
+    ENCRYPTED_VALUE = <span class="val">0x01700...</span>
+);
+
+<span class="cmt">-- Utiliser dans une table</span>
+<span class="kw">CREATE TABLE</span> Patients (
+    Id <span class="val">int</span> <span class="kw">PRIMARY KEY</span>,
+    Nom <span class="val">nvarchar</span>(<span class="val">100</span>),
+    NumeroSecu <span class="val">char</span>(<span class="val">15</span>)
+        <span class="kw">ENCRYPTED WITH</span> (
+            COLUMN_ENCRYPTION_KEY = CEK_Auto,
+            ENCRYPTION_TYPE = <span class="val">DETERMINISTIC</span>,
+            ALGORITHM = <span class="str">'AEAD_AES_256_CBC_HMAC_SHA_256'</span>
+        )
+);
+</code></pre>
+
+<p>
+    <strong>Always Encrypted with Secure Enclaves</strong> (SQL Server 2019+) permet d'effectuer
+    des opérations sur les données chiffrées (LIKE, comparaisons de plage) dans un enclave
+    sécurisé (Intel SGX ou VBS) côté serveur, sans exposer les clés au DBA.
+</p>
+
+<p>SQL Server propose aussi des fonctions T-SQL de chiffrement côté serveur :</p>
+
+<pre><code><span class="cmt">-- Chiffrement symétrique côté serveur (moins sécurisé : le DBA voit les clés)</span>
+<span class="kw">OPEN SYMMETRIC KEY</span> SK_Data <span class="kw">DECRYPTION BY</span> CERTIFICATE Cert_Data;
+
+<span class="kw">INSERT INTO</span> Secrets (EncryptedValue)
+<span class="kw">VALUES</span> (<span class="fn">EncryptByKey</span>(<span class="fn">Key_GUID</span>(<span class="str">'SK_Data'</span>), <span class="str">'donnée sensible'</span>));
+
+<span class="kw">SELECT</span> <span class="fn">CONVERT</span>(<span class="val">varchar</span>, <span class="fn">DecryptByKey</span>(EncryptedValue)) <span class="kw">FROM</span> Secrets;
+</code></pre>
+
+<h3>PostgreSQL — pgcrypto</h3>
+
+<p>
+    PostgreSQL utilise l'extension <strong>pgcrypto</strong> pour le chiffrement applicatif. Toutes
+    les opérations s'effectuent <strong>côté serveur</strong> — les clés sont visibles par le moteur
+    (et donc par le DBA). C'est moins sécurisé que le modèle client-side d'Always Encrypted.
+</p>
+
+<pre><code><span class="cmt">-- Activer l'extension</span>
+<span class="kw">CREATE EXTENSION</span> pgcrypto;
+
+<span class="cmt">-- Chiffrement symétrique PGP</span>
+<span class="kw">INSERT INTO</span> secrets (data)
+<span class="kw">VALUES</span> (<span class="fn">pgp_sym_encrypt</span>(<span class="str">'donnée sensible'</span>, <span class="str">'ma_cle_secrete'</span>));
+
+<span class="kw">SELECT</span> <span class="fn">pgp_sym_decrypt</span>(data, <span class="str">'ma_cle_secrete'</span>) <span class="kw">FROM</span> secrets;
+
+<span class="cmt">-- Chiffrement asymétrique PGP</span>
+<span class="kw">SELECT</span> <span class="fn">pgp_pub_encrypt</span>(<span class="str">'secret'</span>, <span class="fn">dearmor</span>(<span class="str">'-----BEGIN PGP PUBLIC KEY...'</span>));
+<span class="kw">SELECT</span> <span class="fn">pgp_pub_decrypt</span>(data, <span class="fn">dearmor</span>(<span class="str">'-----BEGIN PGP PRIVATE KEY...'</span>));
+
+<span class="cmt">-- Hachage de mots de passe (bcrypt)</span>
+<span class="kw">INSERT INTO</span> users (password_hash)
+<span class="kw">VALUES</span> (<span class="fn">crypt</span>(<span class="str">'mon_mot_de_passe'</span>, <span class="fn">gen_salt</span>(<span class="str">'bf'</span>, <span class="val">12</span>)));
+
+<span class="cmt">-- Vérification du mot de passe</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> users
+<span class="kw">WHERE</span> password_hash = <span class="fn">crypt</span>(<span class="str">'tentative'</span>, password_hash);
+
+<span class="cmt">-- Fonctions utilitaires</span>
+<span class="kw">SELECT</span> <span class="fn">gen_random_bytes</span>(<span class="val">32</span>);        <span class="cmt">-- 32 octets aléatoires</span>
+<span class="kw">SELECT</span> <span class="fn">digest</span>(<span class="str">'data'</span>, <span class="str">'sha256'</span>);  <span class="cmt">-- hash SHA-256</span>
+<span class="kw">SELECT</span> <span class="fn">hmac</span>(<span class="str">'data'</span>, <span class="str">'key'</span>, <span class="str">'sha256'</span>);  <span class="cmt">-- HMAC</span>
+</code></pre>
+
+<h3>Oracle — DBMS_CRYPTO</h3>
+
+<p>
+    Oracle propose le package PL/SQL <strong>DBMS_CRYPTO</strong> pour le chiffrement applicatif.
+    Comme pgcrypto, les opérations s'effectuent côté serveur et les clés sont accessibles au DBA.
+</p>
+
+<pre><code><span class="kw">DECLARE</span>
+    l_key      <span class="val">RAW</span>(<span class="val">32</span>) := <span class="fn">UTL_RAW.CAST_TO_RAW</span>(<span class="str">'CleSecrete32Caracteres!!'</span>);
+    l_data     <span class="val">RAW</span>(<span class="val">2000</span>);
+    l_encrypted <span class="val">RAW</span>(<span class="val">2000</span>);
+    l_decrypted <span class="val">RAW</span>(<span class="val">2000</span>);
+<span class="kw">BEGIN</span>
+    l_data := <span class="fn">UTL_RAW.CAST_TO_RAW</span>(<span class="str">'Donnée sensible'</span>);
+
+    <span class="cmt">-- Chiffrement AES-256 CBC PKCS5</span>
+    l_encrypted := <span class="fn">DBMS_CRYPTO.ENCRYPT</span>(
+        src => l_data,
+        typ => DBMS_CRYPTO.ENCRYPT_AES256
+              + DBMS_CRYPTO.CHAIN_CBC
+              + DBMS_CRYPTO.PAD_PKCS5,
+        key => l_key
+    );
+
+    <span class="cmt">-- Déchiffrement</span>
+    l_decrypted := <span class="fn">DBMS_CRYPTO.DECRYPT</span>(
+        src => l_encrypted,
+        typ => DBMS_CRYPTO.ENCRYPT_AES256
+              + DBMS_CRYPTO.CHAIN_CBC
+              + DBMS_CRYPTO.PAD_PKCS5,
+        key => l_key
+    );
+
+    <span class="cmt">-- Hachage</span>
+    l_data := <span class="fn">DBMS_CRYPTO.HASH</span>(
+        <span class="fn">UTL_RAW.CAST_TO_RAW</span>(<span class="str">'password'</span>),
+        DBMS_CRYPTO.HASH_SH256
+    );
+
+    <span class="cmt">-- HMAC</span>
+    l_data := <span class="fn">DBMS_CRYPTO.MAC</span>(
+        <span class="fn">UTL_RAW.CAST_TO_RAW</span>(<span class="str">'message'</span>),
+        DBMS_CRYPTO.HMAC_SH256,
+        l_key
+    );
+<span class="kw">END</span>;
+</code></pre>
+
+<h3 id="colonnes">Tableau comparatif — Chiffrement applicatif</h3>
+
+<table>
+    <thead>
+        <tr>
+            <th>Caractéristique</th>
+            <th>SQL Server</th>
+            <th>PostgreSQL</th>
+            <th>Oracle</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>Solution principale</td>
+            <td>Always Encrypted</td>
+            <td>pgcrypto</td>
+            <td>DBMS_CRYPTO</td>
+        </tr>
+        <tr>
+            <td>Chiffrement côté client</td>
+            <td class="status-yes">✅ Always Encrypted</td>
+            <td class="status-no">❌ Serveur uniquement</td>
+            <td class="status-no">❌ Serveur uniquement</td>
+        </tr>
+        <tr>
+            <td>Protection contre DBA</td>
+            <td class="status-yes">✅ (Always Encrypted)</td>
+            <td class="status-no">❌</td>
+            <td class="status-no">❌</td>
+        </tr>
+        <tr>
+            <td>Chiffrement symétrique</td>
+            <td>AES-256 (AEAD)</td>
+            <td>PGP (AES, 3DES, etc.)</td>
+            <td>AES-128/192/256, 3DES</td>
+        </tr>
+        <tr>
+            <td>Chiffrement asymétrique</td>
+            <td>RSA (via CMK)</td>
+            <td class="status-yes">✅ PGP</td>
+            <td class="status-partial">⚠️ RSA via DBMS_CRYPTO</td>
+        </tr>
+        <tr>
+            <td>Hachage de mot de passe</td>
+            <td class="status-no">❌ (pas de bcrypt natif)</td>
+            <td class="status-yes">✅ crypt() / gen_salt() (bcrypt)</td>
+            <td class="status-no">❌ (SHA uniquement, pas de bcrypt)</td>
+        </tr>
+        <tr>
+            <td>Fonctions de hash</td>
+            <td>HASHBYTES (MD5, SHA-256)</td>
+            <td>digest() (MD5, SHA-*)</td>
+            <td>DBMS_CRYPTO.HASH (MD5, SHA-*)</td>
+        </tr>
+        <tr>
+            <td>HMAC</td>
+            <td class="status-no">❌ (pas natif)</td>
+            <td class="status-yes">✅ hmac()</td>
+            <td class="status-yes">✅ DBMS_CRYPTO.MAC</td>
+        </tr>
+        <tr>
+            <td>Génération de données aléatoires</td>
+            <td>CRYPT_GEN_RANDOM()</td>
+            <td>gen_random_bytes()</td>
+            <td>DBMS_CRYPTO.RANDOMBYTES</td>
+        </tr>
+        <tr>
+            <td>Requêtes sur données chiffrées</td>
+            <td class="status-yes">✅ Déterministe + Enclaves</td>
+            <td class="status-no">❌ Impossible (déchiffrer d'abord)</td>
+            <td class="status-partial">⚠️ TDE colonne (index possibles)</td>
+        </tr>
+    </tbody>
+</table>
+
+<!-- ============================================================= -->
+<!-- AUTHENTIFICATION                                                -->
+<!-- ============================================================= -->
+
+<h2 id="auth">5. Authentification</h2>
+
+<p>
+    L'authentification est la première ligne de défense : vérifier l'identité de l'utilisateur
+    ou de l'application qui se connecte à la base de données. Chaque SGBD propose différents
+    mécanismes, du simple mot de passe à l'authentification Kerberos intégrée.
+</p>
+
+<h3>SQL Server</h3>
+
+<ul>
+    <li><strong>Windows Authentication</strong> (Kerberos/NTLM) — recommandé en environnement
+        Active Directory. Pas de mot de passe à gérer dans la chaîne de connexion.</li>
+    <li><strong>SQL Server Authentication</strong> — login/mot de passe stocké dans SQL Server.
+        Nécessaire pour les accès hors domaine.</li>
+    <li><strong>Azure Active Directory (Entra ID)</strong> — pour Azure SQL et SQL Server 2022+</li>
+    <li><strong>Contained Database Users</strong> — utilisateurs portables, pas de dépendance
+        aux logins serveur</li>
+    <li>Politique de mot de passe : <code>CHECK_POLICY = ON</code>, <code>CHECK_EXPIRATION = ON</code>
+        (utilise la politique Windows)</li>
+</ul>
+
+<pre><code><span class="cmt">-- Créer un login avec politique de mot de passe</span>
+<span class="kw">CREATE LOGIN</span> app_user
+    <span class="kw">WITH PASSWORD</span> = <span class="str">'C0mplexP@ss!'</span>,
+    CHECK_POLICY = <span class="val">ON</span>,
+    CHECK_EXPIRATION = <span class="val">ON</span>;
+
+<span class="cmt">-- Créer un utilisateur contained</span>
+<span class="kw">USE</span> MaBase;
+<span class="kw">CREATE USER</span> app_user <span class="kw">WITH PASSWORD</span> = <span class="str">'C0mplexP@ss!'</span>;
+</code></pre>
+
+<h3>PostgreSQL</h3>
+
+<ul>
+    <li><strong>SCRAM-SHA-256</strong> — méthode recommandée, défaut depuis PostgreSQL 14.
+        Authentification par challenge-response, le mot de passe n'est jamais envoyé en clair.</li>
+    <li><strong>md5</strong> — méthode historique, considérée comme faible. À éviter.</li>
+    <li><strong>cert</strong> — authentification par certificat client TLS</li>
+    <li><strong>LDAP</strong> — délégation à un annuaire LDAP/Active Directory</li>
+    <li><strong>GSSAPI/Kerberos</strong> — authentification Kerberos</li>
+    <li><strong>RADIUS</strong> — délégation à un serveur RADIUS</li>
+    <li><strong>PAM</strong> — authentification via les modules PAM du système</li>
+    <li><strong>peer</strong> — correspondance utilisateur Unix (connexions locales via socket)</li>
+    <li>Configuration granulaire dans <code>pg_hba.conf</code> : par base, utilisateur, adresse IP</li>
+</ul>
+
+<pre><code><span class="cmt"># pg_hba.conf — exemples de configuration</span>
+<span class="cmt"># TYPE   DATABASE   USER       ADDRESS        METHOD</span>
+local    all        postgres                  peer
+hostssl  all        all        10.0.0.0/8     scram-sha-256
+hostssl  all        all        192.168.0.0/16 scram-sha-256
+host     all        all        0.0.0.0/0      reject
+
+<span class="cmt"># postgresql.conf</span>
+password_encryption = <span class="str">'scram-sha-256'</span>
+</code></pre>
+
+<h3>Oracle</h3>
+
+<ul>
+    <li><strong>Database Authentication</strong> — mot de passe stocké dans la base, haché avec
+        un algorithme propriétaire (verifier-based depuis 12c)</li>
+    <li><strong>OS Authentication</strong> — l'utilisateur du système d'exploitation est mappé
+        à un utilisateur de la base</li>
+    <li><strong>Kerberos</strong> — via Oracle Advanced Security</li>
+    <li><strong>LDAP</strong> — intégration avec un annuaire LDAP</li>
+    <li><strong>RADIUS</strong> — délégation à un serveur RADIUS</li>
+    <li><strong>Oracle Internet Directory (OID)</strong> — annuaire LDAP Oracle</li>
+    <li><strong>Profiles</strong> — politique de mot de passe très granulaire</li>
+</ul>
+
+<pre><code><span class="cmt">-- Créer un profil de sécurité pour les mots de passe</span>
+<span class="kw">CREATE PROFILE</span> secure_profile <span class="kw">LIMIT</span>
+    FAILED_LOGIN_ATTEMPTS <span class="val">5</span>
+    PASSWORD_LIFE_TIME <span class="val">90</span>
+    PASSWORD_REUSE_TIME <span class="val">365</span>
+    PASSWORD_REUSE_MAX <span class="val">12</span>
+    PASSWORD_LOCK_TIME <span class="val">1</span>
+    PASSWORD_GRACE_TIME <span class="val">7</span>
+    PASSWORD_VERIFY_FUNCTION ora12c_verify_function;
+
+<span class="cmt">-- Assigner le profil à un utilisateur</span>
+<span class="kw">ALTER USER</span> app_user <span class="kw">PROFILE</span> secure_profile;
+</code></pre>
+
+<h3>Tableau comparatif — Authentification</h3>
+
+<table>
+    <thead>
+        <tr>
+            <th>Méthode</th>
+            <th>SQL Server</th>
+            <th>PostgreSQL</th>
+            <th>Oracle</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>Mot de passe</td>
+            <td class="status-yes">✅</td>
+            <td class="status-yes">✅ SCRAM-SHA-256</td>
+            <td class="status-yes">✅</td>
+        </tr>
+        <tr>
+            <td>Kerberos</td>
+            <td class="status-yes">✅ Windows Auth</td>
+            <td class="status-yes">✅ GSSAPI</td>
+            <td class="status-yes">✅</td>
+        </tr>
+        <tr>
+            <td>LDAP</td>
+            <td class="status-partial">⚠️ via AD</td>
+            <td class="status-yes">✅</td>
+            <td class="status-yes">✅</td>
+        </tr>
+        <tr>
+            <td>Certificat client</td>
+            <td class="status-partial">⚠️ Limité</td>
+            <td class="status-yes">✅ cert</td>
+            <td class="status-yes">✅ SSL</td>
+        </tr>
+        <tr>
+            <td>RADIUS</td>
+            <td class="status-no">❌</td>
+            <td class="status-yes">✅</td>
+            <td class="status-yes">✅</td>
+        </tr>
+        <tr>
+            <td>Cloud IAM</td>
+            <td class="status-yes">✅ Entra ID</td>
+            <td class="status-partial">⚠️ via services managés</td>
+            <td class="status-yes">✅ OCI IAM</td>
+        </tr>
+        <tr>
+            <td>Politique de mot de passe</td>
+            <td>Via Windows Policy</td>
+            <td>Manuelle (trigger/extension)</td>
+            <td class="status-yes">✅ Profiles (le plus granulaire)</td>
+        </tr>
+    </tbody>
+</table>
+
+<!-- ============================================================= -->
+<!-- AUTORISATION                                                    -->
+<!-- ============================================================= -->
+
+<h2 id="autorisation">6. Autorisation et contrôle d'accès</h2>
+
+<p>
+    L'autorisation détermine <strong>ce que</strong> peut faire un utilisateur authentifié.
+    Le principe fondamental est celui du <strong>moindre privilège</strong> : chaque utilisateur
+    ou application ne doit disposer que des droits strictement nécessaires à son fonctionnement.
+</p>
+
+<h3>SQL Server</h3>
+
+<ul>
+    <li>Modèle hiérarchique : <strong>Server roles → Database roles → Schema → Object</strong></li>
+    <li>Rôles serveur prédéfinis : <code>sysadmin</code>, <code>securityadmin</code>, <code>dbcreator</code>, etc.</li>
+    <li>Rôles de base prédéfinis : <code>db_owner</code>, <code>db_datareader</code>, <code>db_datawriter</code>, etc.</li>
+    <li>Rôles personnalisés, permissions granulaires avec <code>GRANT</code> / <code>DENY</code> / <code>REVOKE</code></li>
+    <li>Schémas pour l'isolation logique des objets</li>
+</ul>
+
+<h3>PostgreSQL</h3>
+
+<ul>
+    <li>Modèle basé sur les <strong>rôles</strong> (pas de distinction user/group)</li>
+    <li><code>GRANT</code> / <code>REVOKE</code> sur bases, schémas, tables, colonnes, fonctions</li>
+    <li>Privilèges par défaut (<code>ALTER DEFAULT PRIVILEGES</code>) pour les nouveaux objets</li>
+    <li><code>pg_read_all_data</code>, <code>pg_write_all_data</code> (PG 14+)</li>
+    <li>La flexibilité des rôles PostgreSQL permet des architectures très fines</li>
+</ul>
+
+<h3>Oracle</h3>
+
+<ul>
+    <li>Modèle riche : <strong>System privileges</strong>, <strong>Object privileges</strong>, <strong>Roles</strong></li>
+    <li>Rôles prédéfinis : <code>DBA</code>, <code>CONNECT</code>, <code>RESOURCE</code>, etc.</li>
+    <li><strong>Separation of Duties</strong> : <code>SYSDBA</code>, <code>SYSOPER</code>,
+        <code>SYSBACKUP</code>, <code>SYSDG</code>, <code>SYSKM</code></li>
+    <li><strong>Database Vault</strong> — empêche même le DBA d'accéder à certains schémas.
+        Réalms, command rules et facteurs de sécurité.</li>
+    <li>Analyse de privilèges (<code>DBMS_PRIVILEGE_CAPTURE</code>) pour identifier les droits inutilisés</li>
+</ul>
+
+<div class="alert alert-success">
+    <strong>Bonne pratique :</strong> Utilisez <code>DBMS_PRIVILEGE_CAPTURE</code> (Oracle) ou des
+    requêtes d'audit pour identifier les privilèges accordés mais jamais utilisés, puis révoquez-les.
+    C'est l'application concrète du principe de moindre privilège.
+</div>
+
+<!-- ============================================================= -->
+<!-- ROW-LEVEL SECURITY                                              -->
+<!-- ============================================================= -->
+
+<h2 id="rls">7. Row-Level Security (RLS)</h2>
+
+<p>
+    La sécurité au niveau des lignes (Row-Level Security) permet de filtrer automatiquement les
+    lignes visibles par un utilisateur, de manière transparente pour l'application. Chaque
+    utilisateur ne voit que les données qui lui sont destinées, même s'il exécute
+    <code>SELECT * FROM table</code>.
+</p>
+
+<h3>SQL Server — Security Policy</h3>
+
+<pre><code><span class="cmt">-- 1. Créer la fonction de filtrage</span>
+<span class="kw">CREATE FUNCTION</span> dbo.fn_SecurityPredicate(@TenantId <span class="val">int</span>)
+<span class="kw">RETURNS TABLE</span>
+<span class="kw">WITH</span> SCHEMABINDING
+<span class="kw">AS</span>
+    <span class="kw">RETURN</span>
+        <span class="kw">SELECT</span> <span class="val">1</span> <span class="kw">AS</span> result
+        <span class="kw">WHERE</span> @TenantId = <span class="fn">CAST</span>(<span class="fn">SESSION_CONTEXT</span>(<span class="val">N</span><span class="str">'TenantId'</span>) <span class="kw">AS</span> <span class="val">int</span>);
+
+<span class="cmt">-- 2. Créer la politique de sécurité</span>
+<span class="kw">CREATE SECURITY POLICY</span> TenantFilter
+    <span class="kw">ADD FILTER PREDICATE</span> dbo.fn_SecurityPredicate(TenantId)
+        <span class="kw">ON</span> dbo.Commandes,
+    <span class="kw">ADD BLOCK PREDICATE</span> dbo.fn_SecurityPredicate(TenantId)
+        <span class="kw">ON</span> dbo.Commandes <span class="kw">AFTER INSERT</span>
+    <span class="kw">WITH</span> (STATE = <span class="val">ON</span>);
+
+<span class="cmt">-- 3. Définir le contexte de session</span>
+<span class="kw">EXEC</span> sp_set_session_context <span class="str">'TenantId'</span>, <span class="val">42</span>;
+</code></pre>
+
+<ul>
+    <li><strong>Filter predicate</strong> : filtre silencieusement les lignes (SELECT, UPDATE, DELETE)</li>
+    <li><strong>Block predicate</strong> : empêche l'insertion/modification de lignes non autorisées</li>
+    <li>Contexte via <code>SESSION_CONTEXT()</code> ou <code>SUSER_SNAME()</code></li>
+</ul>
+
+<h3>PostgreSQL — Row-Level Security</h3>
+
+<pre><code><span class="cmt">-- 1. Activer RLS sur la table</span>
+<span class="kw">ALTER TABLE</span> commandes <span class="kw">ENABLE ROW LEVEL SECURITY</span>;
+
+<span class="cmt">-- 2. Créer une politique</span>
+<span class="kw">CREATE POLICY</span> tenant_isolation <span class="kw">ON</span> commandes
+    <span class="kw">FOR ALL</span>
+    <span class="kw">USING</span> (tenant_id = <span class="fn">current_setting</span>(<span class="str">'app.tenant_id'</span>)::<span class="val">int</span>)
+    <span class="kw">WITH CHECK</span> (tenant_id = <span class="fn">current_setting</span>(<span class="str">'app.tenant_id'</span>)::<span class="val">int</span>);
+
+<span class="cmt">-- 3. Politique basée sur le rôle PostgreSQL</span>
+<span class="kw">CREATE POLICY</span> user_data <span class="kw">ON</span> documents
+    <span class="kw">FOR SELECT</span>
+    <span class="kw">USING</span> (owner = <span class="fn">current_user</span>);
+
+<span class="cmt">-- 4. Définir le contexte applicatif</span>
+<span class="kw">SET</span> app.tenant_id = <span class="str">'42'</span>;
+
+<span class="cmt">-- Forcer RLS même pour le propriétaire de la table</span>
+<span class="kw">ALTER TABLE</span> commandes <span class="kw">FORCE ROW LEVEL SECURITY</span>;
+</code></pre>
+
+<ul>
+    <li>L'implémentation PostgreSQL est considérée comme la <strong>plus flexible</strong></li>
+    <li>Politiques multiples combinables (OR entre les politiques du même type)</li>
+    <li><code>USING</code> : filtre les lignes visibles (SELECT, UPDATE, DELETE)</li>
+    <li><code>WITH CHECK</code> : vérifie les lignes écrites (INSERT, UPDATE)</li>
+    <li>Support des rôles, de <code>current_user</code> et de variables de session personnalisées</li>
+</ul>
+
+<h3>Oracle — Virtual Private Database (VPD)</h3>
+
+<pre><code><span class="cmt">-- 1. Créer la fonction de politique</span>
+<span class="kw">CREATE OR REPLACE FUNCTION</span> tenant_policy(
+    p_schema <span class="kw">IN</span> <span class="val">VARCHAR2</span>,
+    p_table  <span class="kw">IN</span> <span class="val">VARCHAR2</span>
+) <span class="kw">RETURN</span> <span class="val">VARCHAR2</span>
+<span class="kw">AS</span>
+<span class="kw">BEGIN</span>
+    <span class="kw">RETURN</span> <span class="str">'tenant_id = SYS_CONTEXT(''APP_CTX'', ''TENANT_ID'')'</span>;
+<span class="kw">END</span>;
+/
+
+<span class="cmt">-- 2. Appliquer la politique VPD</span>
+<span class="kw">BEGIN</span>
+    <span class="fn">DBMS_RLS.ADD_POLICY</span>(
+        object_schema   => <span class="str">'APP'</span>,
+        object_name     => <span class="str">'COMMANDES'</span>,
+        policy_name     => <span class="str">'TENANT_POLICY'</span>,
+        function_schema => <span class="str">'SEC'</span>,
+        policy_function => <span class="str">'TENANT_POLICY'</span>,
+        statement_types => <span class="str">'SELECT, INSERT, UPDATE, DELETE'</span>
+    );
+<span class="kw">END</span>;
+/
+
+<span class="cmt">-- 3. Définir le contexte applicatif</span>
+<span class="kw">CREATE OR REPLACE CONTEXT</span> app_ctx <span class="kw">USING</span> set_context_pkg;
+
+<span class="kw">CREATE OR REPLACE PACKAGE BODY</span> set_context_pkg <span class="kw">AS</span>
+    <span class="kw">PROCEDURE</span> set_tenant(p_id <span class="val">NUMBER</span>) <span class="kw">IS</span>
+    <span class="kw">BEGIN</span>
+        <span class="fn">DBMS_SESSION.SET_CONTEXT</span>(<span class="str">'APP_CTX'</span>, <span class="str">'TENANT_ID'</span>, p_id);
+    <span class="kw">END</span>;
+<span class="kw">END</span>;
+/
+</code></pre>
+
+<ul>
+    <li><strong>Oracle Label Security (OLS)</strong> — niveau supérieur : classification des données
+        (Confidentiel, Secret, Top Secret) avec des labels sur chaque ligne</li>
+    <li>VPD modifie dynamiquement la clause WHERE des requêtes SQL</li>
+    <li>Contexte via <code>SYS_CONTEXT()</code> et application contexts</li>
+    <li>Très puissant mais plus complexe à configurer que les implémentations SQL Server/PostgreSQL</li>
+</ul>
+
+<h3>Tableau comparatif — Row-Level Security</h3>
+
+<table>
+    <thead>
+        <tr>
+            <th>Caractéristique</th>
+            <th>SQL Server</th>
+            <th>PostgreSQL</th>
+            <th>Oracle</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>Nom de la fonctionnalité</td>
+            <td>Security Policy</td>
+            <td>Row-Level Security</td>
+            <td>Virtual Private Database (VPD)</td>
+        </tr>
+        <tr>
+            <td>Filtrage SELECT</td>
+            <td class="status-yes">✅ Filter Predicate</td>
+            <td class="status-yes">✅ USING</td>
+            <td class="status-yes">✅ Policy Function</td>
+        </tr>
+        <tr>
+            <td>Contrôle INSERT/UPDATE</td>
+            <td class="status-yes">✅ Block Predicate</td>
+            <td class="status-yes">✅ WITH CHECK</td>
+            <td class="status-yes">✅ Statement types</td>
+        </tr>
+        <tr>
+            <td>Contexte utilisateur</td>
+            <td>SESSION_CONTEXT()</td>
+            <td>current_user, current_setting()</td>
+            <td>SYS_CONTEXT()</td>
+        </tr>
+        <tr>
+            <td>Classification multi-niveaux</td>
+            <td class="status-no">❌</td>
+            <td class="status-no">❌</td>
+            <td class="status-yes">✅ Oracle Label Security</td>
+        </tr>
+        <tr>
+            <td>Facilité de mise en œuvre</td>
+            <td>Moyenne</td>
+            <td class="status-yes">Simple (le plus intuitif)</td>
+            <td>Complexe (PL/SQL requis)</td>
+        </tr>
+        <tr>
+            <td>Flexibilité</td>
+            <td>Bonne</td>
+            <td class="status-yes">Excellente</td>
+            <td class="status-yes">Excellente</td>
+        </tr>
+    </tbody>
+</table>
+
+<!-- ============================================================= -->
+<!-- DYNAMIC DATA MASKING                                            -->
+<!-- ============================================================= -->
+
+<h2 id="masking">8. Dynamic Data Masking</h2>
+
+<p>
+    Le masquage dynamique des données (Dynamic Data Masking) permet de masquer automatiquement
+    les données sensibles dans les résultats de requête pour les utilisateurs non autorisés.
+    Contrairement au chiffrement, les données sont stockées en clair — seul l'affichage est modifié.
+    C'est utile pour les environnements de développement, les rapports ou les accès en lecture seule
+    limités.
+</p>
+
+<h3>SQL Server — Dynamic Data Masking (natif)</h3>
+
+<pre><code><span class="cmt">-- Créer une table avec masquage</span>
+<span class="kw">CREATE TABLE</span> Clients (
+    Id <span class="val">int</span> <span class="kw">PRIMARY KEY</span>,
+    Nom <span class="val">nvarchar</span>(<span class="val">100</span>),
+    Email <span class="val">nvarchar</span>(<span class="val">100</span>)
+        <span class="kw">MASKED WITH</span> (FUNCTION = <span class="str">'email()'</span>),
+    Telephone <span class="val">varchar</span>(<span class="val">15</span>)
+        <span class="kw">MASKED WITH</span> (FUNCTION = <span class="str">'partial(0, "XXX-XXX-", 4)'</span>),
+    NumeroSecu <span class="val">char</span>(<span class="val">15</span>)
+        <span class="kw">MASKED WITH</span> (FUNCTION = <span class="str">'default()'</span>),
+    Salaire <span class="val">decimal</span>(<span class="val">10</span>,<span class="val">2</span>)
+        <span class="kw">MASKED WITH</span> (FUNCTION = <span class="str">'random(1000, 9999)'</span>)
+);
+
+<span class="cmt">-- Accorder le droit de voir les vraies données</span>
+<span class="kw">GRANT UNMASK TO</span> admin_user;
+
+<span class="cmt">-- Révoquer le droit</span>
+<span class="kw">REVOKE UNMASK TO</span> report_user;
+</code></pre>
+
+<p>Fonctions de masquage disponibles :</p>
+<ul>
+    <li><code>default()</code> — remplace par « XXXX » (strings), 0 (nombres), 01-01-1900 (dates)</li>
+    <li><code>email()</code> — « aXXX@XXXX.com »</li>
+    <li><code>partial(prefix, padding, suffix)</code> — masquage partiel personnalisable</li>
+    <li><code>random(start, end)</code> — valeur aléatoire dans une plage</li>
+</ul>
+
+<h3>PostgreSQL — Pas de masquage natif</h3>
+
+<p>
+    PostgreSQL ne dispose pas de Dynamic Data Masking intégré. Plusieurs approches alternatives existent :
+</p>
+
+<ul>
+    <li><strong>Vues avec CASE</strong> — créer des vues qui masquent conditionnellement les données</li>
+    <li><strong>postgresql_anonymizer (Anon)</strong> — extension de masquage et d'anonymisation</li>
+    <li><strong>pgMask</strong> — extension tierce pour le masquage dynamique</li>
+</ul>
+
+<pre><code><span class="cmt">-- Approche manuelle avec une vue</span>
+<span class="kw">CREATE VIEW</span> v_clients_masked <span class="kw">AS</span>
+<span class="kw">SELECT</span>
+    id,
+    nom,
+    <span class="kw">CASE WHEN</span> <span class="fn">current_user</span> = <span class="str">'admin'</span>
+        <span class="kw">THEN</span> email
+        <span class="kw">ELSE</span> <span class="fn">LEFT</span>(email, <span class="val">1</span>) || <span class="str">'***@***.com'</span>
+    <span class="kw">END AS</span> email,
+    <span class="kw">CASE WHEN</span> <span class="fn">current_user</span> = <span class="str">'admin'</span>
+        <span class="kw">THEN</span> telephone
+        <span class="kw">ELSE</span> <span class="str">'XXX-XXX-'</span> || <span class="fn">RIGHT</span>(telephone, <span class="val">4</span>)
+    <span class="kw">END AS</span> telephone
+<span class="kw">FROM</span> clients;
+
+<span class="cmt">-- Avec l'extension postgresql_anonymizer</span>
+<span class="kw">CREATE EXTENSION</span> anon <span class="kw">CASCADE</span>;
+<span class="kw">SELECT</span> anon.init();
+
+<span class="kw">SECURITY LABEL FOR</span> anon <span class="kw">ON COLUMN</span> clients.email
+    <span class="kw">IS</span> <span class="str">'MASKED WITH FUNCTION anon.partial_email(email)'</span>;
+
+<span class="kw">SECURITY LABEL FOR</span> anon <span class="kw">ON COLUMN</span> clients.telephone
+    <span class="kw">IS</span> <span class="str">'MASKED WITH FUNCTION anon.partial(telephone, 2, $$XXX-XXX-$$, 4)'</span>;
+</code></pre>
+
+<h3>Oracle — Data Redaction (DBMS_REDACT)</h3>
+
+<pre><code><span class="cmt">-- Masquage complet d'une colonne</span>
+<span class="kw">BEGIN</span>
+    <span class="fn">DBMS_REDACT.ADD_POLICY</span>(
+        object_schema  => <span class="str">'APP'</span>,
+        object_name    => <span class="str">'CLIENTS'</span>,
+        column_name    => <span class="str">'NUMERO_SECU'</span>,
+        policy_name    => <span class="str">'MASK_SSN'</span>,
+        function_type  => DBMS_REDACT.FULL,
+        expression     => <span class="str">'SYS_CONTEXT(''USERENV'', ''SESSION_USER'') != ''ADMIN'''</span>
+    );
+<span class="kw">END</span>;
+/
+
+<span class="cmt">-- Masquage partiel (garder les 4 derniers chiffres)</span>
+<span class="kw">BEGIN</span>
+    <span class="fn">DBMS_REDACT.ADD_POLICY</span>(
+        object_schema       => <span class="str">'APP'</span>,
+        object_name         => <span class="str">'CLIENTS'</span>,
+        column_name         => <span class="str">'CARTE_CREDIT'</span>,
+        policy_name         => <span class="str">'MASK_CC'</span>,
+        function_type       => DBMS_REDACT.PARTIAL,
+        function_parameters => DBMS_REDACT.REDACT_NUM_US_PHONE_TYPE,
+        expression          => <span class="str">'1=1'</span>
+    );
+<span class="kw">END</span>;
+/
+
+<span class="cmt">-- Masquage par expression régulière</span>
+<span class="kw">BEGIN</span>
+    <span class="fn">DBMS_REDACT.ADD_POLICY</span>(
+        object_schema  => <span class="str">'APP'</span>,
+        object_name    => <span class="str">'CLIENTS'</span>,
+        column_name    => <span class="str">'EMAIL'</span>,
+        policy_name    => <span class="str">'MASK_EMAIL'</span>,
+        function_type  => DBMS_REDACT.REGEXP,
+        regexp_pattern => <span class="str">'([A-Za-z0-9._%+-]+)(@.*)'</span>,
+        regexp_replace_string => <span class="str">'xxxx\2'</span>,
+        expression     => <span class="str">'1=1'</span>
+    );
+<span class="kw">END</span>;
+/
+</code></pre>
+
+<p>
+    Oracle Data Redaction est appliqué <strong>au moment de la requête</strong> (query time) — les
+    données ne sont jamais modifiées sur disque. C'est très performant car le masquage est effectué
+    juste avant le retour des résultats.
+</p>
+
+<h3>Tableau comparatif — Dynamic Data Masking</h3>
+
+<table>
+    <thead>
+        <tr>
+            <th>Caractéristique</th>
+            <th>SQL Server</th>
+            <th>PostgreSQL</th>
+            <th>Oracle</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>Solution native</td>
+            <td class="status-yes">✅ Dynamic Data Masking</td>
+            <td class="status-no">❌ (vues / extensions)</td>
+            <td class="status-yes">✅ DBMS_REDACT</td>
+        </tr>
+        <tr>
+            <td>Masquage complet</td>
+            <td class="status-yes">✅ default()</td>
+            <td class="status-partial">⚠️ Manuel</td>
+            <td class="status-yes">✅ FULL</td>
+        </tr>
+        <tr>
+            <td>Masquage partiel</td>
+            <td class="status-yes">✅ partial()</td>
+            <td class="status-partial">⚠️ Manuel</td>
+            <td class="status-yes">✅ PARTIAL</td>
+        </tr>
+        <tr>
+            <td>Masquage par regex</td>
+            <td class="status-no">❌</td>
+            <td class="status-partial">⚠️ Dans la vue</td>
+            <td class="status-yes">✅ REGEXP</td>
+        </tr>
+        <tr>
+            <td>Masquage email</td>
+            <td class="status-yes">✅ email()</td>
+            <td class="status-partial">⚠️ Manuel</td>
+            <td class="status-yes">✅ REGEXP</td>
+        </tr>
+        <tr>
+            <td>Masquage aléatoire</td>
+            <td class="status-yes">✅ random()</td>
+            <td class="status-partial">⚠️ Manuel</td>
+            <td class="status-yes">✅ RANDOM</td>
+        </tr>
+        <tr>
+            <td>Basé sur les politiques</td>
+            <td>UNMASK permission</td>
+            <td>current_user dans la vue</td>
+            <td class="status-yes">✅ Expression conditionnelle</td>
+        </tr>
+        <tr>
+            <td>Granularité des conditions</td>
+            <td>Par utilisateur/rôle</td>
+            <td>Flexible (code SQL)</td>
+            <td class="status-yes">Le plus granulaire (SYS_CONTEXT)</td>
+        </tr>
+    </tbody>
+</table>
+
+<!-- ============================================================= -->
+<!-- AUDIT ET JOURNALISATION                                         -->
+<!-- ============================================================= -->
+
+<h2 id="audit">9. Audit et journalisation</h2>
+
+<p>
+    L'audit est essentiel pour la détection des intrusions, la conformité réglementaire et
+    l'investigation post-incident. Un bon système d'audit enregistre <strong>qui</strong> a fait
+    <strong>quoi</strong>, <strong>quand</strong> et <strong>sur quelles données</strong>.
+</p>
+
+<h3>SQL Server — SQL Server Audit</h3>
+
+<pre><code><span class="cmt">-- 1. Créer un audit serveur (destination : fichier)</span>
+<span class="kw">CREATE SERVER AUDIT</span> MainAudit
+    <span class="kw">TO FILE</span> (FILEPATH = <span class="str">'C:\AuditLogs\'</span>, MAXSIZE = <span class="val">100</span> MB)
+    <span class="kw">WITH</span> (ON_FAILURE = CONTINUE);
+
+<span class="kw">ALTER SERVER AUDIT</span> MainAudit <span class="kw">WITH</span> (STATE = <span class="val">ON</span>);
+
+<span class="cmt">-- 2. Spécification d'audit au niveau serveur</span>
+<span class="kw">CREATE SERVER AUDIT SPECIFICATION</span> ServerAuditSpec
+    <span class="kw">FOR SERVER AUDIT</span> MainAudit
+    <span class="kw">ADD</span> (FAILED_LOGIN_GROUP),
+    <span class="kw">ADD</span> (LOGIN_CHANGE_PASSWORD_GROUP),
+    <span class="kw">ADD</span> (SERVER_ROLE_MEMBER_CHANGE_GROUP)
+    <span class="kw">WITH</span> (STATE = <span class="val">ON</span>);
+
+<span class="cmt">-- 3. Spécification d'audit au niveau base de données</span>
+<span class="kw">USE</span> MaBase;
+<span class="kw">CREATE DATABASE AUDIT SPECIFICATION</span> DbAuditSpec
+    <span class="kw">FOR SERVER AUDIT</span> MainAudit
+    <span class="kw">ADD</span> (<span class="val">SELECT</span>, <span class="val">INSERT</span>, <span class="val">UPDATE</span>, <span class="val">DELETE</span>
+        <span class="kw">ON SCHEMA</span>::dbo <span class="kw">BY</span> <span class="kw">PUBLIC</span>),
+    <span class="kw">ADD</span> (SCHEMA_OBJECT_CHANGE_GROUP)
+    <span class="kw">WITH</span> (STATE = <span class="val">ON</span>);
+
+<span class="cmt">-- Lire les logs d'audit</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="fn">sys.fn_get_audit_file</span>(<span class="str">'C:\AuditLogs\*.sqlaudit'</span>, <span class="val">NULL</span>, <span class="val">NULL</span>);
+</code></pre>
+
+<p>Autres mécanismes SQL Server :</p>
+<ul>
+    <li><strong>Change Data Capture (CDC)</strong> — capture les modifications de données (INSERT, UPDATE, DELETE) dans des tables de suivi</li>
+    <li><strong>Temporal Tables</strong> — tables versionnées avec historique automatique des modifications</li>
+    <li><strong>SQL Server Profiler / Extended Events</strong> — capture détaillée des requêtes pour le diagnostic</li>
+</ul>
+
+<h3>PostgreSQL — pgaudit</h3>
+
+<pre><code><span class="cmt"># postgresql.conf — configuration de pgaudit</span>
+shared_preload_libraries = <span class="str">'pgaudit'</span>
+pgaudit.log = <span class="str">'read, write, ddl, role'</span>
+pgaudit.log_catalog = <span class="val">off</span>
+pgaudit.log_relation = <span class="val">on</span>
+pgaudit.log_statement_once = <span class="val">on</span>
+
+<span class="cmt"># Logging basique (sans pgaudit)</span>
+log_statement = <span class="str">'all'</span>          <span class="cmt">-- none, ddl, mod, all</span>
+log_connections = <span class="val">on</span>
+log_disconnections = <span class="val">on</span>
+log_line_prefix = <span class="str">'%t [%p] %u@%d '</span>
+</code></pre>
+
+<pre><code><span class="cmt">-- Audit par objet avec pgaudit</span>
+<span class="kw">SET</span> pgaudit.role = <span class="str">'auditor'</span>;
+
+<span class="cmt">-- Accorder les droits pour déclencher l'audit</span>
+<span class="kw">GRANT SELECT ON</span> clients <span class="kw">TO</span> auditor;
+<span class="cmt">-- Maintenant tous les SELECT sur clients seront audités</span>
+
+<span class="cmt">-- Statistiques de requêtes</span>
+<span class="kw">CREATE EXTENSION</span> pg_stat_statements;
+<span class="kw">SELECT</span> query, calls, mean_exec_time, rows
+<span class="kw">FROM</span> pg_stat_statements
+<span class="kw">ORDER BY</span> calls <span class="kw">DESC</span> <span class="kw">LIMIT</span> <span class="val">20</span>;
+</code></pre>
+
+<ul>
+    <li><strong>pgaudit</strong> — l'extension standard pour l'audit de conformité</li>
+    <li><strong>pg_stat_statements</strong> — statistiques sur les requêtes exécutées</li>
+    <li><strong>Logical decoding</strong> — pour le Change Data Capture (CDC) via les slots de réplication</li>
+    <li>Les logs sont envoyés dans le journal PostgreSQL (syslog, CSV, stderr)</li>
+</ul>
+
+<h3>Oracle — Unified Audit</h3>
+
+<pre><code><span class="cmt">-- Créer une politique d'audit unifiée</span>
+<span class="kw">CREATE AUDIT POLICY</span> sensitive_data_audit
+    <span class="kw">ACTIONS</span>
+        <span class="val">SELECT</span> <span class="kw">ON</span> app.clients,
+        <span class="val">UPDATE</span> <span class="kw">ON</span> app.clients,
+        <span class="val">DELETE</span> <span class="kw">ON</span> app.clients,
+        <span class="val">INSERT</span> <span class="kw">ON</span> app.clients
+    <span class="kw">WHEN</span> <span class="str">'SYS_CONTEXT(''USERENV'', ''SESSION_USER'') NOT IN (''APP_USER'')'</span>
+    <span class="kw">EVALUATE PER SESSION</span>;
+
+<span class="cmt">-- Activer la politique</span>
+<span class="kw">AUDIT POLICY</span> sensitive_data_audit;
+
+<span class="cmt">-- Fine-Grained Auditing (FGA)</span>
+<span class="kw">BEGIN</span>
+    <span class="fn">DBMS_FGA.ADD_POLICY</span>(
+        object_schema  => <span class="str">'APP'</span>,
+        object_name    => <span class="str">'CLIENTS'</span>,
+        policy_name    => <span class="str">'AUDIT_SALARY'</span>,
+        audit_column   => <span class="str">'SALAIRE'</span>,
+        audit_condition => <span class="str">'SALAIRE > 100000'</span>,
+        statement_types => <span class="str">'SELECT'</span>
+    );
+<span class="kw">END</span>;
+/
+
+<span class="cmt">-- Consulter les logs d'audit</span>
+<span class="kw">SELECT</span> event_timestamp, dbusername, action_name, object_name, sql_text
+<span class="kw">FROM</span> unified_audit_trail
+<span class="kw">WHERE</span> event_timestamp > <span class="fn">SYSDATE</span> - <span class="val">1</span>
+<span class="kw">ORDER BY</span> event_timestamp <span class="kw">DESC</span>;
+</code></pre>
+
+<ul>
+    <li><strong>Unified Audit</strong> (depuis 12c) — consolide tous les types d'audit en un seul flux</li>
+    <li><strong>Fine-Grained Auditing (FGA)</strong> — audit conditionnel sur des colonnes spécifiques.
+        Permet d'auditer uniquement quand certaines conditions sont remplies (ex : accès aux salaires &gt; 100k).</li>
+    <li><strong>Oracle Audit Vault and Database Firewall (AVDF)</strong> — solution centralisée pour
+        collecter, stocker et analyser les logs d'audit de plusieurs bases</li>
+    <li><strong>Flashback Data Archive</strong> — conservation de l'historique des modifications sur
+        une longue durée (compliance, forensics)</li>
+    <li>Oracle est considéré comme ayant les <strong>capacités d'audit les plus complètes</strong></li>
+</ul>
+
+<h3>Tableau comparatif — Audit</h3>
+
+<table>
+    <thead>
+        <tr>
+            <th>Caractéristique</th>
+            <th>SQL Server</th>
+            <th>PostgreSQL</th>
+            <th>Oracle</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>Solution principale</td>
+            <td>SQL Server Audit</td>
+            <td>pgaudit (extension)</td>
+            <td>Unified Audit</td>
+        </tr>
+        <tr>
+            <td>Audit serveur</td>
+            <td class="status-yes">✅</td>
+            <td class="status-partial">⚠️ Via logs</td>
+            <td class="status-yes">✅</td>
+        </tr>
+        <tr>
+            <td>Audit base de données</td>
+            <td class="status-yes">✅</td>
+            <td class="status-yes">✅ pgaudit</td>
+            <td class="status-yes">✅</td>
+        </tr>
+        <tr>
+            <td>Audit conditionnel</td>
+            <td class="status-partial">⚠️ Limité</td>
+            <td class="status-no">❌</td>
+            <td class="status-yes">✅ FGA (le plus avancé)</td>
+        </tr>
+        <tr>
+            <td>Change Data Capture</td>
+            <td class="status-yes">✅ CDC</td>
+            <td class="status-yes">✅ Logical Decoding</td>
+            <td class="status-yes">✅ Flashback</td>
+        </tr>
+        <tr>
+            <td>Tables versionnées</td>
+            <td class="status-yes">✅ Temporal Tables</td>
+            <td class="status-no">❌ (triggers manuels)</td>
+            <td class="status-yes">✅ Flashback Data Archive</td>
+        </tr>
+        <tr>
+            <td>Centralisation multi-serveurs</td>
+            <td class="status-partial">⚠️ Via SIEM</td>
+            <td class="status-partial">⚠️ Via SIEM/syslog</td>
+            <td class="status-yes">✅ AVDF</td>
+        </tr>
+        <tr>
+            <td>Statistiques de requêtes</td>
+            <td>Query Store</td>
+            <td>pg_stat_statements</td>
+            <td>AWR / ASH</td>
+        </tr>
+        <tr>
+            <td>Complexité globale</td>
+            <td>Moyenne</td>
+            <td>Simple</td>
+            <td>Le plus complet mais complexe</td>
+        </tr>
+    </tbody>
+</table>
+
+<!-- ============================================================= -->
+<!-- RÉSEAU ET HARDENING                                              -->
+<!-- ============================================================= -->
+
+<h2 id="reseau">10. Réseau et hardening</h2>
+
+<p>
+    Le durcissement (hardening) de la configuration du serveur de base de données est une étape
+    cruciale, souvent négligée. Une installation par défaut contient généralement des paramètres
+    permissifs qui doivent être resserrés avant la mise en production.
+</p>
+
+<h3>Bonnes pratiques communes</h3>
+
+<ul>
+    <li><strong>Changer le port par défaut</strong> — 1433 (SQL Server), 5432 (PostgreSQL), 1521 (Oracle) sont les premiers ports scannés</li>
+    <li><strong>Règles de pare-feu</strong> — n'autoriser que les adresses IP des serveurs applicatifs</li>
+    <li><strong>Principe de moindre privilège</strong> — aucun compte applicatif ne doit être administrateur</li>
+    <li><strong>Supprimer les bases d'exemple</strong> — Adventure Works, Northwind, HR, SCOTT, etc.</li>
+    <li><strong>Gestion des patches</strong> — appliquer les correctifs de sécurité dans un délai raisonnable</li>
+    <li><strong>Sauvegardes chiffrées</strong> — les backups doivent être chiffrés et stockés séparément</li>
+    <li><strong>Supervision des connexions</strong> — alertes sur les connexions échouées, les connexions inhabituelles</li>
+</ul>
+
+<h3>SQL Server — Hardening spécifique</h3>
+
+<ul>
+    <li><strong>Compte <code>sa</code></strong> — renommer ou désactiver. Ne jamais utiliser en production.</li>
+    <li><strong><code>xp_cmdshell</code></strong> — <strong>toujours désactivé</strong>. Permet l'exécution de commandes OS depuis SQL.</li>
+    <li><strong>Surface Area Configuration</strong> — désactiver les fonctionnalités inutilisées
+        (OLE Automation, CLR, Database Mail, etc.)</li>
+    <li><strong>SQL Server Browser</strong> — désactiver si non nécessaire (évite la découverte d'instances)</li>
+    <li><strong>Ports dynamiques</strong> — configurer un port fixe plutôt que des ports dynamiques</li>
+</ul>
+
+<pre><code><span class="cmt">-- Désactiver xp_cmdshell</span>
+<span class="kw">EXEC</span> sp_configure <span class="str">'show advanced options'</span>, <span class="val">1</span>;
+RECONFIGURE;
+<span class="kw">EXEC</span> sp_configure <span class="str">'xp_cmdshell'</span>, <span class="val">0</span>;
+RECONFIGURE;
+
+<span class="cmt">-- Désactiver le compte sa</span>
+<span class="kw">ALTER LOGIN</span> sa <span class="kw">DISABLE</span>;
+
+<span class="cmt">-- Vérifier les fonctionnalités activées</span>
+<span class="kw">SELECT</span> name, value_in_use
+<span class="kw">FROM</span> sys.configurations
+<span class="kw">WHERE</span> name <span class="kw">IN</span> (<span class="str">'xp_cmdshell'</span>, <span class="str">'clr enabled'</span>,
+    <span class="str">'Ole Automation Procedures'</span>, <span class="str">'cross db ownership chaining'</span>);
+</code></pre>
+
+<h3>PostgreSQL — Hardening spécifique</h3>
+
+<ul>
+    <li><strong><code>pg_hba.conf</code></strong> — le fichier le plus critique. Bannir <code>trust</code> et <code>md5</code>,
+        utiliser <code>scram-sha-256</code> ou <code>cert</code>.</li>
+    <li><strong><code>listen_addresses</code></strong> — restreindre aux interfaces réseau nécessaires
+        (pas <code>'*'</code> en production)</li>
+    <li><strong>Limites de connexion</strong> — <code>max_connections</code>, connection pooling (PgBouncer)</li>
+    <li><strong>Rôle <code>postgres</code></strong> — protéger comme root, ne jamais utiliser pour les applications</li>
+    <li><strong>Extensions</strong> — n'installer que les extensions nécessaires, auditer régulièrement</li>
+</ul>
+
+<pre><code><span class="cmt"># postgresql.conf — paramètres de sécurité</span>
+listen_addresses = <span class="str">'10.0.1.5'</span>           <span class="cmt">-- PAS '*'</span>
+max_connections = <span class="val">100</span>
+password_encryption = <span class="str">'scram-sha-256'</span>
+log_connections = <span class="val">on</span>
+log_disconnections = <span class="val">on</span>
+log_statement = <span class="str">'ddl'</span>
+
+<span class="cmt"># pg_hba.conf — exemple sécurisé</span>
+local   all   postgres               peer
+hostssl all   app_user  10.0.1.0/24  scram-sha-256
+host    all   all       0.0.0.0/0    reject
+</code></pre>
+
+<h3>Oracle — Hardening spécifique</h3>
+
+<ul>
+    <li><strong><code>DBMS_NETWORK_ACL_ADMIN</code></strong> — contrôle granulaire des connexions réseau
+        sortantes depuis PL/SQL (UTL_HTTP, UTL_TCP, UTL_SMTP)</li>
+    <li><strong><code>AUDIT_SYS_OPERATIONS</code></strong> — auditer les opérations effectuées par SYSDBA/SYSOPER</li>
+    <li><strong><code>O7_DICTIONARY_ACCESSIBILITY = FALSE</code></strong> — empêcher l'accès aux vues dictionnaire
+        par les utilisateurs non privilégiés</li>
+    <li><strong>Comptes par défaut</strong> — verrouiller tous les comptes inutilisés (DBSNMP, SCOTT, HR, etc.)</li>
+    <li><strong>Oracle Database Vault</strong> — empêcher le DBA d'accéder aux données applicatives</li>
+    <li><strong>Listener</strong> — sécuriser le listener (mot de passe, logging, restriction d'administration distante)</li>
+</ul>
+
+<pre><code><span class="cmt">-- Contrôle d'accès réseau sortant (ACL)</span>
+<span class="kw">BEGIN</span>
+    <span class="fn">DBMS_NETWORK_ACL_ADMIN.APPEND_HOST_ACE</span>(
+        host       => <span class="str">'api.example.com'</span>,
+        lower_port => <span class="val">443</span>,
+        upper_port => <span class="val">443</span>,
+        ace        => <span class="fn">xs$ace_type</span>(
+            privilege_list => <span class="fn">xs$name_list</span>(<span class="str">'http'</span>),
+            principal_name => <span class="str">'APP_USER'</span>,
+            principal_type => <span class="fn">xs_acl.ptype_db</span>
+        )
+    );
+<span class="kw">END</span>;
+/
+
+<span class="cmt">-- Auditer les opérations SYSDBA</span>
+<span class="kw">ALTER SYSTEM SET</span> audit_sys_operations = <span class="val">TRUE</span> <span class="kw">SCOPE</span> = SPFILE;
+
+<span class="cmt">-- Verrouiller les comptes inutilisés</span>
+<span class="kw">ALTER USER</span> scott <span class="kw">ACCOUNT LOCK</span>;
+<span class="kw">ALTER USER</span> hr <span class="kw">ACCOUNT LOCK</span>;
+<span class="kw">ALTER USER</span> dbsnmp <span class="kw">ACCOUNT LOCK</span>;
+</code></pre>
+
+<div class="alert alert-warning">
+    <strong>Rappel :</strong> Le hardening n'est pas un événement ponctuel. Il doit être revu
+    régulièrement, en particulier après chaque mise à jour du SGBD, changement d'architecture
+    ou audit de sécurité. Utilisez les CIS Benchmarks comme référence.
+</div>
+
+<!-- ============================================================= -->
+<!-- CONFORMITÉ RGPD                                                 -->
+<!-- ============================================================= -->
+
+<h2 id="rgpd">11. Conformité RGPD</h2>
+
+<p>
+    Le Règlement Général sur la Protection des Données (RGPD / GDPR) impose des obligations
+    strictes aux organisations qui traitent des données personnelles de résidents de l'UE. Les
+    bases de données étant le lieu principal de stockage de ces données, leur sécurisation est
+    directement liée à la conformité RGPD.
+</p>
+
+<h3>Articles clés et leur application aux bases de données</h3>
+
+<table>
+    <thead>
+        <tr>
+            <th>Article RGPD</th>
+            <th>Obligation</th>
+            <th>Application technique</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><strong>Art. 25</strong></td>
+            <td>Protection des données dès la conception (<em>privacy by design</em>)</td>
+            <td>Intégrer le chiffrement, le masquage et le contrôle d'accès dès la phase de conception du schéma</td>
+        </tr>
+        <tr>
+            <td><strong>Art. 32</strong></td>
+            <td>Mesures techniques et organisationnelles appropriées</td>
+            <td>Chiffrement (TDE, TLS), pseudonymisation, contrôle d'accès, audit, tests de sécurité réguliers</td>
+        </tr>
+        <tr>
+            <td><strong>Art. 33</strong></td>
+            <td>Notification de violation à l'autorité (72h)</td>
+            <td>Si les données sont chiffrées et les clés non compromises, la notification peut ne pas être requise</td>
+        </tr>
+        <tr>
+            <td><strong>Art. 34</strong></td>
+            <td>Communication aux personnes concernées</td>
+            <td>Exemption si les données sont rendues inintelligibles (chiffrement)</td>
+        </tr>
+        <tr>
+            <td><strong>Art. 17</strong></td>
+            <td>Droit à l'effacement (<em>droit à l'oubli</em>)</td>
+            <td>Suppression effective ou <strong>crypto-shredding</strong> (destruction de la clé = destruction des données)</td>
+        </tr>
+        <tr>
+            <td><strong>Art. 20</strong></td>
+            <td>Droit à la portabilité</td>
+            <td>Capacité d'exporter les données d'un individu dans un format structuré (CSV, JSON)</td>
+        </tr>
+        <tr>
+            <td><strong>Art. 30</strong></td>
+            <td>Registre des traitements</td>
+            <td>Documentation des bases, des colonnes sensibles, des accès, des durées de conservation</td>
+        </tr>
+    </tbody>
+</table>
+
+<h3>Crypto-shredding : la destruction par la clé</h3>
+
+<p>
+    Le <strong>crypto-shredding</strong> est une technique élégante pour le droit à l'effacement :
+    plutôt que de supprimer physiquement les données (ce qui peut être complexe avec les backups,
+    la réplication, les archives), on détruit la clé de chiffrement. Sans la clé, les données
+    chiffrées deviennent définitivement inaccessibles, ce qui équivaut à une suppression effective.
+</p>
+
+<div class="alert alert-success">
+    <strong>Avantage du crypto-shredding :</strong> Il s'applique rétroactivement à toutes les
+    copies des données — backups, réplicas, archives — sans avoir à les localiser et les modifier
+    individuellement. C'est particulièrement utile dans les architectures distribuées.
+</div>
+
+<h3>Comment chaque SGBD aide à la conformité</h3>
+
+<div class="comparison-3">
+    <div class="card info">
+        <h4>SQL Server</h4>
+        <ul>
+            <li>TDE pour le chiffrement au repos</li>
+            <li>Always Encrypted pour les données ultra-sensibles</li>
+            <li>Dynamic Data Masking pour limiter l'exposition</li>
+            <li>Temporal Tables pour l'historique et la traçabilité</li>
+            <li>SQL Audit pour la journalisation</li>
+            <li>Data Classification (labels dans SSMS)</li>
+            <li>Azure Purview pour la gouvernance</li>
+        </ul>
+    </div>
+    <div class="card info">
+        <h4>PostgreSQL</h4>
+        <ul>
+            <li>pgcrypto / pg_tde pour le chiffrement</li>
+            <li>RLS pour l'isolation des données</li>
+            <li>pgaudit pour l'audit</li>
+            <li>postgresql_anonymizer pour la pseudonymisation</li>
+            <li>Gratuit — accessible aux PME</li>
+            <li>Extensible — s'adapte à tout contexte</li>
+            <li>SCRAM-SHA-256 pour l'authentification forte</li>
+        </ul>
+    </div>
+    <div class="card info">
+        <h4>Oracle</h4>
+        <ul>
+            <li>TDE (le plus mature) pour le chiffrement</li>
+            <li>Data Redaction pour le masquage temps réel</li>
+            <li>VPD / OLS pour l'isolation fine</li>
+            <li>Unified Audit / FGA pour la traçabilité</li>
+            <li>Database Vault pour la séparation des rôles</li>
+            <li>Oracle Data Safe (cloud) pour l'évaluation de conformité</li>
+            <li>Label Security pour la classification</li>
+        </ul>
+    </div>
+</div>
+
+<!-- ============================================================= -->
+<!-- SYNTHÈSE COMPARATIVE                                            -->
+<!-- ============================================================= -->
+
+<h2 id="synthese">12. Synthèse — Table comparative complète</h2>
+
+<p>
+    Le tableau ci-dessous résume l'ensemble des fonctionnalités de sécurité comparées dans ce document.
+    Les symboles utilisés :
+    <span class="status-yes">✅ Support natif complet</span> —
+    <span class="status-partial">⚠️ Support partiel ou via extension</span> —
+    <span class="status-no">❌ Non disponible</span>
+</p>
+
+<table>
+    <thead>
+        <tr>
+            <th>Fonctionnalité</th>
+            <th>SQL Server</th>
+            <th>PostgreSQL</th>
+            <th>Oracle</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td colspan="4" style="background: var(--surface-2); font-weight: 700; color: var(--accent);">Chiffrement</td>
+        </tr>
+        <tr>
+            <td>TDE (Transparent Data Encryption)</td>
+            <td class="status-yes">✅ Enterprise</td>
+            <td class="status-partial">⚠️ pg_tde / LUKS</td>
+            <td class="status-yes">✅ Natif (le plus mature)</td>
+        </tr>
+        <tr>
+            <td>Chiffrement client-side</td>
+            <td class="status-yes">✅ Always Encrypted</td>
+            <td class="status-no">❌ (pgcrypto = serveur)</td>
+            <td class="status-no">❌ (DBMS_CRYPTO = serveur)</td>
+        </tr>
+        <tr>
+            <td>Chiffrement de colonnes natif</td>
+            <td class="status-yes">✅ Always Encrypted</td>
+            <td class="status-yes">✅ pgcrypto</td>
+            <td class="status-yes">✅ TDE colonnes</td>
+        </tr>
+        <tr>
+            <td>TLS/SSL</td>
+            <td class="status-yes">✅ TLS 1.2/1.3</td>
+            <td class="status-yes">✅ TLS 1.2/1.3</td>
+            <td class="status-yes">✅ TLS + natif</td>
+        </tr>
+        <tr>
+            <td>Chiffrement réseau sans TLS</td>
+            <td class="status-no">❌</td>
+            <td class="status-no">❌</td>
+            <td class="status-yes">✅ Oracle Net AES256</td>
+        </tr>
+        <tr>
+            <td>Requêtes sur données chiffrées</td>
+            <td class="status-yes">✅ Enclaves sécurisés</td>
+            <td class="status-no">❌</td>
+            <td class="status-partial">⚠️ TDE colonne (index)</td>
+        </tr>
+        <tr>
+            <td colspan="4" style="background: var(--surface-2); font-weight: 700; color: var(--accent);">Contrôle d'accès</td>
+        </tr>
+        <tr>
+            <td>Row-Level Security</td>
+            <td class="status-yes">✅ Security Policy</td>
+            <td class="status-yes">✅ RLS (le plus flexible)</td>
+            <td class="status-yes">✅ VPD</td>
+        </tr>
+        <tr>
+            <td>Dynamic Data Masking</td>
+            <td class="status-yes">✅ Natif</td>
+            <td class="status-partial">⚠️ Extensions / vues</td>
+            <td class="status-yes">✅ DBMS_REDACT</td>
+        </tr>
+        <tr>
+            <td>Classification multi-niveaux</td>
+            <td class="status-no">❌</td>
+            <td class="status-no">❌</td>
+            <td class="status-yes">✅ Oracle Label Security</td>
+        </tr>
+        <tr>
+            <td>Séparation DBA / données</td>
+            <td class="status-partial">⚠️ Always Encrypted</td>
+            <td class="status-no">❌</td>
+            <td class="status-yes">✅ Database Vault</td>
+        </tr>
+        <tr>
+            <td colspan="4" style="background: var(--surface-2); font-weight: 700; color: var(--accent);">Authentification</td>
+        </tr>
+        <tr>
+            <td>Kerberos / SSO</td>
+            <td class="status-yes">✅ Windows Auth</td>
+            <td class="status-yes">✅ GSSAPI</td>
+            <td class="status-yes">✅</td>
+        </tr>
+        <tr>
+            <td>LDAP</td>
+            <td class="status-partial">⚠️ Via AD</td>
+            <td class="status-yes">✅</td>
+            <td class="status-yes">✅</td>
+        </tr>
+        <tr>
+            <td>Certificat client</td>
+            <td class="status-partial">⚠️ Limité</td>
+            <td class="status-yes">✅ cert</td>
+            <td class="status-yes">✅</td>
+        </tr>
+        <tr>
+            <td>Politique de mots de passe</td>
+            <td class="status-partial">⚠️ Via Windows</td>
+            <td class="status-partial">⚠️ Manuel</td>
+            <td class="status-yes">✅ Profiles (granulaire)</td>
+        </tr>
+        <tr>
+            <td>Auth challenge-response</td>
+            <td class="status-partial">⚠️ Interne</td>
+            <td class="status-yes">✅ SCRAM-SHA-256</td>
+            <td class="status-partial">⚠️ Verifier (12c+)</td>
+        </tr>
+        <tr>
+            <td colspan="4" style="background: var(--surface-2); font-weight: 700; color: var(--accent);">Audit et traçabilité</td>
+        </tr>
+        <tr>
+            <td>Audit natif</td>
+            <td class="status-yes">✅ SQL Audit</td>
+            <td class="status-yes">✅ pgaudit</td>
+            <td class="status-yes">✅ Unified Audit (le plus complet)</td>
+        </tr>
+        <tr>
+            <td>Audit conditionnel (FGA)</td>
+            <td class="status-partial">⚠️ Limité</td>
+            <td class="status-no">❌</td>
+            <td class="status-yes">✅ DBMS_FGA</td>
+        </tr>
+        <tr>
+            <td>Change Data Capture</td>
+            <td class="status-yes">✅ CDC</td>
+            <td class="status-yes">✅ Logical Decoding</td>
+            <td class="status-yes">✅ Flashback</td>
+        </tr>
+        <tr>
+            <td>Tables versionnées</td>
+            <td class="status-yes">✅ Temporal Tables</td>
+            <td class="status-no">❌ (triggers)</td>
+            <td class="status-yes">✅ Flashback Archive</td>
+        </tr>
+        <tr>
+            <td colspan="4" style="background: var(--surface-2); font-weight: 700; color: var(--accent);">Cryptographie</td>
+        </tr>
+        <tr>
+            <td>Hachage de mots de passe (bcrypt)</td>
+            <td class="status-no">❌</td>
+            <td class="status-yes">✅ pgcrypto crypt()</td>
+            <td class="status-no">❌</td>
+        </tr>
+        <tr>
+            <td>HMAC natif</td>
+            <td class="status-no">❌</td>
+            <td class="status-yes">✅ hmac()</td>
+            <td class="status-yes">✅ DBMS_CRYPTO.MAC</td>
+        </tr>
+        <tr>
+            <td>Gestion des clés</td>
+            <td>DPAPI / Azure Key Vault</td>
+            <td>pg_tde / fichier</td>
+            <td>Oracle Wallet / OKV</td>
+        </tr>
+        <tr>
+            <td colspan="4" style="background: var(--surface-2); font-weight: 700; color: var(--accent);">Opérationnel</td>
+        </tr>
+        <tr>
+            <td>Contrôle réseau sortant</td>
+            <td class="status-no">❌</td>
+            <td class="status-no">❌</td>
+            <td class="status-yes">✅ DBMS_NETWORK_ACL</td>
+        </tr>
+        <tr>
+            <td>Coût licence</td>
+            <td class="status-no">$$$$ (Enterprise)</td>
+            <td class="status-yes">Gratuit (open source)</td>
+            <td class="status-no">$$$$ (Enterprise)</td>
+        </tr>
+        <tr>
+            <td>Conformité RGPD</td>
+            <td class="status-yes">✅ Outils complets</td>
+            <td class="status-yes">✅ Flexible + gratuit</td>
+            <td class="status-yes">✅ Le plus complet</td>
+        </tr>
+        <tr>
+            <td>CIS Benchmark disponible</td>
+            <td class="status-yes">✅</td>
+            <td class="status-yes">✅</td>
+            <td class="status-yes">✅</td>
+        </tr>
+    </tbody>
+</table>
+
+<!-- ============================================================= -->
+<!-- RECOMMANDATIONS                                                 -->
+<!-- ============================================================= -->
+
+<h2 id="recommandations">13. Recommandations par cas d'usage</h2>
+
+<div class="comparison">
+    <div class="card good">
+        <h4>Startup / PME</h4>
+        <p><strong>Recommandation : PostgreSQL</strong></p>
+        <ul>
+            <li>Gratuit et open source — pas de coût de licence</li>
+            <li>RLS natif très flexible pour le multi-tenancy</li>
+            <li>pgcrypto pour le chiffrement applicatif</li>
+            <li>SCRAM-SHA-256 pour l'authentification forte</li>
+            <li>Large communauté et documentation abondante</li>
+            <li>Facile à héberger (on-premise ou cloud)</li>
+        </ul>
+    </div>
+    <div class="card info">
+        <h4>Enterprise Windows / .NET</h4>
+        <p><strong>Recommandation : SQL Server</strong></p>
+        <ul>
+            <li>Intégration native avec Active Directory</li>
+            <li>Always Encrypted pour la protection contre le DBA</li>
+            <li>Dynamic Data Masking intégré</li>
+            <li>Excellent outillage (SSMS, Azure Data Studio)</li>
+            <li>Temporal Tables pour la conformité</li>
+            <li>Ecosystème Microsoft cohérent</li>
+        </ul>
+    </div>
+</div>
+
+<div class="comparison">
+    <div class="card warn">
+        <h4>Grande entreprise / Banques / Assurances</h4>
+        <p><strong>Recommandation : Oracle Database</strong></p>
+        <ul>
+            <li>TDE le plus mature du marché</li>
+            <li>Database Vault pour la séparation des rôles</li>
+            <li>Label Security pour la classification</li>
+            <li>Unified Audit + FGA pour la conformité</li>
+            <li>Oracle Key Vault pour la gestion centralisée des clés</li>
+            <li>Support enterprise 24/7</li>
+            <li>Audit Vault and Database Firewall</li>
+        </ul>
+    </div>
+    <div class="card info">
+        <h4>Cloud-native / Microservices</h4>
+        <p><strong>Recommandation : Services managés</strong></p>
+        <ul>
+            <li><strong>AWS</strong> : RDS PostgreSQL/MySQL, Aurora, DynamoDB</li>
+            <li><strong>Azure</strong> : Azure SQL, Azure Database for PostgreSQL</li>
+            <li><strong>OCI</strong> : Oracle Autonomous Database</li>
+            <li><strong>GCP</strong> : Cloud SQL, AlloyDB</li>
+            <li>Chiffrement au repos automatique</li>
+            <li>TLS activé par défaut</li>
+            <li>Patching automatique</li>
+            <li>Intégration IAM native</li>
+        </ul>
+    </div>
+</div>
+
+<div class="alert alert-info">
+    <strong>Rappel universel :</strong> Quel que soit le SGBD choisi, les principes fondamentaux
+    restent identiques : chiffrer au repos et en transit, appliquer le moindre privilège, auditer
+    les accès, maintenir les patches à jour, et tester régulièrement la sécurité. Le choix du SGBD
+    influence les outils disponibles, pas la stratégie de sécurité.
+</div>
+
+<!-- ============================================================= -->
+<!-- RÉFÉRENCES                                                      -->
+<!-- ============================================================= -->
+
+<h2 id="references">14. Références</h2>
+
+<h3>Documentation officielle</h3>
+
+<table>
+    <thead>
+        <tr>
+            <th>Ressource</th>
+            <th>Lien</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>SQL Server — Security Center</td>
+            <td><a href="https://learn.microsoft.com/sql/relational-databases/security/" style="color: var(--info)">learn.microsoft.com/sql/security</a></td>
+        </tr>
+        <tr>
+            <td>SQL Server — TDE</td>
+            <td><a href="https://learn.microsoft.com/sql/relational-databases/security/encryption/transparent-data-encryption" style="color: var(--info)">learn.microsoft.com/sql/tde</a></td>
+        </tr>
+        <tr>
+            <td>SQL Server — Always Encrypted</td>
+            <td><a href="https://learn.microsoft.com/sql/relational-databases/security/encryption/always-encrypted-database-engine" style="color: var(--info)">learn.microsoft.com/sql/always-encrypted</a></td>
+        </tr>
+        <tr>
+            <td>PostgreSQL — Security</td>
+            <td><a href="https://www.postgresql.org/docs/current/security.html" style="color: var(--info)">postgresql.org/docs/security</a></td>
+        </tr>
+        <tr>
+            <td>PostgreSQL — pgcrypto</td>
+            <td><a href="https://www.postgresql.org/docs/current/pgcrypto.html" style="color: var(--info)">postgresql.org/docs/pgcrypto</a></td>
+        </tr>
+        <tr>
+            <td>PostgreSQL — Row Security</td>
+            <td><a href="https://www.postgresql.org/docs/current/ddl-rowsecurity.html" style="color: var(--info)">postgresql.org/docs/row-security</a></td>
+        </tr>
+        <tr>
+            <td>pgaudit</td>
+            <td><a href="https://www.pgaudit.org/" style="color: var(--info)">pgaudit.org</a></td>
+        </tr>
+        <tr>
+            <td>Oracle — Security Guide</td>
+            <td><a href="https://docs.oracle.com/en/database/oracle/oracle-database/23/dbseg/" style="color: var(--info)">docs.oracle.com/database/security</a></td>
+        </tr>
+        <tr>
+            <td>Oracle — TDE</td>
+            <td><a href="https://docs.oracle.com/en/database/oracle/oracle-database/23/asoag/" style="color: var(--info)">docs.oracle.com/database/tde</a></td>
+        </tr>
+        <tr>
+            <td>Oracle — DBMS_CRYPTO</td>
+            <td><a href="https://docs.oracle.com/en/database/oracle/oracle-database/23/arpls/DBMS_CRYPTO.html" style="color: var(--info)">docs.oracle.com/DBMS_CRYPTO</a></td>
+        </tr>
+        <tr>
+            <td>Oracle — VPD</td>
+            <td><a href="https://docs.oracle.com/en/database/oracle/oracle-database/23/dbseg/using-oracle-virtual-private-database-to-control-data-access.html" style="color: var(--info)">docs.oracle.com/VPD</a></td>
+        </tr>
+    </tbody>
+</table>
+
+<h3>Standards et guides de sécurité</h3>
+
+<table>
+    <thead>
+        <tr>
+            <th>Ressource</th>
+            <th>Lien</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>OWASP — Database Security Cheat Sheet</td>
+            <td><a href="https://cheatsheetseries.owasp.org/cheatsheets/Database_Security_Cheat_Sheet.html" style="color: var(--info)">owasp.org/cheatsheets/Database_Security</a></td>
+        </tr>
+        <tr>
+            <td>CIS Benchmark — SQL Server</td>
+            <td><a href="https://www.cisecurity.org/benchmark/microsoft_sql_server" style="color: var(--info)">cisecurity.org/benchmark/sql_server</a></td>
+        </tr>
+        <tr>
+            <td>CIS Benchmark — PostgreSQL</td>
+            <td><a href="https://www.cisecurity.org/benchmark/postgresql" style="color: var(--info)">cisecurity.org/benchmark/postgresql</a></td>
+        </tr>
+        <tr>
+            <td>CIS Benchmark — Oracle</td>
+            <td><a href="https://www.cisecurity.org/benchmark/oracle_database" style="color: var(--info)">cisecurity.org/benchmark/oracle</a></td>
+        </tr>
+        <tr>
+            <td>ANSSI — Recommandations pour les SGBD</td>
+            <td><a href="https://www.ssi.gouv.fr/guide/recommandations-pour-la-securisation-des-sgbd/" style="color: var(--info)">ssi.gouv.fr/guide/sgbd</a></td>
+        </tr>
+        <tr>
+            <td>ANSSI — Guide d'hygiène informatique</td>
+            <td><a href="https://www.ssi.gouv.fr/guide/guide-dhygiene-informatique/" style="color: var(--info)">ssi.gouv.fr/guide/hygiene</a></td>
+        </tr>
+        <tr>
+            <td>RGPD — Texte officiel</td>
+            <td><a href="https://eur-lex.europa.eu/legal-content/FR/TXT/?uri=CELEX:32016R0679" style="color: var(--info)">eur-lex.europa.eu/RGPD</a></td>
+        </tr>
+        <tr>
+            <td>CNIL — Guide de la sécurité des données personnelles</td>
+            <td><a href="https://www.cnil.fr/fr/guide-de-la-securite-des-donnees-personnelles" style="color: var(--info)">cnil.fr/guide-securite</a></td>
+        </tr>
+    </tbody>
+</table>
+
+</main>
+
+<footer>
+    Condorcet 2026 — Programmation Sécurisée
+</footer>
+
+</body>
+</html>

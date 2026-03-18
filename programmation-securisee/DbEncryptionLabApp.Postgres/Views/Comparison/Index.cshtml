@@ -1,0 +1,220 @@
+@model ComparisonViewModel
+@{
+    ViewData["Title"] = "Comparaison";
+}
+
+<div class="row justify-content-center mt-3">
+    <div class="col-lg-12">
+        <h2 class="fw-bold mb-3">Comparaison cote a cote : <span class="text-warning">memes donnees, 3 patterns</span></h2>
+
+        <div class="alert alert-info">
+            <strong>Principe :</strong> Les memes 4 employes sont stockes dans 3 tables differentes.
+            Pour chaque table, on compare ce que voit l'application (apres dechiffrement)
+            et ce que contient reellement la base de donnees PostgreSQL.
+        </div>
+
+        <!-- ═══════════ PATTERN 1: CLEAR TEXT ═══════════ -->
+        <h3 class="text-danger mt-4 mb-3">Pattern 1 : Stockage en clair</h3>
+        <div class="row g-3 mb-4">
+            <div class="col-md-6">
+                <div class="card border-danger">
+                    <div class="card-header bg-danger text-white fw-bold small">Vue Application</div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-dark table-sm mb-0" style="font-size: 0.8rem;">
+                                <thead><tr><th>Nom</th><th>N. National</th><th>Salaire</th><th>IBAN</th></tr></thead>
+                                <tbody>
+                                    @foreach (var e in Model.EmployesClair)
+                                    {
+                                        <tr>
+                                            <td>@e.Nom @e.Prenom</td>
+                                            <td class="text-danger">@e.NumeroNational</td>
+                                            <td class="text-danger">@e.Salaire</td>
+                                            <td class="text-danger">@e.CompteBancaire</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card border-danger">
+                    <div class="card-header bg-dark text-danger fw-bold small">Vue Base de Donnees (PostgreSQL)</div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-dark table-sm mb-0" style="font-size: 0.8rem;">
+                                <thead><tr><th>Nom</th><th>N. National</th><th>Salaire</th><th>IBAN</th></tr></thead>
+                                <tbody>
+                                    @foreach (var row in Model.RawRowsClair)
+                                    {
+                                        <tr>
+                                            <td>@row["Nom"] @row["Prenom"]</td>
+                                            <td class="text-danger">@row["NumeroNational"]</td>
+                                            <td class="text-danger">@row["Salaire"]</td>
+                                            <td class="text-danger">@row["CompteBancaire"]</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="alert alert-danger small py-2">
+            Les deux tableaux sont <strong>identiques</strong> — un attaquant voit directement les donnees sensibles.
+        </div>
+
+        <!-- ═══════════ PATTERN 2: VALUE CONVERTER ═══════════ -->
+        <h3 class="text-success mt-4 mb-3">Pattern 2 : Value Converters + Data Protection</h3>
+        <div class="row g-3 mb-4">
+            <div class="col-md-6">
+                <div class="card border-success">
+                    <div class="card-header bg-success text-white fw-bold small">Vue Application (dechiffre)</div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-dark table-sm mb-0" style="font-size: 0.8rem;">
+                                <thead><tr><th>Nom</th><th>N. National</th><th>Salaire</th><th>IBAN</th></tr></thead>
+                                <tbody>
+                                    @foreach (var e in Model.EmployesValueConverter)
+                                    {
+                                        <tr>
+                                            <td>@e.Nom @e.Prenom</td>
+                                            <td class="text-success">@e.NumeroNational</td>
+                                            <td class="text-success">@e.Salaire</td>
+                                            <td class="text-success">@e.CompteBancaire</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card border-success">
+                    <div class="card-header bg-dark text-danger fw-bold small">Vue Base de Donnees (chiffre)</div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-dark table-sm mb-0" style="font-size: 0.75rem;">
+                                <thead><tr><th>Nom</th><th>N. National</th><th>Salaire</th><th>IBAN</th></tr></thead>
+                                <tbody>
+                                    @foreach (var row in Model.RawRowsValueConverter)
+                                    {
+                                        <tr>
+                                            <td>@row["Nom"] @row["Prenom"]</td>
+                                            <td><code class="text-danger encrypted-text" style="max-width:150px;">@(row["NumeroNational"].Length > 40 ? row["NumeroNational"].Substring(0, 40) + "..." : row["NumeroNational"])</code></td>
+                                            <td><code class="text-danger encrypted-text" style="max-width:150px;">@(row["Salaire"].Length > 40 ? row["Salaire"].Substring(0, 40) + "..." : row["Salaire"])</code></td>
+                                            <td><code class="text-danger encrypted-text" style="max-width:150px;">@(row["CompteBancaire"].Length > 40 ? row["CompteBancaire"].Substring(0, 40) + "..." : row["CompteBancaire"])</code></td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="alert alert-success small py-2">
+            L'application voit les donnees en clair, mais la base de donnees ne contient que du texte chiffre par Data Protection.
+        </div>
+
+        <!-- ═══════════ PATTERN 3: AES-256 ═══════════ -->
+        <h3 class="text-info mt-4 mb-3">Pattern 3 : AES-256-CBC + HMAC-SHA256</h3>
+        <div class="row g-3 mb-4">
+            <div class="col-md-6">
+                <div class="card border-info">
+                    <div class="card-header bg-info text-white fw-bold small">Vue Application (dechiffre)</div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-dark table-sm mb-0" style="font-size: 0.8rem;">
+                                <thead><tr><th>Nom</th><th>N. National</th><th>Salaire</th><th>IBAN</th></tr></thead>
+                                <tbody>
+                                    @foreach (var e in Model.EmployesAes)
+                                    {
+                                        <tr>
+                                            <td>@e.Nom @e.Prenom</td>
+                                            <td class="text-info">@e.NumeroNational</td>
+                                            <td class="text-info">@e.Salaire</td>
+                                            <td class="text-info">@e.CompteBancaire</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card border-info">
+                    <div class="card-header bg-dark text-danger fw-bold small">Vue Base de Donnees (chiffre AES)</div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-dark table-sm mb-0" style="font-size: 0.75rem;">
+                                <thead><tr><th>Nom</th><th>N. National</th><th>Salaire</th><th>IBAN</th></tr></thead>
+                                <tbody>
+                                    @foreach (var row in Model.RawRowsAes)
+                                    {
+                                        <tr>
+                                            <td>@row["Nom"] @row["Prenom"]</td>
+                                            <td><code class="text-danger encrypted-text" style="max-width:150px;">@(row["NumeroNational"].Length > 40 ? row["NumeroNational"].Substring(0, 40) + "..." : row["NumeroNational"])</code></td>
+                                            <td><code class="text-danger encrypted-text" style="max-width:150px;">@(row["Salaire"].Length > 40 ? row["Salaire"].Substring(0, 40) + "..." : row["Salaire"])</code></td>
+                                            <td><code class="text-danger encrypted-text" style="max-width:150px;">@(row["CompteBancaire"].Length > 40 ? row["CompteBancaire"].Substring(0, 40) + "..." : row["CompteBancaire"])</code></td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="alert alert-info small py-2">
+            Meme resultat que le Value Converter, mais avec un chiffrement AES-256 manuel authentifie par HMAC-SHA256.
+            Le format du texte chiffre est different (Base64 brut vs. format Data Protection).
+        </div>
+
+        <!-- Summary -->
+        <div class="card border-light mt-4 mb-4">
+            <div class="card-header bg-dark text-light fw-bold">Resume : quel pattern choisir ?</div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <div class="card bg-dark border-danger h-100">
+                            <div class="card-body text-center">
+                                <h6 class="text-danger">En Clair</h6>
+                                <p class="small mb-0">Jamais en production avec des donnees sensibles</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-dark border-success h-100">
+                            <div class="card-body text-center">
+                                <h6 class="text-success">Value Converter</h6>
+                                <p class="small mb-0">Ideal pour du prototypage rapide ou des projets simples</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-dark border-info h-100">
+                            <div class="card-body text-center">
+                                <h6 class="text-info">AES-256 Manuel</h6>
+                                <p class="small mb-0">Quand vous avez besoin de portabilite ou d'interoperabilite</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-dark border-warning h-100">
+                            <div class="card-body text-center">
+                                <h6 class="text-warning">pgcrypto</h6>
+                                <p class="small mb-0">Chiffrement natif PostgreSQL, simple et integre au SQL</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

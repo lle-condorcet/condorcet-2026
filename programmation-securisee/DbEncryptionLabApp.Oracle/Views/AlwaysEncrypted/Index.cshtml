@@ -1,0 +1,441 @@
+@{
+    ViewData["Title"] = "TDE + DBMS_CRYPTO";
+}
+
+<div class="row justify-content-center mt-3">
+    <div class="col-lg-11">
+        <h2 class="fw-bold text-warning mb-3">Pattern 4 : TDE + DBMS_CRYPTO (Oracle Database)</h2>
+
+        <div class="alert alert-warning">
+            <strong>FONCTIONNALITES NATIVES ORACLE DATABASE :</strong> Oracle propose deux mecanismes majeurs de chiffrement :
+            <strong>TDE (Transparent Data Encryption)</strong> pour le chiffrement transparent au niveau colonne ou tablespace,
+            et <strong>DBMS_CRYPTO</strong> pour le chiffrement applicatif cote serveur en PL/SQL.
+        </div>
+
+        <!-- TDE Architecture -->
+        <div class="card border-warning mb-4">
+            <div class="card-header bg-warning text-dark fw-bold">Architecture TDE (Transparent Data Encryption)</div>
+            <div class="card-body">
+<pre class="bg-dark text-light p-3 rounded mb-3"><code>
+   ┌──────────────────────────────────────────────────────────────────┐
+   │                    ORACLE DATABASE                               │
+   │                                                                  │
+   │  ┌──────────────┐    ┌──────────────────┐    ┌───────────────┐  │
+   │  │ Oracle Wallet │    │   Master Key     │    │  Table Key    │  │
+   │  │   (ou OKV)   │───►│  (TDE Master     │───►│  (par table   │  │
+   │  │              │    │   Encryption Key)│    │   ou colonne) │  │
+   │  └──────────────┘    └──────────────────┘    └───────┬───────┘  │
+   │                                                       │         │
+   │                                              ┌────────▼───────┐ │
+   │  APPLICATION .NET                            │   Donnees      │ │
+   │  ┌────────────────┐                          │   chiffrees    │ │
+   │  │ Code C# ne     │    SELECT/INSERT         │   sur disque   │ │
+   │  │ change PAS     │◄──────────────────────►  │   (datafiles)  │ │
+   │  │                │    Donnees en clair       │                │ │
+   │  │ Aucun chg code │    en memoire (SGA)      │   Backups      │ │
+   │  └────────────────┘                          │   chiffres     │ │
+   │                                              └────────────────┘ │
+   └──────────────────────────────────────────────────────────────────┘
+
+   Hierarchie des cles :
+   ┌────────────────────┐
+   │  Oracle Wallet /   │  Stocke la Master Key (protegee par mot de passe)
+   │  Oracle Key Vault  │  Fichier : ewallet.p12 / cwallet.sso
+   └────────┬───────────┘
+            │ protege
+   ┌────────▼───────────┐
+   │  TDE Master Key    │  Une seule par base de donnees
+   │  (dans la DB)      │  Chiffree par la cle du Wallet
+   └────────┬───────────┘
+            │ protege
+   ┌────────▼───────────┐
+   │  Table Key /       │  Une par table (tablespace TDE)
+   │  Column Key        │  ou une par colonne (column TDE)
+   └────────┬───────────┘
+            │ chiffre
+   ┌────────▼───────────┐
+   │  Donnees sur       │  Chiffrees avec AES-128/192/256 ou 3DES
+   │  disque            │
+   └────────────────────┘
+</code></pre>
+            </div>
+        </div>
+
+        <!-- Column TDE vs Tablespace TDE -->
+        <div class="row g-4 mb-4">
+            <div class="col-md-6">
+                <div class="card border-info h-100">
+                    <div class="card-header bg-info text-white fw-bold">TDE Column Encryption</div>
+                    <div class="card-body">
+                        <p>Chiffrement au niveau de <strong>colonnes individuelles</strong>.</p>
+                        <h6 class="text-success">Avantages :</h6>
+                        <ul class="small">
+                            <li>Granularite fine : seules les colonnes sensibles sont chiffrees</li>
+                            <li>Index possibles (avec certaines restrictions)</li>
+                            <li>Moins d'overhead que le tablespace complet</li>
+                        </ul>
+                        <h6 class="text-danger">Limitations :</h6>
+                        <ul class="small">
+                            <li>Pas de recherche par plage (<code>BETWEEN</code>, <code>LIKE</code>)</li>
+                            <li>Max 2000 octets par colonne chiffree</li>
+                            <li>Types supportes : VARCHAR2, NUMBER, DATE, RAW, etc.</li>
+                        </ul>
+<pre class="bg-dark text-light p-2 rounded mt-2" style="font-size: 0.78rem;"><code><span class="text-info">ALTER TABLE</span> EMPLOYES
+<span class="text-info">MODIFY</span> (
+  NumeroNational <span class="text-info">ENCRYPT</span>
+    <span class="text-info">USING</span> <span class="text-warning">'AES256'</span>
+    <span class="text-info">SALT</span>
+);</code></pre>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card border-success h-100">
+                    <div class="card-header bg-success text-white fw-bold">TDE Tablespace Encryption</div>
+                    <div class="card-body">
+                        <p>Chiffrement de l'<strong>integralite d'un tablespace</strong>.</p>
+                        <h6 class="text-success">Avantages :</h6>
+                        <ul class="small">
+                            <li>Toutes les donnees du tablespace sont chiffrees</li>
+                            <li>Aucune restriction sur les types de colonnes</li>
+                            <li>Supporte tous les types d'index</li>
+                            <li>Meilleure performance (bulk encryption)</li>
+                        </ul>
+                        <h6 class="text-danger">Limitations :</h6>
+                        <ul class="small">
+                            <li>Tout ou rien : pas de granularite par colonne</li>
+                            <li>Les donnees sont en clair dans le buffer cache (SGA)</li>
+                        </ul>
+<pre class="bg-dark text-light p-2 rounded mt-2" style="font-size: 0.78rem;"><code><span class="text-info">CREATE TABLESPACE</span> ts_secure
+  <span class="text-info">DATAFILE</span> <span class="text-warning">'ts_secure01.dbf'</span>
+  <span class="text-info">SIZE</span> 100M
+  <span class="text-info">ENCRYPTION USING</span> <span class="text-warning">'AES256'</span>
+  <span class="text-info">DEFAULT STORAGE</span> (<span class="text-info">ENCRYPT</span>);</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Setup TDE -->
+        <div class="card border-secondary mb-4">
+            <div class="card-header bg-secondary text-white fw-bold">Mise en place de TDE avec Oracle Database</div>
+            <div class="card-body">
+                <h6>Etape 1 : Configurer le Wallet (Oracle Keystore)</h6>
+<pre class="bg-dark text-light p-3 rounded mb-3"><code><span class="text-muted">-- Configurer le repertoire du wallet dans sqlnet.ora</span>
+<span class="text-muted">-- ENCRYPTION_WALLET_LOCATION = (SOURCE = (METHOD = FILE)</span>
+<span class="text-muted">--   (METHOD_DATA = (DIRECTORY = /opt/oracle/admin/wallet)))</span>
+
+<span class="text-muted">-- Creer le keystore (wallet)</span>
+<span class="text-info">ADMINISTER KEY MANAGEMENT
+  CREATE KEYSTORE</span> <span class="text-warning">'/opt/oracle/admin/wallet'</span>
+  <span class="text-info">IDENTIFIED BY</span> <span class="text-warning">"MonMotDePasse123!"</span>;
+
+<span class="text-muted">-- Ouvrir le keystore</span>
+<span class="text-info">ADMINISTER KEY MANAGEMENT
+  SET KEYSTORE OPEN
+  IDENTIFIED BY</span> <span class="text-warning">"MonMotDePasse123!"</span>;
+
+<span class="text-muted">-- Creer un auto-login wallet (optionnel, pour demarrage automatique)</span>
+<span class="text-info">ADMINISTER KEY MANAGEMENT
+  CREATE AUTO_LOGIN KEYSTORE FROM KEYSTORE</span> <span class="text-warning">'/opt/oracle/admin/wallet'</span>
+  <span class="text-info">IDENTIFIED BY</span> <span class="text-warning">"MonMotDePasse123!"</span>;</code></pre>
+
+                <h6>Etape 2 : Creer la Master Encryption Key</h6>
+<pre class="bg-dark text-light p-3 rounded mb-3"><code><span class="text-info">ADMINISTER KEY MANAGEMENT
+  SET KEY
+  IDENTIFIED BY</span> <span class="text-warning">"MonMotDePasse123!"</span>
+  <span class="text-info">WITH BACKUP USING</span> <span class="text-warning">'pre_tde_backup'</span>;
+
+<span class="text-muted">-- Verifier</span>
+<span class="text-info">SELECT</span> * <span class="text-info">FROM</span> V$ENCRYPTION_WALLET;</code></pre>
+
+                <h6>Etape 3 : Chiffrer les colonnes sensibles (Column TDE)</h6>
+<pre class="bg-dark text-light p-3 rounded mb-3"><code><span class="text-muted">-- Chiffrer des colonnes individuelles</span>
+<span class="text-info">ALTER TABLE</span> EMPLOYES <span class="text-info">MODIFY</span> (
+  NumeroNational <span class="text-info">ENCRYPT USING</span> <span class="text-warning">'AES256'</span> <span class="text-info">SALT</span>,
+  Salaire        <span class="text-info">ENCRYPT USING</span> <span class="text-warning">'AES256'</span> <span class="text-info">SALT</span>,
+  CompteBancaire <span class="text-info">ENCRYPT USING</span> <span class="text-warning">'AES256'</span> <span class="text-info">SALT</span>
+);
+
+<span class="text-muted">-- SALT ajoute un sel aleatoire (plus securise, mais pas d'index)</span>
+<span class="text-muted">-- NO SALT permet l'indexation mais est moins securise</span>
+
+<span class="text-muted">-- Verifier les colonnes chiffrees</span>
+<span class="text-info">SELECT</span> table_name, column_name, encryption_alg, salt
+<span class="text-info">FROM</span> DBA_ENCRYPTED_COLUMNS;</code></pre>
+
+                <h6>Etape 4 : Utiliser avec EF Core (aucun changement dans le code !)</h6>
+<pre class="bg-dark text-light p-3 rounded mb-0"><code><span class="text-muted">// Le code EF Core reste IDENTIQUE - TDE est transparent</span>
+<span class="text-primary">var</span> employes = <span class="text-primary">await</span> _db.Employes.ToListAsync();
+
+<span class="text-muted">// Oracle gere automatiquement :</span>
+<span class="text-muted">// - Le dechiffrement lors de la lecture depuis les datafiles</span>
+<span class="text-muted">// - Le chiffrement lors de l'ecriture sur disque</span>
+<span class="text-muted">// - Les backups RMAN sont automatiquement chiffres</span>
+
+<span class="text-muted">// Connection string Oracle - aucun parametre special requis</span>
+<span class="text-warning">"User Id=system;Password=oracle;Data Source=localhost:1521/FREEPDB1"</span></code></pre>
+            </div>
+        </div>
+
+        <!-- DBMS_CRYPTO -->
+        <div class="card border-info mb-4">
+            <div class="card-header bg-info text-white fw-bold">DBMS_CRYPTO : Chiffrement applicatif PL/SQL</div>
+            <div class="card-body">
+                <p>Le package <code>DBMS_CRYPTO</code> fournit des fonctions de chiffrement/dechiffrement au niveau PL/SQL,
+                   equivalent a un chiffrement applicatif mais execute <strong>cote serveur Oracle</strong>.</p>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <h6 class="text-warning">Chiffrement avec DBMS_CRYPTO</h6>
+<pre class="bg-dark text-light p-3 rounded mb-0" style="font-size: 0.78rem;"><code><span class="text-info">DECLARE</span>
+  l_key      <span class="text-primary">RAW</span>(32) := UTL_RAW.CAST_TO_RAW(
+                          <span class="text-warning">'MaCleSecrete32octets!!'</span>);
+  l_data     <span class="text-primary">RAW</span>(2000);
+  l_encrypted <span class="text-primary">RAW</span>(2000);
+<span class="text-info">BEGIN</span>
+  l_data := UTL_I18N.STRING_TO_RAW(
+              <span class="text-warning">'85.07.15-123.45'</span>, <span class="text-warning">'AL32UTF8'</span>);
+
+  l_encrypted := <span class="text-info">DBMS_CRYPTO.ENCRYPT</span>(
+    src => l_data,
+    typ => DBMS_CRYPTO.ENCRYPT_AES256
+         + DBMS_CRYPTO.CHAIN_CBC
+         + DBMS_CRYPTO.PAD_PKCS5,
+    key => l_key
+  );
+
+  <span class="text-muted">-- l_encrypted contient les donnees chiffrees</span>
+<span class="text-info">END;</span></code></pre>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-warning">Dechiffrement avec DBMS_CRYPTO</h6>
+<pre class="bg-dark text-light p-3 rounded mb-0" style="font-size: 0.78rem;"><code><span class="text-info">DECLARE</span>
+  l_key       <span class="text-primary">RAW</span>(32) := UTL_RAW.CAST_TO_RAW(
+                           <span class="text-warning">'MaCleSecrete32octets!!'</span>);
+  l_encrypted <span class="text-primary">RAW</span>(2000);
+  l_decrypted <span class="text-primary">RAW</span>(2000);
+  l_result    <span class="text-primary">VARCHAR2</span>(200);
+<span class="text-info">BEGIN</span>
+  l_decrypted := <span class="text-info">DBMS_CRYPTO.DECRYPT</span>(
+    src => l_encrypted,
+    typ => DBMS_CRYPTO.ENCRYPT_AES256
+         + DBMS_CRYPTO.CHAIN_CBC
+         + DBMS_CRYPTO.PAD_PKCS5,
+    key => l_key
+  );
+
+  l_result := UTL_I18N.RAW_TO_CHAR(
+                l_decrypted, <span class="text-warning">'AL32UTF8'</span>);
+
+  <span class="text-muted">-- l_result = '85.07.15-123.45'</span>
+<span class="text-info">END;</span></code></pre>
+                    </div>
+                </div>
+
+                <h6 class="mt-3">Algorithmes disponibles dans DBMS_CRYPTO :</h6>
+                <div class="table-responsive">
+                    <table class="table table-dark table-sm mb-0" style="font-size: 0.85rem;">
+                        <thead><tr><th>Constante</th><th>Algorithme</th><th>Taille cle</th></tr></thead>
+                        <tbody>
+                            <tr><td><code>ENCRYPT_AES128</code></td><td>AES-128</td><td>128 bits</td></tr>
+                            <tr><td><code>ENCRYPT_AES192</code></td><td>AES-192</td><td>192 bits</td></tr>
+                            <tr class="text-success"><td><code>ENCRYPT_AES256</code></td><td>AES-256 (recommande)</td><td>256 bits</td></tr>
+                            <tr><td><code>ENCRYPT_3DES_2KEY</code></td><td>Triple DES (2 cles)</td><td>128 bits</td></tr>
+                            <tr><td><code>ENCRYPT_3DES</code></td><td>Triple DES (3 cles)</td><td>192 bits</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Comparison table -->
+        <div class="card border-secondary mb-4">
+            <div class="card-header bg-secondary text-white fw-bold">Comparaison des 4 patterns</div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-dark table-striped mb-0">
+                        <thead>
+                            <tr>
+                                <th>Critere</th>
+                                <th class="text-danger">En Clair</th>
+                                <th class="text-success">Value Converter</th>
+                                <th class="text-info">AES-256 Manuel</th>
+                                <th class="text-warning">TDE / DBMS_CRYPTO</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Donnees protegees en DB</td>
+                                <td class="text-danger">Non</td>
+                                <td class="text-success">Oui</td>
+                                <td class="text-success">Oui</td>
+                                <td class="text-success">Oui</td>
+                            </tr>
+                            <tr>
+                                <td>Protection contre DBA</td>
+                                <td class="text-danger">Non</td>
+                                <td class="text-danger">Non (cles sur le serveur app)</td>
+                                <td class="text-danger">Non (cles sur le serveur app)</td>
+                                <td class="text-warning">Partiel (TDE: non, DBMS_CRYPTO: depend de la gestion des cles)</td>
+                            </tr>
+                            <tr>
+                                <td>Requetes WHERE</td>
+                                <td class="text-success">Oui</td>
+                                <td class="text-danger">Non</td>
+                                <td class="text-danger">Non</td>
+                                <td class="text-success">Oui (TDE est transparent pour SQL)</td>
+                            </tr>
+                            <tr>
+                                <td>Transparent pour le code</td>
+                                <td class="text-success">Oui</td>
+                                <td class="text-success">Oui</td>
+                                <td class="text-success">Oui (via Value Converter)</td>
+                                <td class="text-success">Oui (TDE) / Non (DBMS_CRYPTO)</td>
+                            </tr>
+                            <tr>
+                                <td>Gestion des cles</td>
+                                <td>N/A</td>
+                                <td>Automatique (Data Protection)</td>
+                                <td>Manuelle</td>
+                                <td>Oracle Wallet / OKV (HSM)</td>
+                            </tr>
+                            <tr>
+                                <td>Portabilite</td>
+                                <td class="text-success">Toute DB</td>
+                                <td class="text-success">Toute DB avec EF Core</td>
+                                <td class="text-success">Toute plateforme</td>
+                                <td class="text-danger">Oracle Database uniquement</td>
+                            </tr>
+                            <tr>
+                                <td>Complexite</td>
+                                <td class="text-success">Aucune</td>
+                                <td class="text-success">Faible</td>
+                                <td class="text-warning">Moyenne</td>
+                                <td class="text-success">Faible (TDE) / Moyenne (DBMS_CRYPTO)</td>
+                            </tr>
+                            <tr>
+                                <td>RGPD / Compliance</td>
+                                <td class="text-danger">Non conforme</td>
+                                <td class="text-warning">Acceptable</td>
+                                <td class="text-warning">Acceptable</td>
+                                <td class="text-success">Recommande (TDE certifie FIPS 140-2)</td>
+                            </tr>
+                            <tr>
+                                <td>Protection at-rest</td>
+                                <td class="text-danger">Non</td>
+                                <td class="text-success">Oui</td>
+                                <td class="text-success">Oui</td>
+                                <td class="text-success">Oui (datafiles, backups RMAN, redo logs)</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Oracle Data Redaction bonus -->
+        <div class="card border-secondary mb-4">
+            <div class="card-header bg-dark text-light fw-bold">Bonus : Oracle Data Redaction (DBMS_REDACT)</div>
+            <div class="card-body">
+                <p><strong>Oracle Data Redaction</strong> masque les donnees sensibles <strong>a la volee</strong> lors des
+                requetes SELECT, sans modifier les donnees stockees. C'est du masquage dynamique, pas du chiffrement.</p>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <h6 class="text-info">Types de redaction :</h6>
+                        <ul class="small">
+                            <li><strong>Full Redaction</strong> : remplace par une valeur fixe (0, null, espace)</li>
+                            <li><strong>Partial Redaction</strong> : masque partiellement (ex: XXX-XX-1234)</li>
+                            <li><strong>Random Redaction</strong> : remplace par une valeur aleatoire</li>
+                            <li><strong>Regular Expression</strong> : masquage par regex</li>
+                            <li><strong>None</strong> : pas de masquage (pour tests)</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+<pre class="bg-dark text-light p-3 rounded mb-0" style="font-size: 0.78rem;"><code><span class="text-muted">-- Masquer partiellement le numero national</span>
+<span class="text-info">BEGIN</span>
+  DBMS_REDACT.ADD_POLICY(
+    object_schema => <span class="text-warning">'HR'</span>,
+    object_name   => <span class="text-warning">'EMPLOYES'</span>,
+    column_name   => <span class="text-warning">'NUMERONATIONAL'</span>,
+    policy_name   => <span class="text-warning">'redact_nn'</span>,
+    function_type =>
+      DBMS_REDACT.PARTIAL,
+    function_parameters =>
+      <span class="text-warning">'VVVVVVVVVFVVVVVV,VVV-VV-VVVV,*,1,7'</span>,
+    expression => <span class="text-warning">'SYS_CONTEXT(''USERENV'',''SESSION_USER'') != ''HR_ADMIN'''</span>
+  );
+<span class="text-info">END;</span>
+
+<span class="text-muted">-- Resultat pour un utilisateur standard :</span>
+<span class="text-muted">-- **.**.** -123.45 → *******-123.45</span></code></pre>
+                    </div>
+                </div>
+
+                <div class="alert alert-info mb-0 small">
+                    <strong>Data Redaction vs TDE :</strong> Data Redaction <strong>masque</strong> les donnees pour certains utilisateurs
+                    mais ne les <strong>chiffre pas</strong> sur le disque. TDE <strong>chiffre</strong> les donnees sur le disque mais les
+                    montre en clair a tous les utilisateurs autorises. Combinez les deux pour une protection optimale.
+                </div>
+            </div>
+        </div>
+
+        <!-- TDE vs other approaches -->
+        <div class="card border-secondary mb-4">
+            <div class="card-header bg-dark text-light fw-bold">TDE Column vs TDE Tablespace : quand utiliser quoi ?</div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-dark table-striped mb-0" style="font-size: 0.85rem;">
+                        <thead>
+                            <tr>
+                                <th>Critere</th>
+                                <th class="text-info">TDE Column</th>
+                                <th class="text-success">TDE Tablespace</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Granularite</td>
+                                <td>Par colonne</td>
+                                <td>Tablespace entier</td>
+                            </tr>
+                            <tr>
+                                <td>Performance</td>
+                                <td>Overhead par colonne accedee</td>
+                                <td>Overhead global mais optimise (bulk)</td>
+                            </tr>
+                            <tr>
+                                <td>Index</td>
+                                <td>Egalite uniquement (NO SALT requis)</td>
+                                <td>Tous les index supportes</td>
+                            </tr>
+                            <tr>
+                                <td>Types de donnees</td>
+                                <td>VARCHAR2, NUMBER, DATE, RAW, etc.</td>
+                                <td>Tous les types</td>
+                            </tr>
+                            <tr>
+                                <td>SALT</td>
+                                <td>Supportes (SALT / NO SALT)</td>
+                                <td>N/A (implicitly salted)</td>
+                            </tr>
+                            <tr>
+                                <td>Cas d'usage</td>
+                                <td>Quelques colonnes sensibles</td>
+                                <td>Beaucoup de donnees sensibles / conformite globale</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="alert alert-info">
+            <strong>Recommandation :</strong> En production avec Oracle Database, combinez les approches :
+            <strong>TDE Tablespace</strong> (protection at-rest globale) + <strong>TDE Column</strong> (colonnes specifiques) +
+            <strong>Data Redaction</strong> (masquage dynamique par role) +
+            <strong>Oracle Key Vault</strong> (gestion centralisee des cles avec HSM).
+        </div>
+    </div>
+</div>
