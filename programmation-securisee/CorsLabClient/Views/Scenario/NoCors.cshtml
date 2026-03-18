@@ -1,0 +1,77 @@
+@{
+    ViewData["Title"] = "Scenario 1 - Sans CORS";
+}
+
+<div class="row justify-content-center mt-4">
+    <div class="col-md-10">
+        <h2><span class="badge bg-secondary">Scenario 1</span> Sans CORS — Blocage SOP</h2>
+        <p class="lead text-muted">
+            L'API ne renvoie aucun en-tete CORS. Le navigateur bloque la lecture de la reponse.
+        </p>
+
+        <div class="card border-info mb-4">
+            <div class="card-header bg-info text-white fw-bold">Explication</div>
+            <div class="card-body">
+                <p>Quand un serveur ne renvoie pas d'en-tete <code>Access-Control-Allow-Origin</code>,
+                le navigateur applique la <strong>Same-Origin Policy</strong> par defaut :</p>
+                <ul>
+                    <li>La requete HTTP est <strong>envoyee</strong> au serveur (le serveur la recoit et repond)</li>
+                    <li>Mais le navigateur <strong>refuse de montrer la reponse</strong> au JavaScript</li>
+                    <li>Une erreur CORS apparait dans la console F12</li>
+                </ul>
+                <p class="mb-0"><strong>Resultat :</strong> Les donnees sont protegees meme sans configuration CORS explicite.</p>
+            </div>
+        </div>
+
+        <div class="card border-secondary mb-4">
+            <div class="card-header bg-secondary text-white fw-bold">Test : Requete vers /api/no-cors/compte</div>
+            <div class="card-body">
+                <p>Cliquez sur le bouton pour tenter une requete <code>fetch()</code> vers l'API sans en-tetes CORS.</p>
+                <button class="btn btn-secondary" id="btn-no-cors">Tenter la requete</button>
+                <div id="result-no-cors" class="mt-3"></div>
+            </div>
+        </div>
+
+        <div class="card border-dark mb-4">
+            <div class="card-header bg-dark text-white fw-bold">En-tetes HTTP attendus</div>
+            <div class="card-body">
+                <pre><code>GET /api/no-cors/compte HTTP/1.1
+Host: localhost:5300
+Origin: http://localhost:5301
+
+HTTP/1.1 200 OK
+Content-Type: application/json
+<span class="text-danger">// Aucun en-tete Access-Control-Allow-Origin !</span>
+<span class="text-danger">// → Le navigateur bloque la lecture de la reponse</span></code></pre>
+            </div>
+        </div>
+
+        <div class="alert alert-success">
+            <strong>Bonne pratique :</strong> Ne pas configurer CORS du tout est la configuration la plus restrictive.
+            C'est le comportement par defaut et c'est securise.
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+document.getElementById('btn-no-cors').addEventListener('click', async () => {
+    const resultDiv = document.getElementById('result-no-cors');
+    resultDiv.innerHTML = '<div class="text-muted">Envoi de la requete...</div>';
+
+    try {
+        const response = await fetch('http://localhost:5300/api/no-cors/compte');
+        const data = await response.json();
+        resultDiv.innerHTML = `<div class="alert alert-success">
+            <strong>Reponse recue :</strong><br><pre>${JSON.stringify(data, null, 2)}</pre>
+        </div>`;
+    } catch (error) {
+        resultDiv.innerHTML = `<div class="alert alert-danger">
+            <strong>Erreur CORS !</strong> Le navigateur a bloque la lecture de la reponse.<br>
+            <code>${error.message}</code><br><br>
+            <em>Ouvrez la console F12 pour voir le message d'erreur CORS detaille.</em>
+        </div>`;
+    }
+});
+</script>
+}

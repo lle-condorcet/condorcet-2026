@@ -1,0 +1,111 @@
+@{
+    ViewData["Title"] = "Accueil";
+}
+
+<div class="row justify-content-center mt-4">
+    <div class="col-md-10">
+        <div class="text-center mb-5">
+            <h1 class="display-5 fw-bold">Labo <span class="text-warning">CORS</span> - Cross-Origin Resource Sharing</h1>
+            <p class="lead text-muted">
+                Comprendre la Same-Origin Policy (SOP) et les mecanismes CORS
+                a travers des scenarios interactifs avec une API bancaire simulee.
+            </p>
+        </div>
+
+        <!-- Explication SOP -->
+        <div class="card border-info mb-4">
+            <div class="card-header bg-info text-white fw-bold">Qu'est-ce que la Same-Origin Policy (SOP) ?</div>
+            <div class="card-body">
+                <p>La <strong>Same-Origin Policy</strong> est un mecanisme de securite fondamental des navigateurs web.
+                Elle empeche un script d'une origine (scheme + host + port) de lire les reponses d'une autre origine.</p>
+                <p class="mb-0"><strong>Exemple :</strong> Un script sur <code>http://evil.com</code> ne peut pas lire
+                les donnees de <code>http://mabanque.com</code>, meme si le navigateur envoie la requete.</p>
+            </div>
+        </div>
+
+        <!-- Explication CORS -->
+        <div class="card border-warning mb-4">
+            <div class="card-header bg-warning text-dark fw-bold">Qu'est-ce que CORS ?</div>
+            <div class="card-body">
+                <p><strong>CORS</strong> (Cross-Origin Resource Sharing) est un mecanisme qui permet a un serveur
+                d'indiquer au navigateur quelles origines sont autorisees a lire ses reponses.</p>
+                <p>Le serveur repond avec des en-tetes HTTP specifiques :</p>
+                <ul>
+                    <li><code>Access-Control-Allow-Origin</code> — Quelle(s) origine(s) autorisee(s)</li>
+                    <li><code>Access-Control-Allow-Credentials</code> — Autoriser les cookies/credentials</li>
+                    <li><code>Access-Control-Allow-Methods</code> — Methodes HTTP autorisees</li>
+                    <li><code>Access-Control-Allow-Headers</code> — En-tetes autorises</li>
+                </ul>
+                <p class="mb-0"><strong>Attention :</strong> Une mauvaise configuration CORS peut creer des failles de securite graves,
+                permettant a un site malveillant de voler des donnees sensibles.</p>
+            </div>
+        </div>
+
+        <!-- Grille des scenarios -->
+        <h3 class="mb-3">Scenarios</h3>
+        <div class="row g-4 mb-4">
+            <div class="col-md-6 col-lg-3">
+                <div class="card h-100 border-secondary">
+                    <div class="card-body text-center">
+                        <h5 class="card-title text-secondary">Sans CORS</h5>
+                        <p class="card-text">Aucun en-tete CORS. Le navigateur bloque la lecture de la reponse (SOP).</p>
+                        <a asp-controller="Scenario" asp-action="NoCors" class="btn btn-outline-secondary">Tester</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <div class="card h-100 border-info">
+                    <div class="card-body text-center">
+                        <h5 class="card-title text-info">Wildcard *</h5>
+                        <p class="card-text">Ouvert a tous mais les credentials (cookies) sont interdits.</p>
+                        <a asp-controller="Scenario" asp-action="Wildcard" class="btn btn-outline-info">Tester</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <div class="card h-100 border-danger">
+                    <div class="card-body text-center">
+                        <h5 class="card-title text-danger">Vulnerable</h5>
+                        <p class="card-text">Reflexion d'origine + credentials = vol de donnees bancaires.</p>
+                        <a asp-controller="Scenario" asp-action="Vulnerable" class="btn btn-outline-danger">Tester</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <div class="card h-100 border-success">
+                    <div class="card-body text-center">
+                        <h5 class="card-title text-success">Securise</h5>
+                        <p class="card-text">Whitelist d'origines stricte. Seule l'origine autorisee fonctionne.</p>
+                        <a asp-controller="Scenario" asp-action="Secure" class="btn btn-outline-success">Tester</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Architecture -->
+        <div class="card border-dark mb-4">
+            <div class="card-header bg-dark text-white fw-bold">Architecture du labo</div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="fw-bold">CorsLabClient (port 5301)</h6>
+                        <p>Cette application MVC — le site que vous consultez. Elle fait des requetes <code>fetch()</code>
+                        vers l'API bancaire sur un port different.</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="fw-bold">CorsLabApi (port 5300)</h6>
+                        <p>L'API bancaire simulee. Elle expose les memes donnees via 4 groupes de routes,
+                        chacun avec une politique CORS differente.</p>
+                    </div>
+                </div>
+                <p class="mb-0 text-muted"><strong>Origine differente :</strong> <code>http://localhost:5301</code> ≠ <code>http://localhost:5300</code>
+                (ports differents = origines differentes pour le navigateur).</p>
+            </div>
+        </div>
+
+        <div class="alert alert-warning">
+            <strong>Usage educatif uniquement.</strong> Ce laboratoire simule des vulnerabilites CORS
+            dans un environnement controle. N'utilisez jamais ces techniques sur des systemes sans autorisation.
+        </div>
+    </div>
+</div>

@@ -1,0 +1,188 @@
+@{
+    ViewData["Title"] = "Scenario 3 - Vulnerable";
+}
+
+<div class="row justify-content-center mt-4">
+    <div class="col-md-10">
+        <h2><span class="badge bg-danger">Scenario 3</span> Vulnerable — Vol de donnees bancaires</h2>
+        <p class="lead text-muted">
+            L'API reflete l'en-tete <code>Origin</code> et autorise les credentials.
+            N'importe quel site peut voler les donnees de l'utilisateur connecte.
+        </p>
+
+        <div class="card border-danger mb-4">
+            <div class="card-header bg-danger text-white fw-bold">La faille CORS critique</div>
+            <div class="card-body">
+                <p>La configuration serveur utilise :</p>
+                <pre><code>policy.SetIsOriginAllowed(_ => true)  <span class="text-danger">// Accepte TOUTE origine</span>
+      .AllowCredentials();                <span class="text-danger">// Autorise les cookies</span></code></pre>
+                <p>Resultat : le serveur repond avec :</p>
+                <ul>
+                    <li><code>Access-Control-Allow-Origin: http://evil.com</code> (reflete l'origine de l'attaquant)</li>
+                    <li><code>Access-Control-Allow-Credentials: true</code></li>
+                </ul>
+                <p class="mb-0 text-danger"><strong>Le navigateur envoie les cookies ET autorise la lecture de la reponse.
+                L'attaquant peut voler les donnees bancaires.</strong></p>
+            </div>
+        </div>
+
+        <!-- Etape 1 : Connexion -->
+        <div class="card border-warning mb-4">
+            <div class="card-header bg-warning text-dark fw-bold">Etape 1 : Se connecter a la banque</div>
+            <div class="card-body">
+                <p>Simulez la connexion pour obtenir le cookie <code>session_banque</code>.</p>
+                <button class="btn btn-warning" id="btn-login">Se connecter</button>
+                <button class="btn btn-outline-secondary ms-2" id="btn-logout">Se deconnecter</button>
+                <button class="btn btn-outline-info ms-2" id="btn-check-auth">Verifier le statut</button>
+                <div id="result-auth" class="mt-3"></div>
+            </div>
+        </div>
+
+        <!-- Etape 2 : Attaque -->
+        <div class="card border-danger mb-4">
+            <div class="card-header bg-danger text-white fw-bold">Etape 2 : Simuler l'attaque CORS</div>
+            <div class="card-body">
+                <p>Imaginez que vous visitez un site malveillant. Ce site execute le code suivant
+                pour voler vos donnees bancaires :</p>
+                <pre><code><span class="text-muted">// Code execute par le site malveillant</span>
+fetch('http://localhost:5300/api/vulnerable/compte', {
+    credentials: 'include'  <span class="text-danger">// Envoie le cookie session_banque</span>
+})
+.then(r => r.json())
+.then(data => {
+    <span class="text-danger">// L'attaquant recoit vos donnees bancaires !</span>
+    envoyerAuServeurAttaquant(data);
+});</code></pre>
+                <button class="btn btn-danger" id="btn-attack-compte">Voler les infos du compte</button>
+                <button class="btn btn-danger ms-2" id="btn-attack-transactions">Voler les transactions</button>
+                <div id="result-attack" class="mt-3"></div>
+            </div>
+        </div>
+
+        <div class="card border-dark mb-4">
+            <div class="card-header bg-dark text-white fw-bold">En-tetes HTTP</div>
+            <div class="card-body">
+                <pre><code>GET /api/vulnerable/compte HTTP/1.1
+Host: localhost:5300
+Origin: http://evil.com
+Cookie: session_banque=user_jean_dupont
+
+HTTP/1.1 200 OK
+Content-Type: application/json
+<span class="text-danger">Access-Control-Allow-Origin: http://evil.com</span>
+<span class="text-danger">Access-Control-Allow-Credentials: true</span>
+
+{"nom":"Jean Dupont","iban":"BE68 5390 0754 7034","solde":12750.42}</code></pre>
+            </div>
+        </div>
+
+        <div class="alert alert-danger">
+            <strong>Ne jamais utiliser <code>SetIsOriginAllowed(_ => true)</code> avec <code>AllowCredentials()</code> !</strong>
+            C'est equivalent a desactiver completement la protection CORS.
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+const API = 'http://localhost:5300';
+
+document.getElementById('btn-login').addEventListener('click', async () => {
+    const resultDiv = document.getElementById('result-auth');
+    try {
+        const response = await fetch(`${API}/api/auth/login`, {
+            method: 'POST',
+            credentials: 'include'
+        });
+        const data = await response.json();
+        resultDiv.innerHTML = `<div class="alert alert-success"><strong>${data.message}</strong> — Cookie de session defini.</div>`;
+    } catch (error) {
+        resultDiv.innerHTML = `<div class="alert alert-danger"><code>${error.message}</code></div>`;
+    }
+});
+
+document.getElementById('btn-logout').addEventListener('click', async () => {
+    const resultDiv = document.getElementById('result-auth');
+    try {
+        const response = await fetch(`${API}/api/auth/logout`, {
+            method: 'POST',
+            credentials: 'include'
+        });
+        const data = await response.json();
+        resultDiv.innerHTML = `<div class="alert alert-secondary"><strong>${data.message}</strong></div>`;
+    } catch (error) {
+        resultDiv.innerHTML = `<div class="alert alert-danger"><code>${error.message}</code></div>`;
+    }
+});
+
+document.getElementById('btn-check-auth').addEventListener('click', async () => {
+    const resultDiv = document.getElementById('result-auth');
+    try {
+        const response = await fetch(`${API}/api/auth/status`, {
+            credentials: 'include'
+        });
+        const data = await response.json();
+        if (data.authenticated) {
+            resultDiv.innerHTML = `<div class="alert alert-success">Connecte en tant que <strong>${data.user}</strong></div>`;
+        } else {
+            resultDiv.innerHTML = `<div class="alert alert-warning">Non connecte</div>`;
+        }
+    } catch (error) {
+        resultDiv.innerHTML = `<div class="alert alert-danger"><code>${error.message}</code></div>`;
+    }
+});
+
+document.getElementById('btn-attack-compte').addEventListener('click', async () => {
+    const resultDiv = document.getElementById('result-attack');
+    resultDiv.innerHTML = '<div class="text-muted">Vol en cours...</div>';
+    try {
+        const response = await fetch(`${API}/api/vulnerable/compte`, {
+            credentials: 'include'
+        });
+        const data = await response.json();
+        if (data.error) {
+            resultDiv.innerHTML = `<div class="alert alert-warning"><strong>${data.error}</strong> — Connectez-vous d'abord (etape 1).</div>`;
+        } else {
+            resultDiv.innerHTML = `<div class="alert alert-danger">
+                <strong>Donnees bancaires volees !</strong><br>
+                <table class="table table-sm table-bordered mt-2 mb-0">
+                    <tr><th>Nom</th><td>${data.nom}</td></tr>
+                    <tr><th>IBAN</th><td><code>${data.iban}</code></td></tr>
+                    <tr><th>Solde</th><td><strong>${data.solde.toFixed(2)} ${data.devise}</strong></td></tr>
+                </table>
+            </div>`;
+        }
+    } catch (error) {
+        resultDiv.innerHTML = `<div class="alert alert-danger"><code>${error.message}</code></div>`;
+    }
+});
+
+document.getElementById('btn-attack-transactions').addEventListener('click', async () => {
+    const resultDiv = document.getElementById('result-attack');
+    resultDiv.innerHTML = '<div class="text-muted">Vol en cours...</div>';
+    try {
+        const response = await fetch(`${API}/api/vulnerable/transactions`, {
+            credentials: 'include'
+        });
+        const data = await response.json();
+        if (data.error) {
+            resultDiv.innerHTML = `<div class="alert alert-warning"><strong>${data.error}</strong> — Connectez-vous d'abord (etape 1).</div>`;
+        } else {
+            let html = `<div class="alert alert-danger">
+                <strong>Transactions volees !</strong>
+                <table class="table table-sm table-bordered mt-2 mb-0">
+                    <thead><tr><th>Date</th><th>Libelle</th><th>Montant</th><th>Type</th></tr></thead>
+                    <tbody>`;
+            for (const t of data) {
+                const color = t.type === 'credit' ? 'text-success' : 'text-danger';
+                html += `<tr><td>${t.date}</td><td>${t.libelle}</td><td class="${color}">${t.montant.toFixed(2)} EUR</td><td>${t.type}</td></tr>`;
+            }
+            html += `</tbody></table></div>`;
+            resultDiv.innerHTML = html;
+        }
+    } catch (error) {
+        resultDiv.innerHTML = `<div class="alert alert-danger"><code>${error.message}</code></div>`;
+    }
+});
+</script>
+}

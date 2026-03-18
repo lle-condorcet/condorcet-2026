@@ -1,0 +1,110 @@
+@{
+    ViewData["Title"] = "Scenario 2 - Wildcard";
+}
+
+<div class="row justify-content-center mt-4">
+    <div class="col-md-10">
+        <h2><span class="badge bg-info">Scenario 2</span> Wildcard * — Ouvert mais sans credentials</h2>
+        <p class="lead text-muted">
+            L'API repond avec <code>Access-Control-Allow-Origin: *</code>. Tout le monde peut lire les donnees publiques,
+            mais les cookies ne sont pas envoyes.
+        </p>
+
+        <div class="card border-info mb-4">
+            <div class="card-header bg-info text-white fw-bold">Explication</div>
+            <div class="card-body">
+                <p>Avec <code>Access-Control-Allow-Origin: *</code> :</p>
+                <ul>
+                    <li>N'importe quelle origine peut <strong>lire la reponse</strong></li>
+                    <li>Mais le navigateur <strong>refuse d'envoyer les cookies</strong> avec <code>credentials: 'include'</code></li>
+                    <li>La specification CORS interdit <code>*</code> combine avec <code>Access-Control-Allow-Credentials: true</code></li>
+                </ul>
+                <p class="mb-0"><strong>Utile pour :</strong> Les API publiques (meteo, taux de change, donnees ouvertes).</p>
+            </div>
+        </div>
+
+        <!-- Test 1 : sans credentials -->
+        <div class="card border-info mb-4">
+            <div class="card-header bg-info text-white fw-bold">Test 1 : Requete sans credentials</div>
+            <div class="card-body">
+                <p>Requete simple sans cookies — devrait fonctionner car les donnees sont publiques.</p>
+                <button class="btn btn-info text-white" id="btn-wildcard-no-cred">Requete sans credentials</button>
+                <div id="result-wildcard-no-cred" class="mt-3"></div>
+            </div>
+        </div>
+
+        <!-- Test 2 : avec credentials -->
+        <div class="card border-warning mb-4">
+            <div class="card-header bg-warning text-dark fw-bold">Test 2 : Requete avec credentials</div>
+            <div class="card-body">
+                <p>Meme requete mais avec <code>credentials: 'include'</code> — le navigateur refuse
+                car <code>*</code> n'est pas compatible avec les credentials.</p>
+                <button class="btn btn-warning" id="btn-wildcard-cred">Requete avec credentials</button>
+                <div id="result-wildcard-cred" class="mt-3"></div>
+            </div>
+        </div>
+
+        <div class="card border-dark mb-4">
+            <div class="card-header bg-dark text-white fw-bold">En-tetes HTTP</div>
+            <div class="card-body">
+                <pre><code>GET /api/wildcard/compte HTTP/1.1
+Host: localhost:5300
+Origin: http://localhost:5301
+
+HTTP/1.1 200 OK
+Content-Type: application/json
+<span class="text-info">Access-Control-Allow-Origin: *</span>
+<span class="text-muted">// Pas de Access-Control-Allow-Credentials</span>
+<span class="text-muted">// → Credentials interdits avec wildcard</span></code></pre>
+            </div>
+        </div>
+
+        <div class="alert alert-info">
+            <strong>A retenir :</strong> <code>*</code> est un bon choix pour les donnees publiques.
+            Il ne permet pas le vol de donnees privees car les cookies ne sont jamais envoyes.
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+document.getElementById('btn-wildcard-no-cred').addEventListener('click', async () => {
+    const resultDiv = document.getElementById('result-wildcard-no-cred');
+    resultDiv.innerHTML = '<div class="text-muted">Envoi de la requete...</div>';
+
+    try {
+        const response = await fetch('http://localhost:5300/api/wildcard/compte');
+        const data = await response.json();
+        resultDiv.innerHTML = `<div class="alert alert-success">
+            <strong>Succes !</strong> Les donnees publiques sont accessibles :<br>
+            <pre>${JSON.stringify(data, null, 2)}</pre>
+        </div>`;
+    } catch (error) {
+        resultDiv.innerHTML = `<div class="alert alert-danger">
+            <strong>Erreur :</strong> <code>${error.message}</code>
+        </div>`;
+    }
+});
+
+document.getElementById('btn-wildcard-cred').addEventListener('click', async () => {
+    const resultDiv = document.getElementById('result-wildcard-cred');
+    resultDiv.innerHTML = '<div class="text-muted">Envoi de la requete avec credentials...</div>';
+
+    try {
+        const response = await fetch('http://localhost:5300/api/wildcard/compte', {
+            credentials: 'include'
+        });
+        const data = await response.json();
+        resultDiv.innerHTML = `<div class="alert alert-success">
+            <strong>Reponse recue :</strong><br><pre>${JSON.stringify(data, null, 2)}</pre>
+        </div>`;
+    } catch (error) {
+        resultDiv.innerHTML = `<div class="alert alert-danger">
+            <strong>Erreur CORS !</strong> Le navigateur refuse d'envoyer les credentials avec <code>*</code>.<br>
+            <code>${error.message}</code><br><br>
+            <em>La specification CORS interdit credentials + wildcard. Ouvrez la console F12 pour les details.</em>
+        </div>`;
+    }
+});
+</script>
+}

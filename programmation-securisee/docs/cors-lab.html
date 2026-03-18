@@ -1,0 +1,1524 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CORS Lab - Guide</title>
+    <style>
+        :root {
+            --bg: #0f1117;
+            --surface: #1a1d27;
+            --surface-2: #242736;
+            --accent: #ffa502;
+            --accent-light: #ffc048;
+            --danger: #ff4757;
+            --success: #2ed573;
+            --warning: #ffa502;
+            --info: #1e90ff;
+            --text: #e4e6eb;
+            --text-muted: #8b8fa3;
+            --border: #2e3142;
+            --code-bg: #12131a;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+        }
+
+        /* Sidebar */
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 260px;
+            height: 100vh;
+            background: var(--surface);
+            border-right: 1px solid var(--border);
+            padding: 2rem 0;
+            overflow-y: auto;
+        }
+
+        nav .logo {
+            font-size: 1.4rem;
+            font-weight: 800;
+            padding: 0 1.5rem 1.5rem;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 1rem;
+        }
+
+        nav .logo span { color: var(--accent); }
+
+        nav a {
+            display: block;
+            padding: 0.5rem 1.5rem;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+
+        nav a:hover {
+            color: var(--accent);
+            background: var(--surface-2);
+        }
+
+        nav .section-title {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--text-muted);
+            padding: 1rem 1.5rem 0.3rem;
+            font-weight: 700;
+        }
+
+        /* Main content */
+        main {
+            margin-left: 260px;
+            max-width: 900px;
+            padding: 3rem 4rem;
+        }
+
+        h1 {
+            font-size: 2.2rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+        }
+
+        h1 span { color: var(--accent); }
+
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin: 3rem 0 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        h3 {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin: 2rem 0 0.8rem;
+            color: var(--accent-light);
+        }
+
+        p { margin-bottom: 1rem; }
+
+        a { color: var(--accent); }
+
+        /* Code */
+        code {
+            font-family: 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
+            font-size: 0.85em;
+            background: var(--code-bg);
+            padding: 0.15em 0.4em;
+            border-radius: 4px;
+            color: var(--accent-light);
+        }
+
+        pre {
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.2rem 1.5rem;
+            overflow-x: auto;
+            margin: 1rem 0 1.5rem;
+            line-height: 1.5;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            font-size: 0.85rem;
+            color: var(--text);
+        }
+
+        .kw { color: #c678dd; }
+        .str { color: #98c379; }
+        .cmt { color: #5c6370; }
+        .fn { color: #61afef; }
+        .val { color: #d19a66; }
+        .danger-hl { color: #ff4757; }
+        .success-hl { color: #2ed573; }
+
+        /* Alerts */
+        .alert {
+            padding: 1rem 1.2rem;
+            border-radius: 8px;
+            margin: 1rem 0 1.5rem;
+            border-left: 4px solid;
+        }
+
+        .alert-danger {
+            background: rgba(255, 71, 87, 0.1);
+            border-color: var(--danger);
+        }
+
+        .alert-success {
+            background: rgba(46, 213, 115, 0.1);
+            border-color: var(--success);
+        }
+
+        .alert-warning {
+            background: rgba(255, 165, 2, 0.1);
+            border-color: var(--warning);
+        }
+
+        .alert-info {
+            background: rgba(30, 144, 255, 0.1);
+            border-color: var(--info);
+        }
+
+        .alert strong {
+            display: block;
+            margin-bottom: 0.3rem;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0 1.5rem;
+        }
+
+        th, td {
+            padding: 0.6rem 1rem;
+            border: 1px solid var(--border);
+            text-align: left;
+        }
+
+        th {
+            background: var(--surface-2);
+            font-weight: 600;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Comparison */
+        .comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin: 1.5rem 0;
+        }
+
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.2rem;
+        }
+
+        .card.bad {
+            border-color: var(--danger);
+        }
+
+        .card.good {
+            border-color: var(--success);
+        }
+
+        .card h4 {
+            font-size: 1rem;
+            margin-bottom: 0.8rem;
+        }
+
+        .card.bad h4 { color: var(--danger); }
+        .card.good h4 { color: var(--success); }
+
+        /* Flow diagrams */
+        .flow {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.8rem;
+            margin: 1.5rem 0;
+            flex-wrap: wrap;
+        }
+
+        .flow-box {
+            padding: 0.6rem 1.2rem;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            text-align: center;
+        }
+
+        .flow-box.browser { background: var(--surface-2); border: 1px solid var(--info); color: var(--info); }
+        .flow-box.server { background: var(--surface-2); border: 1px solid var(--success); color: var(--success); }
+        .flow-box.attacker { background: var(--surface-2); border: 1px solid var(--danger); color: var(--danger); }
+
+        .flow-arrow {
+            font-size: 1.2rem;
+            color: var(--text-muted);
+        }
+
+        /* Lists */
+        ul, ol {
+            margin: 0.5rem 0 1rem 1.5rem;
+        }
+
+        li { margin-bottom: 0.3rem; }
+
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            margin-bottom: 2rem;
+        }
+
+        /* Footer */
+        footer {
+            margin-left: 260px;
+            max-width: 900px;
+            padding: 2rem 4rem;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            border-top: 1px solid var(--border);
+        }
+
+        /* Diagrams */
+        .diagram-container {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            overflow-x: auto;
+        }
+
+        .diagram-container svg {
+            display: block;
+            margin: 0 auto;
+        }
+
+        .diagram-title {
+            text-align: center;
+            font-weight: 700;
+            font-size: 1rem;
+            margin-bottom: 1rem;
+            color: var(--accent-light);
+        }
+
+        /* Scenario grid */
+        .scenario-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.2rem;
+            margin: 1.5rem 0;
+        }
+
+        .scenario-card {
+            background: var(--surface);
+            border-radius: 10px;
+            padding: 1.2rem;
+            border: 2px solid var(--border);
+            transition: transform 0.2s;
+        }
+
+        .scenario-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .scenario-card.blocked { border-color: var(--info); }
+        .scenario-card.open { border-color: var(--warning); }
+        .scenario-card.danger { border-color: var(--danger); }
+        .scenario-card.safe { border-color: var(--success); }
+
+        .scenario-card .sc-header {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            margin-bottom: 0.8rem;
+        }
+
+        .scenario-card .sc-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            flex-shrink: 0;
+        }
+
+        .scenario-card.blocked .sc-icon { background: rgba(30,144,255,0.15); }
+        .scenario-card.open .sc-icon { background: rgba(255,165,2,0.15); }
+        .scenario-card.danger .sc-icon { background: rgba(255,71,87,0.15); }
+        .scenario-card.safe .sc-icon { background: rgba(46,213,115,0.15); }
+
+        .scenario-card .sc-title {
+            font-weight: 700;
+            font-size: 0.95rem;
+        }
+
+        .scenario-card.blocked .sc-title { color: var(--info); }
+        .scenario-card.open .sc-title { color: var(--warning); }
+        .scenario-card.danger .sc-title { color: var(--danger); }
+        .scenario-card.safe .sc-title { color: var(--success); }
+
+        .scenario-card .sc-subtitle {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .scenario-card .sc-steps {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .scenario-card .sc-steps li {
+            padding: 0.3rem 0;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: flex-start;
+            gap: 0.5rem;
+        }
+
+        .scenario-card .sc-steps li::before {
+            content: attr(data-step);
+            font-size: 0.7rem;
+            font-weight: 700;
+            background: var(--surface-2);
+            border-radius: 50%;
+            min-width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: 2px;
+        }
+
+        .sc-result {
+            margin-top: 0.6rem;
+            padding: 0.5rem 0.8rem;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .sc-result.blocked { background: rgba(30,144,255,0.1); color: var(--info); }
+        .sc-result.success { background: rgba(46,213,115,0.1); color: var(--success); }
+        .sc-result.stolen { background: rgba(255,71,87,0.1); color: var(--danger); }
+        .sc-result.partial { background: rgba(255,165,2,0.1); color: var(--warning); }
+
+        /* Decision tree */
+        .decision-tree {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0;
+            margin: 1.5rem 0;
+        }
+
+        .dt-node {
+            padding: 0.8rem 1.5rem;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            text-align: center;
+            max-width: 360px;
+            position: relative;
+        }
+
+        .dt-question {
+            background: var(--surface-2);
+            border: 2px solid var(--accent);
+            color: var(--accent-light);
+        }
+
+        .dt-answer {
+            font-size: 0.85rem;
+            padding: 0.6rem 1.2rem;
+        }
+
+        .dt-answer.good { background: rgba(46,213,115,0.15); border: 1px solid var(--success); color: var(--success); }
+        .dt-answer.warn { background: rgba(255,165,2,0.15); border: 1px solid var(--warning); color: var(--warning); }
+        .dt-answer.bad { background: rgba(255,71,87,0.15); border: 1px solid var(--danger); color: var(--danger); }
+
+        .dt-branches {
+            display: flex;
+            gap: 2rem;
+            align-items: flex-start;
+        }
+
+        .dt-branch {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0;
+        }
+
+        .dt-connector {
+            width: 2px;
+            height: 20px;
+            background: var(--text-muted);
+        }
+
+        .dt-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            font-weight: 600;
+            padding: 0.2rem 0.6rem;
+            background: var(--surface);
+            border-radius: 4px;
+            border: 1px solid var(--border);
+        }
+
+        .dt-h-line {
+            height: 2px;
+            background: var(--text-muted);
+            align-self: stretch;
+            margin: 0 calc(50% - 100px);
+        }
+
+        @media (max-width: 768px) {
+            nav { display: none; }
+            main, footer { margin-left: 0; padding: 1.5rem; }
+            .scenario-grid { grid-template-columns: 1fr; }
+            .dt-branches { flex-direction: column; gap: 1rem; }
+        }
+    </style>
+</head>
+<body>
+
+<nav>
+    <div class="logo"><span>CORS</span> Lab</div>
+    <div class="section-title">Introduction</div>
+    <a href="#intro">Qu'est-ce que CORS ?</a>
+    <a href="#sop">Same-Origin Policy</a>
+    <a href="#architecture">Architecture du labo</a>
+    <div class="section-title">Scenarios</div>
+    <a href="#no-cors">1. Sans CORS</a>
+    <a href="#wildcard">2. Wildcard *</a>
+    <a href="#vulnerable">3. Vulnerable</a>
+    <a href="#secure">4. Securise</a>
+    <div class="section-title">Diagrammes</div>
+    <a href="#diag-sop">SOP en action</a>
+    <a href="#diag-preflight">Preflight sequence</a>
+    <a href="#diag-attaque">Attaque CORS</a>
+    <a href="#diag-comparaison">Comparaison 4 scenarios</a>
+    <a href="#diag-decision">Arbre de decision</a>
+    <div class="section-title">Technique</div>
+    <a href="#headers">En-tetes CORS</a>
+    <a href="#preflight">Requetes preflight</a>
+    <a href="#config">Configuration ASP.NET</a>
+    <a href="#bonnes-pratiques">Bonnes pratiques</a>
+</nav>
+
+<main>
+    <h1><span>CORS</span> Lab</h1>
+    <p class="subtitle">Cross-Origin Resource Sharing — Guide complet</p>
+
+    <!-- ============================================================ -->
+    <h2 id="intro">Qu'est-ce que CORS ?</h2>
+
+    <p><strong>CORS</strong> (Cross-Origin Resource Sharing) est un mecanisme de securite implemente par les navigateurs
+    qui controle quelles origines web peuvent acceder aux ressources d'un serveur.</p>
+
+    <p>Une <strong>origine</strong> est definie par trois composants :</p>
+
+    <table>
+        <thead><tr><th>Composant</th><th>Exemple</th></tr></thead>
+        <tbody>
+            <tr><td>Scheme (protocole)</td><td><code>http://</code> ou <code>https://</code></td></tr>
+            <tr><td>Host (domaine)</td><td><code>localhost</code>, <code>example.com</code></td></tr>
+            <tr><td>Port</td><td><code>5300</code>, <code>5301</code>, <code>443</code></td></tr>
+        </tbody>
+    </table>
+
+    <div class="alert alert-warning">
+        <strong>Important</strong>
+        <code>http://localhost:5300</code> et <code>http://localhost:5301</code> sont des origines
+        <strong>differentes</strong> car leurs ports different. C'est pour cela que notre labo necessite deux applications.
+    </div>
+
+    <!-- ============================================================ -->
+    <h2 id="sop">Same-Origin Policy (SOP)</h2>
+
+    <p>La <strong>Same-Origin Policy</strong> est la regle de securite par defaut des navigateurs.
+    Elle empeche un script d'une origine A de lire les reponses d'une origine B.</p>
+
+    <div class="flow">
+        <div class="flow-box attacker">Site malveillant<br><small>http://evil.com</small></div>
+        <div class="flow-arrow">→ fetch() →</div>
+        <div class="flow-box server">API Banque<br><small>http://banque.com</small></div>
+    </div>
+
+    <ol>
+        <li>Le navigateur <strong>envoie</strong> la requete au serveur (le serveur la recoit !)</li>
+        <li>Le serveur <strong>repond</strong> normalement avec les donnees</li>
+        <li>Le navigateur <strong>bloque</strong> la lecture de la reponse par le JavaScript</li>
+    </ol>
+
+    <div class="alert alert-info">
+        <strong>Subtilite</strong>
+        La SOP ne bloque pas la requete elle-meme, mais la <em>lecture de la reponse</em>.
+        Le serveur recoit bien la requete et repond. C'est le navigateur qui refuse de montrer la reponse au script.
+    </div>
+
+    <!-- ============================================================ -->
+    <h2 id="architecture">Architecture du labo</h2>
+
+    <div class="flow">
+        <div class="flow-box browser">CorsLabClient<br><small>http://localhost:5301</small></div>
+        <div class="flow-arrow">← fetch() →</div>
+        <div class="flow-box server">CorsLabApi<br><small>http://localhost:5300</small></div>
+    </div>
+
+    <table>
+        <thead><tr><th>Projet</th><th>Type</th><th>Port</th><th>Role</th></tr></thead>
+        <tbody>
+            <tr><td><code>CorsLabApi</code></td><td>Minimal API</td><td>5300</td><td>API bancaire avec 4 politiques CORS</td></tr>
+            <tr><td><code>CorsLabClient</code></td><td>MVC</td><td>5301</td><td>Application educative avec scenarios</td></tr>
+        </tbody>
+    </table>
+
+    <p>L'API expose les memes donnees bancaires via 4 groupes de routes, chacun avec une configuration CORS differente :</p>
+
+    <table>
+        <thead><tr><th>Route</th><th>Politique CORS</th><th>Comportement</th></tr></thead>
+        <tbody>
+            <tr><td><code>/api/no-cors/*</code></td><td>Aucune</td><td>Bloque par la SOP</td></tr>
+            <tr><td><code>/api/wildcard/*</code></td><td><code>*</code></td><td>Ouvert, sans cookies</td></tr>
+            <tr><td><code>/api/vulnerable/*</code></td><td>Reflexion d'origine</td><td>Vol de donnees possible</td></tr>
+            <tr><td><code>/api/secure/*</code></td><td>Whitelist</td><td>Seul localhost:5301 autorise</td></tr>
+        </tbody>
+    </table>
+
+    <!-- ============================================================ -->
+    <h2 id="no-cors">Scenario 1 : Sans CORS</h2>
+
+    <p>Le serveur ne renvoie aucun en-tete CORS. Le navigateur applique la SOP et bloque la lecture.</p>
+
+    <pre><code><span class="cmt">// Le serveur ne configure aucune politique CORS pour ces routes</span>
+app.<span class="fn">MapGet</span>(<span class="str">"/api/no-cors/compte"</span>, () <span class="kw">=></span> Results.<span class="fn">Json</span>(compte));
+<span class="cmt">// Pas de .RequireCors() → aucun en-tete CORS dans la reponse</span></code></pre>
+
+    <h3>Requete et reponse</h3>
+
+    <pre><code><span class="cmt">// Requete</span>
+GET /api/no-cors/compte HTTP/1.1
+Host: localhost:5300
+Origin: http://localhost:5301
+
+<span class="cmt">// Reponse — aucun en-tete CORS</span>
+HTTP/1.1 200 OK
+Content-Type: application/json
+
+<span class="danger-hl">→ Le navigateur bloque la lecture (pas de Access-Control-Allow-Origin)</span></code></pre>
+
+    <div class="alert alert-success">
+        <strong>Securise par defaut</strong>
+        Ne pas configurer CORS est la configuration la plus restrictive. C'est le comportement par defaut d'ASP.NET Core.
+    </div>
+
+    <!-- ============================================================ -->
+    <h2 id="wildcard">Scenario 2 : Wildcard *</h2>
+
+    <p><code>Access-Control-Allow-Origin: *</code> autorise toute origine a lire la reponse,
+    mais interdit l'envoi de credentials (cookies, en-tetes d'authentification).</p>
+
+    <pre><code>options.<span class="fn">AddPolicy</span>(<span class="str">"Wildcard"</span>, policy <span class="kw">=></span>
+{
+    policy.<span class="fn">AllowAnyOrigin</span>()    <span class="cmt">// Access-Control-Allow-Origin: *</span>
+          .<span class="fn">AllowAnyHeader</span>()
+          .<span class="fn">AllowAnyMethod</span>();
+});</code></pre>
+
+    <h3>Avec et sans credentials</h3>
+
+    <div class="comparison">
+        <div class="card good">
+            <h4>Sans credentials — Succes</h4>
+            <pre><code>fetch(url)
+<span class="cmt">// → Reponse lisible</span></code></pre>
+            <p>Les donnees publiques sont accessibles depuis toute origine.</p>
+        </div>
+        <div class="card bad">
+            <h4>Avec credentials — Echec</h4>
+            <pre><code>fetch(url, {
+  credentials: <span class="str">'include'</span>
+})
+<span class="cmt">// → Erreur CORS</span></code></pre>
+            <p>La specification interdit <code>*</code> + <code>credentials</code>.</p>
+        </div>
+    </div>
+
+    <div class="alert alert-info">
+        <strong>Bon choix pour les API publiques</strong>
+        Le wildcard est adapte pour les API qui servent des donnees publiques (meteo, taux de change, etc.)
+        sans authentification.
+    </div>
+
+    <!-- ============================================================ -->
+    <h2 id="vulnerable">Scenario 3 : Vulnerable</h2>
+
+    <p>C'est <strong>la faille CORS critique</strong>. Le serveur reflete l'en-tete <code>Origin</code>
+    de la requete et autorise les credentials. Tout site peut voler les donnees de l'utilisateur connecte.</p>
+
+    <pre><code>options.<span class="fn">AddPolicy</span>(<span class="str">"Vulnerable"</span>, policy <span class="kw">=></span>
+{
+    policy.<span class="fn">SetIsOriginAllowed</span>(<span class="danger-hl">_ => true</span>)   <span class="cmt">// Accepte TOUTE origine</span>
+          .<span class="fn">AllowAnyHeader</span>()
+          .<span class="fn">AllowAnyMethod</span>()
+          .<span class="fn">AllowCredentials</span>();                  <span class="cmt">// Envoie les cookies</span>
+});</code></pre>
+
+    <div class="alert alert-danger">
+        <strong>Danger critique</strong>
+        Cette configuration est equivalente a desactiver completement la protection CORS.
+        N'importe quel site malveillant peut voler les donnees bancaires de l'utilisateur connecte.
+    </div>
+
+    <h3>Scenario d'attaque</h3>
+
+    <div class="flow">
+        <div class="flow-box browser">Victime<br><small>connectee a la banque</small></div>
+        <div class="flow-arrow">→ visite →</div>
+        <div class="flow-box attacker">Site malveillant<br><small>http://evil.com</small></div>
+        <div class="flow-arrow">→ fetch() →</div>
+        <div class="flow-box server">API Banque<br><small>avec cookie</small></div>
+    </div>
+
+    <ol>
+        <li>La victime se connecte a sa banque (cookie <code>session_banque</code> defini)</li>
+        <li>La victime visite un site malveillant</li>
+        <li>Le site malveillant fait un <code>fetch()</code> vers l'API bancaire avec <code>credentials: 'include'</code></li>
+        <li>Le navigateur envoie le cookie de session automatiquement</li>
+        <li>Le serveur repond avec les donnees ET l'en-tete <code>Access-Control-Allow-Origin: http://evil.com</code></li>
+        <li>Le navigateur autorise la lecture → <strong>donnees volees</strong></li>
+    </ol>
+
+    <pre><code><span class="cmt">// Code du site malveillant</span>
+<span class="kw">const</span> response = <span class="kw">await</span> <span class="fn">fetch</span>(<span class="str">'http://localhost:5300/api/vulnerable/compte'</span>, {
+    credentials: <span class="str">'include'</span>
+});
+<span class="kw">const</span> data = <span class="kw">await</span> response.<span class="fn">json</span>();
+<span class="cmt">// data contient : {nom: "Jean Dupont", iban: "BE68...", solde: 12750.42}</span>
+<span class="danger-hl">envoyerAuServeurAttaquant(data);</span></code></pre>
+
+    <!-- ============================================================ -->
+    <h2 id="secure">Scenario 4 : Securise</h2>
+
+    <p>Le serveur autorise uniquement les origines de confiance via une whitelist explicite.</p>
+
+    <pre><code>options.<span class="fn">AddPolicy</span>(<span class="str">"Secure"</span>, policy <span class="kw">=></span>
+{
+    policy.<span class="fn">WithOrigins</span>(<span class="str">"http://localhost:5301"</span>)  <span class="success-hl">// Seule cette origine</span>
+          .<span class="fn">AllowAnyHeader</span>()
+          .<span class="fn">AllowAnyMethod</span>()
+          .<span class="fn">AllowCredentials</span>();                       <span class="success-hl">// Cookies autorises</span>
+});</code></pre>
+
+    <div class="comparison">
+        <div class="card good">
+            <h4>Origine autorisee</h4>
+            <pre><code>Origin: http://localhost:5301
+<span class="success-hl">→ Access-Control-Allow-Origin: http://localhost:5301</span>
+<span class="success-hl">→ Acces autorise</span></code></pre>
+        </div>
+        <div class="card bad">
+            <h4>Origine non autorisee</h4>
+            <pre><code>Origin: http://evil.com
+<span class="danger-hl">→ Pas d'en-tete CORS</span>
+<span class="danger-hl">→ Bloque par le navigateur</span></code></pre>
+        </div>
+    </div>
+
+    <div class="alert alert-success">
+        <strong>Bonne pratique</strong>
+        Toujours utiliser <code>WithOrigins()</code> avec une liste explicite d'origines.
+        C'est la seule configuration securisee pour les API avec authentification.
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- DIAGRAMS SECTION -->
+    <!-- ============================================================ -->
+
+    <h2 id="diag-sop">Diagramme : Same-Origin Policy en action</h2>
+    <p>Ce diagramme de sequence montre ce qui se passe quand un script tente d'acceder a une API cross-origin
+    <strong>sans</strong> configuration CORS :</p>
+
+    <div class="diagram-container">
+        <svg viewBox="0 0 750 420" xmlns="http://www.w3.org/2000/svg" style="max-width:750px;width:100%">
+            <!-- Actors -->
+            <rect x="60" y="20" width="130" height="44" rx="8" fill="#242736" stroke="#1e90ff" stroke-width="2"/>
+            <text x="125" y="38" text-anchor="middle" fill="#1e90ff" font-size="12" font-weight="700">JavaScript</text>
+            <text x="125" y="54" text-anchor="middle" fill="#8b8fa3" font-size="10">(evil.com)</text>
+
+            <rect x="295" y="20" width="130" height="44" rx="8" fill="#242736" stroke="#ffa502" stroke-width="2"/>
+            <text x="360" y="38" text-anchor="middle" fill="#ffa502" font-size="12" font-weight="700">Navigateur</text>
+            <text x="360" y="54" text-anchor="middle" fill="#8b8fa3" font-size="10">(Chrome, Firefox...)</text>
+
+            <rect x="540" y="20" width="130" height="44" rx="8" fill="#242736" stroke="#2ed573" stroke-width="2"/>
+            <text x="605" y="38" text-anchor="middle" fill="#2ed573" font-size="12" font-weight="700">API Banque</text>
+            <text x="605" y="54" text-anchor="middle" fill="#8b8fa3" font-size="10">(localhost:5300)</text>
+
+            <!-- Lifelines -->
+            <line x1="125" y1="64" x2="125" y2="400" stroke="#2e3142" stroke-width="2" stroke-dasharray="6,4"/>
+            <line x1="360" y1="64" x2="360" y2="400" stroke="#2e3142" stroke-width="2" stroke-dasharray="6,4"/>
+            <line x1="605" y1="64" x2="605" y2="400" stroke="#2e3142" stroke-width="2" stroke-dasharray="6,4"/>
+
+            <!-- Step 1: fetch() call -->
+            <line x1="125" y1="100" x2="355" y2="100" stroke="#1e90ff" stroke-width="2" marker-end="url(#arrow-blue)"/>
+            <rect x="155" y="82" width="170" height="22" rx="4" fill="#12131a"/>
+            <text x="240" y="97" text-anchor="middle" fill="#61afef" font-size="11">fetch("/api/no-cors/compte")</text>
+
+            <!-- Step number 1 -->
+            <circle cx="40" cy="100" r="14" fill="#1e90ff" opacity="0.2"/>
+            <text x="40" y="105" text-anchor="middle" fill="#1e90ff" font-size="12" font-weight="700">1</text>
+
+            <!-- Step 2: Browser sends request -->
+            <line x1="360" y1="155" x2="600" y2="155" stroke="#ffa502" stroke-width="2" marker-end="url(#arrow-orange)"/>
+            <rect x="390" y="134" width="190" height="22" rx="4" fill="#12131a"/>
+            <text x="485" y="149" text-anchor="middle" fill="#ffa502" font-size="11">GET + Origin: evil.com</text>
+
+            <circle cx="40" cy="155" r="14" fill="#ffa502" opacity="0.2"/>
+            <text x="40" y="160" text-anchor="middle" fill="#ffa502" font-size="12" font-weight="700">2</text>
+
+            <!-- Step 3: Server responds -->
+            <line x1="600" y1="210" x2="365" y2="210" stroke="#2ed573" stroke-width="2" marker-end="url(#arrow-green)"/>
+            <rect x="395" y="189" width="190" height="22" rx="4" fill="#12131a"/>
+            <text x="490" y="204" text-anchor="middle" fill="#2ed573" font-size="11">200 OK + JSON (donnees)</text>
+
+            <circle cx="40" cy="210" r="14" fill="#2ed573" opacity="0.2"/>
+            <text x="40" y="215" text-anchor="middle" fill="#2ed573" font-size="12" font-weight="700">3</text>
+
+            <!-- Step 4: Browser checks headers -->
+            <rect x="290" y="245" width="140" height="50" rx="6" fill="rgba(255,165,2,0.1)" stroke="#ffa502" stroke-width="1"/>
+            <text x="360" y="265" text-anchor="middle" fill="#ffa502" font-size="10" font-weight="600">Verification CORS</text>
+            <text x="360" y="280" text-anchor="middle" fill="#ff4757" font-size="10">Aucun en-tete ACAO</text>
+
+            <circle cx="40" cy="267" r="14" fill="#ffa502" opacity="0.2"/>
+            <text x="40" y="272" text-anchor="middle" fill="#ffa502" font-size="12" font-weight="700">4</text>
+
+            <!-- Step 5: Browser blocks -->
+            <line x1="355" y1="330" x2="130" y2="330" stroke="#ff4757" stroke-width="2.5" marker-end="url(#arrow-red)"/>
+            <rect x="145" y="309" width="200" height="22" rx="4" fill="rgba(255,71,87,0.15)"/>
+            <text x="245" y="324" text-anchor="middle" fill="#ff4757" font-size="11" font-weight="700">CORS Error: Blocked</text>
+
+            <circle cx="40" cy="330" r="14" fill="#ff4757" opacity="0.2"/>
+            <text x="40" y="335" text-anchor="middle" fill="#ff4757" font-size="12" font-weight="700">5</text>
+
+            <!-- Result box -->
+            <rect x="80" y="360" width="590" height="32" rx="6" fill="rgba(30,144,255,0.1)" stroke="#1e90ff" stroke-width="1"/>
+            <text x="375" y="381" text-anchor="middle" fill="#1e90ff" font-size="12" font-weight="600">Le serveur a recu la requete et repondu, mais le JS ne peut PAS lire la reponse</text>
+
+            <!-- Arrow markers -->
+            <defs>
+                <marker id="arrow-blue" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="#1e90ff"/></marker>
+                <marker id="arrow-orange" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="#ffa502"/></marker>
+                <marker id="arrow-green" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="#2ed573"/></marker>
+                <marker id="arrow-red" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="#ff4757"/></marker>
+            </defs>
+        </svg>
+    </div>
+
+    <h3>Lecture du diagramme</h3>
+    <p>
+        Ce diagramme illustre le comportement <strong>par defaut</strong> d'un navigateur lorsqu'un script
+        tente de lire une ressource sur une autre origine (ici, <code>evil.com</code> essaie de lire l'API bancaire
+        sur <code>localhost:5300</code>).
+    </p>
+    <p>
+        <strong>Le point cle a comprendre :</strong> la requete HTTP est bien envoyee au serveur, et le serveur
+        repond normalement avec les donnees (etape 3). La protection se situe <em>dans le navigateur</em>,
+        qui refuse de transmettre la reponse au JavaScript (etape 5). C'est pour cela qu'on dit que la SOP
+        bloque la <em>lecture</em>, pas la <em>requete</em>.
+    </p>
+    <p>
+        En pratique, si vous ouvrez la console DevTools dans le navigateur, vous verrez le message d'erreur
+        <code>Access to fetch at '...' from origin '...' has been blocked by CORS policy: No 'Access-Control-Allow-Origin'
+        header is present on the requested resource.</code>
+        Pourtant, dans l'onglet Network, la reponse du serveur est bien presente (le navigateur la cache simplement
+        au JavaScript).
+    </p>
+
+    <div class="alert alert-info">
+        <strong>A retenir</strong>
+        Sans aucune configuration CORS cote serveur, les donnees sont protegees contre la lecture cross-origin.
+        C'est le comportement le plus securise et c'est le defaut d'ASP.NET Core.
+    </div>
+
+    <!-- ============================================================ -->
+    <h2 id="diag-preflight">Diagramme : Requete Preflight</h2>
+    <p>Quand le navigateur detecte une requete "non simple" (methode PUT/DELETE, en-tete custom...),
+    il envoie d'abord une requete <code>OPTIONS</code> pour demander la permission :</p>
+
+    <div class="diagram-container">
+        <svg viewBox="0 0 700 520" xmlns="http://www.w3.org/2000/svg" style="max-width:700px;width:100%">
+            <!-- Actors -->
+            <rect x="80" y="15" width="140" height="44" rx="8" fill="#242736" stroke="#1e90ff" stroke-width="2"/>
+            <text x="150" y="33" text-anchor="middle" fill="#1e90ff" font-size="12" font-weight="700">Navigateur</text>
+            <text x="150" y="49" text-anchor="middle" fill="#8b8fa3" font-size="10">(localhost:5301)</text>
+
+            <rect x="460" y="15" width="140" height="44" rx="8" fill="#242736" stroke="#2ed573" stroke-width="2"/>
+            <text x="530" y="33" text-anchor="middle" fill="#2ed573" font-size="12" font-weight="700">API</text>
+            <text x="530" y="49" text-anchor="middle" fill="#8b8fa3" font-size="10">(localhost:5300)</text>
+
+            <!-- Lifelines -->
+            <line x1="150" y1="59" x2="150" y2="500" stroke="#2e3142" stroke-width="2" stroke-dasharray="6,4"/>
+            <line x1="530" y1="59" x2="530" y2="500" stroke="#2e3142" stroke-width="2" stroke-dasharray="6,4"/>
+
+            <!-- Phase 1 label -->
+            <rect x="10" y="88" width="58" height="20" rx="4" fill="rgba(255,165,2,0.2)"/>
+            <text x="39" y="102" text-anchor="middle" fill="#ffa502" font-size="9" font-weight="700">PHASE 1</text>
+
+            <!-- Preflight request -->
+            <line x1="150" y1="100" x2="525" y2="100" stroke="#ffa502" stroke-width="2" marker-end="url(#arr-o)"/>
+            <rect x="220" y="78" width="240" height="22" rx="4" fill="#12131a"/>
+            <text x="340" y="93" text-anchor="middle" fill="#ffa502" font-size="11" font-weight="600">OPTIONS /api/secure/compte</text>
+
+            <!-- Preflight headers -->
+            <rect x="185" y="112" width="310" height="56" rx="6" fill="rgba(255,165,2,0.06)" stroke="#ffa502" stroke-width="1" stroke-dasharray="4,3"/>
+            <text x="340" y="129" text-anchor="middle" fill="#8b8fa3" font-size="10">Origin: http://localhost:5301</text>
+            <text x="340" y="145" text-anchor="middle" fill="#8b8fa3" font-size="10">Access-Control-Request-Method: DELETE</text>
+            <text x="340" y="161" text-anchor="middle" fill="#8b8fa3" font-size="10">Access-Control-Request-Headers: Authorization</text>
+
+            <!-- Preflight response -->
+            <line x1="525" y1="200" x2="155" y2="200" stroke="#2ed573" stroke-width="2" marker-end="url(#arr-g)"/>
+            <rect x="250" y="178" width="180" height="22" rx="4" fill="#12131a"/>
+            <text x="340" y="193" text-anchor="middle" fill="#2ed573" font-size="11" font-weight="600">204 No Content</text>
+
+            <!-- Preflight response headers -->
+            <rect x="185" y="212" width="310" height="72" rx="6" fill="rgba(46,213,115,0.06)" stroke="#2ed573" stroke-width="1" stroke-dasharray="4,3"/>
+            <text x="340" y="229" text-anchor="middle" fill="#2ed573" font-size="10">Access-Control-Allow-Origin: http://localhost:5301</text>
+            <text x="340" y="245" text-anchor="middle" fill="#2ed573" font-size="10">Access-Control-Allow-Methods: DELETE</text>
+            <text x="340" y="261" text-anchor="middle" fill="#2ed573" font-size="10">Access-Control-Allow-Headers: Authorization</text>
+            <text x="340" y="277" text-anchor="middle" fill="#2ed573" font-size="10">Access-Control-Allow-Credentials: true</text>
+
+            <!-- Browser decision -->
+            <rect x="95" y="300" width="110" height="34" rx="6" fill="rgba(46,213,115,0.1)" stroke="#2ed573" stroke-width="1"/>
+            <text x="150" y="322" text-anchor="middle" fill="#2ed573" font-size="10" font-weight="600">Preflight OK !</text>
+
+            <!-- Phase 2 label -->
+            <rect x="10" y="358" width="58" height="20" rx="4" fill="rgba(30,144,255,0.2)"/>
+            <text x="39" y="372" text-anchor="middle" fill="#1e90ff" font-size="9" font-weight="700">PHASE 2</text>
+
+            <!-- Real request -->
+            <line x1="150" y1="370" x2="525" y2="370" stroke="#1e90ff" stroke-width="2" marker-end="url(#arr-b)"/>
+            <rect x="230" y="348" width="220" height="22" rx="4" fill="#12131a"/>
+            <text x="340" y="363" text-anchor="middle" fill="#1e90ff" font-size="11" font-weight="600">DELETE /api/secure/compte</text>
+
+            <rect x="215" y="382" width="250" height="24" rx="6" fill="rgba(30,144,255,0.06)" stroke="#1e90ff" stroke-width="1" stroke-dasharray="4,3"/>
+            <text x="340" y="399" text-anchor="middle" fill="#8b8fa3" font-size="10">Cookie: session_banque=user_jean_dupont</text>
+
+            <!-- Real response -->
+            <line x1="525" y1="435" x2="155" y2="435" stroke="#2ed573" stroke-width="2" marker-end="url(#arr-g)"/>
+            <rect x="270" y="413" width="140" height="22" rx="4" fill="#12131a"/>
+            <text x="340" y="428" text-anchor="middle" fill="#2ed573" font-size="11" font-weight="600">200 OK + JSON</text>
+
+            <!-- Final result -->
+            <rect x="60" y="465" width="560" height="28" rx="6" fill="rgba(46,213,115,0.1)" stroke="#2ed573" stroke-width="1"/>
+            <text x="340" y="484" text-anchor="middle" fill="#2ed573" font-size="11" font-weight="600">Le navigateur autorise le JS a lire la reponse (origine dans la whitelist)</text>
+
+            <defs>
+                <marker id="arr-b" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="#1e90ff"/></marker>
+                <marker id="arr-o" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="#ffa502"/></marker>
+                <marker id="arr-g" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="#2ed573"/></marker>
+            </defs>
+        </svg>
+    </div>
+
+    <h3>Lecture du diagramme</h3>
+    <p>
+        Le preflight est un mecanisme de <strong>negociation automatique</strong> entre le navigateur et le serveur.
+        Le developpeur n'a rien a coder cote client : le navigateur detecte seul qu'une requete est "non simple"
+        et envoie le preflight de maniere transparente.
+    </p>
+    <p>
+        <strong>Phase 1 — La demande de permission :</strong> le navigateur envoie une requete <code>OPTIONS</code>
+        (sans body, sans cookie) qui contient trois informations : l'origine appelante, la methode HTTP souhaitee
+        (<code>Access-Control-Request-Method</code>) et les en-tetes personnalises prevus
+        (<code>Access-Control-Request-Headers</code>). Le serveur repond avec les en-tetes
+        <code>Access-Control-Allow-*</code> correspondants. Si la methode ou les en-tetes ne sont pas autorises,
+        le serveur peut repondre sans ces en-tetes et le navigateur arrete la.
+    </p>
+    <p>
+        <strong>Phase 2 — La requete reelle :</strong> uniquement si le preflight est valide, le navigateur
+        envoie la vraie requete (<code>DELETE</code>, <code>PUT</code>, etc.) avec les cookies et les en-tetes.
+        Le serveur traite la requete normalement.
+    </p>
+    <p>
+        <strong>Quand le preflight se declenche-t-il ?</strong> Pour toute requete qui n'est pas "simple", c'est-a-dire :
+    </p>
+    <ul>
+        <li>Methode autre que <code>GET</code>, <code>POST</code> ou <code>HEAD</code></li>
+        <li>En-tetes personnalises (ex: <code>Authorization</code>, <code>X-Custom-Header</code>)</li>
+        <li><code>Content-Type</code> autre que <code>text/plain</code>, <code>multipart/form-data</code> ou <code>application/x-www-form-urlencoded</code></li>
+    </ul>
+    <p>
+        Un <code>GET</code> avec <code>credentials: 'include'</code> et sans en-tete custom est une requete "simple" :
+        pas de preflight, le navigateur verifie simplement les en-tetes CORS dans la reponse.
+    </p>
+
+    <div class="alert alert-warning">
+        <strong>Performance</strong>
+        Le preflight ajoute un aller-retour reseau supplementaire. Utilisez l'en-tete
+        <code>Access-Control-Max-Age</code> pour que le navigateur mette en cache le resultat et evite
+        de refaire le preflight a chaque requete.
+    </div>
+
+    <!-- ============================================================ -->
+    <h2 id="diag-attaque">Diagramme : Attaque via CORS Vulnerable</h2>
+    <p>Voici le scenario complet d'une attaque exploitant une mauvaise configuration CORS
+    (<code>SetIsOriginAllowed(_ => true)</code> + <code>AllowCredentials()</code>) :</p>
+
+    <div class="diagram-container">
+        <svg viewBox="0 0 820 580" xmlns="http://www.w3.org/2000/svg" style="max-width:820px;width:100%">
+            <!-- Actors -->
+            <rect x="30" y="15" width="120" height="44" rx="8" fill="#242736" stroke="#ffa502" stroke-width="2"/>
+            <text x="90" y="33" text-anchor="middle" fill="#ffa502" font-size="12" font-weight="700">Victime</text>
+            <text x="90" y="49" text-anchor="middle" fill="#8b8fa3" font-size="10">(navigateur)</text>
+
+            <rect x="240" y="15" width="120" height="44" rx="8" fill="#242736" stroke="#2ed573" stroke-width="2"/>
+            <text x="300" y="33" text-anchor="middle" fill="#2ed573" font-size="12" font-weight="700">API Banque</text>
+            <text x="300" y="49" text-anchor="middle" fill="#8b8fa3" font-size="10">(localhost:5300)</text>
+
+            <rect x="460" y="15" width="120" height="44" rx="8" fill="#242736" stroke="#ff4757" stroke-width="2"/>
+            <text x="520" y="33" text-anchor="middle" fill="#ff4757" font-size="12" font-weight="700">Site Malveillant</text>
+            <text x="520" y="49" text-anchor="middle" fill="#8b8fa3" font-size="10">(evil.com)</text>
+
+            <rect x="660" y="15" width="120" height="44" rx="8" fill="#242736" stroke="#ff4757" stroke-width="2"/>
+            <text x="720" y="33" text-anchor="middle" fill="#ff4757" font-size="12" font-weight="700">Serveur Pirate</text>
+            <text x="720" y="49" text-anchor="middle" fill="#8b8fa3" font-size="10">(collecte)</text>
+
+            <!-- Lifelines -->
+            <line x1="90" y1="59" x2="90" y2="560" stroke="#2e3142" stroke-width="2" stroke-dasharray="6,4"/>
+            <line x1="300" y1="59" x2="300" y2="560" stroke="#2e3142" stroke-width="2" stroke-dasharray="6,4"/>
+            <line x1="520" y1="59" x2="520" y2="560" stroke="#2e3142" stroke-width="2" stroke-dasharray="6,4"/>
+            <line x1="720" y1="59" x2="720" y2="560" stroke="#2e3142" stroke-width="2" stroke-dasharray="6,4"/>
+
+            <!-- Phase: User logs in -->
+            <rect x="5" y="78" width="56" height="16" rx="3" fill="rgba(46,213,115,0.2)"/>
+            <text x="33" y="90" text-anchor="middle" fill="#2ed573" font-size="8" font-weight="700">LEGIT</text>
+
+            <line x1="90" y1="100" x2="295" y2="100" stroke="#2ed573" stroke-width="2" marker-end="url(#atk-g)"/>
+            <text x="192" y="93" text-anchor="middle" fill="#2ed573" font-size="10">POST /api/auth/login</text>
+
+            <line x1="295" y1="130" x2="95" y2="130" stroke="#2ed573" stroke-width="2" marker-end="url(#atk-g2)"/>
+            <text x="192" y="123" text-anchor="middle" fill="#2ed573" font-size="10">Set-Cookie: session_banque=...</text>
+
+            <!-- Cookie indicator -->
+            <rect x="50" y="145" width="80" height="20" rx="4" fill="rgba(255,165,2,0.15)" stroke="#ffa502" stroke-width="1"/>
+            <text x="90" y="159" text-anchor="middle" fill="#ffa502" font-size="9" font-weight="600">Cookie stocke</text>
+
+            <!-- Phase: User visits evil site -->
+            <rect x="5" y="183" width="56" height="16" rx="3" fill="rgba(255,71,87,0.2)"/>
+            <text x="33" y="195" text-anchor="middle" fill="#ff4757" font-size="8" font-weight="700">PIEGE</text>
+
+            <line x1="90" y1="205" x2="515" y2="205" stroke="#ff4757" stroke-width="2" marker-end="url(#atk-r)"/>
+            <text x="300" y="198" text-anchor="middle" fill="#ff4757" font-size="10">La victime visite evil.com</text>
+
+            <line x1="515" y1="235" x2="95" y2="235" stroke="#ff4757" stroke-width="2" marker-end="url(#atk-r2)"/>
+            <text x="300" y="228" text-anchor="middle" fill="#ff4757" font-size="10">Page HTML + JavaScript malveillant</text>
+
+            <!-- Phase: Attack -->
+            <rect x="5" y="268" width="56" height="16" rx="3" fill="rgba(255,71,87,0.2)"/>
+            <text x="33" y="280" text-anchor="middle" fill="#ff4757" font-size="8" font-weight="700">VOL</text>
+
+            <!-- JS executes fetch -->
+            <rect x="40" y="295" width="100" height="36" rx="6" fill="rgba(255,71,87,0.08)" stroke="#ff4757" stroke-width="1"/>
+            <text x="90" y="310" text-anchor="middle" fill="#ff4757" font-size="9" font-weight="600">JS execute</text>
+            <text x="90" y="323" text-anchor="middle" fill="#ff4757" font-size="9">fetch() + creds</text>
+
+            <line x1="90" y1="340" x2="295" y2="340" stroke="#ff4757" stroke-width="2" marker-end="url(#atk-r)"/>
+            <rect x="100" y="343" width="186" height="30" rx="4" fill="rgba(255,71,87,0.06)" stroke="#ff4757" stroke-width="1" stroke-dasharray="3,2"/>
+            <text x="192" y="355" text-anchor="middle" fill="#ff4757" font-size="9">GET /api/vulnerable/compte</text>
+            <text x="192" y="368" text-anchor="middle" fill="#ffa502" font-size="9">Cookie: session_banque=... (auto !)</text>
+
+            <!-- Server responds with reflected origin -->
+            <line x1="295" y1="395" x2="95" y2="395" stroke="#2ed573" stroke-width="2" marker-end="url(#atk-g2)"/>
+            <rect x="100" y="398" width="186" height="44" rx="4" fill="rgba(255,71,87,0.06)" stroke="#ff4757" stroke-width="1" stroke-dasharray="3,2"/>
+            <text x="192" y="413" text-anchor="middle" fill="#2ed573" font-size="9">200 OK + donnees bancaires</text>
+            <text x="192" y="428" text-anchor="middle" fill="#ff4757" font-size="9" font-weight="600">ACAO: http://evil.com</text>
+            <text x="192" y="440" text-anchor="middle" fill="#ff4757" font-size="9">ACAC: true</text>
+
+            <!-- Browser allows reading! -->
+            <rect x="40" y="455" width="100" height="28" rx="6" fill="rgba(255,71,87,0.15)" stroke="#ff4757" stroke-width="1.5"/>
+            <text x="90" y="474" text-anchor="middle" fill="#ff4757" font-size="9" font-weight="700">Lecture autorisee !</text>
+
+            <!-- Data sent to attacker -->
+            <line x1="90" y1="500" x2="715" y2="500" stroke="#ff4757" stroke-width="2" stroke-dasharray="6,3" marker-end="url(#atk-r)"/>
+            <rect x="280" y="480" width="210" height="22" rx="4" fill="rgba(255,71,87,0.15)"/>
+            <text x="385" y="495" text-anchor="middle" fill="#ff4757" font-size="10" font-weight="700">Donnees volees → serveur pirate</text>
+
+            <!-- Result -->
+            <rect x="50" y="530" width="700" height="28" rx="6" fill="rgba(255,71,87,0.1)" stroke="#ff4757" stroke-width="1"/>
+            <text x="400" y="549" text-anchor="middle" fill="#ff4757" font-size="11" font-weight="600">IBAN, solde, transactions de la victime envoyes a l'attaquant — sans aucune interaction !</text>
+
+            <defs>
+                <marker id="atk-g" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="#2ed573"/></marker>
+                <marker id="atk-g2" markerWidth="8" markerHeight="6" refX="0" refY="3" orient="auto"><path d="M8,0 L0,3 L8,6" fill="#2ed573"/></marker>
+                <marker id="atk-r" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="#ff4757"/></marker>
+                <marker id="atk-r2" markerWidth="8" markerHeight="6" refX="0" refY="3" orient="auto"><path d="M8,0 L0,3 L8,6" fill="#ff4757"/></marker>
+            </defs>
+        </svg>
+    </div>
+
+    <h3>Lecture du diagramme</h3>
+    <p>
+        Ce diagramme montre une attaque complete en 3 phases, impliquant 4 acteurs.
+        Il est essentiel de comprendre <strong>pourquoi</strong> cette attaque fonctionne et comment
+        chaque element s'imbrique.
+    </p>
+
+    <h3>Phase "LEGIT" — La victime se connecte normalement</h3>
+    <p>
+        Jean Dupont se connecte a sa banque en ligne de maniere tout a fait normale.
+        L'API repond avec un cookie <code>Set-Cookie: session_banque=user_jean_dupont</code>.
+        Le navigateur stocke ce cookie et l'enverra automatiquement a chaque requete vers
+        <code>localhost:5300</code>. Jusque la, rien d'anormal.
+    </p>
+
+    <h3>Phase "PIEGE" — La victime visite un site malveillant</h3>
+    <p>
+        Plus tard, la victime clique sur un lien (email de phishing, publicite, forum...)
+        qui l'amene sur <code>evil.com</code>. Ce site contient du JavaScript malveillant
+        qui s'execute automatiquement dans le navigateur de la victime. La victime ne voit rien
+        de suspect — la page peut ressembler a un article normal, un jeu, ou n'importe quoi d'autre.
+    </p>
+
+    <h3>Phase "VOL" — Le JavaScript vole les donnees</h3>
+    <p>
+        Le script malveillant execute <code>fetch('http://localhost:5300/api/vulnerable/compte', {credentials: 'include'})</code>.
+        Deux choses critiques se produisent :
+    </p>
+    <ol>
+        <li><strong>Le cookie est envoye automatiquement.</strong> Le navigateur voit que la requete va vers
+        <code>localhost:5300</code> et qu'il a un cookie pour ce domaine. Avec <code>credentials: 'include'</code>
+        et <code>SameSite: None</code>, le cookie part avec la requete. L'API pense que c'est Jean Dupont qui demande ses donnees.</li>
+        <li><strong>Le serveur reflete l'origine.</strong> Puisque la politique CORS utilise
+        <code>SetIsOriginAllowed(_ => true)</code>, le serveur repond avec
+        <code>Access-Control-Allow-Origin: http://evil.com</code> (il copie simplement l'<code>Origin</code> de la requete).
+        Combine avec <code>Access-Control-Allow-Credentials: true</code>, le navigateur autorise le JavaScript de
+        <code>evil.com</code> a lire la reponse.</li>
+    </ol>
+    <p>
+        Le script peut alors lire le JSON contenant l'IBAN, le solde et les transactions, puis l'envoyer
+        a son propre serveur. La victime n'a rien vu, rien clique, rien confirme.
+    </p>
+
+    <div class="alert alert-danger">
+        <strong>Pourquoi c'est si grave</strong>
+        L'attaque est <strong>invisible</strong> pour la victime. Elle ne requiert aucune interaction.
+        Il suffit de visiter une page web. Tout utilisateur connecte a la banque est vulnerable,
+        et l'attaquant peut automatiser le vol de donnees a grande echelle.
+    </div>
+
+    <h3>Pourquoi la configuration securisee bloque cette attaque</h3>
+    <p>
+        Avec <code>WithOrigins("http://localhost:5301")</code>, le serveur ne renvoie l'en-tete
+        <code>Access-Control-Allow-Origin</code> que si l'<code>Origin</code> de la requete correspond
+        exactement a <code>http://localhost:5301</code>. Quand <code>evil.com</code> fait la meme requete,
+        le serveur ne renvoie pas cet en-tete, et le navigateur bloque la lecture —
+        meme si la reponse contient les donnees, le JavaScript ne peut pas y acceder.
+    </p>
+
+    <!-- ============================================================ -->
+    <h2 id="diag-comparaison">Comparaison visuelle des 4 scenarios</h2>
+    <p>Chaque scenario montre un comportement CORS different. Voici ce qui se passe dans chaque cas :</p>
+
+    <div class="scenario-grid">
+        <!-- Scenario 1 -->
+        <div class="scenario-card blocked">
+            <div class="sc-header">
+                <div class="sc-icon">&#x1f6e1;</div>
+                <div>
+                    <div class="sc-title">1. Sans CORS</div>
+                    <div class="sc-subtitle">SOP par defaut — aucun en-tete CORS</div>
+                </div>
+            </div>
+            <ul class="sc-steps">
+                <li data-step="1">JS appelle <code>fetch()</code> vers l'API</li>
+                <li data-step="2">Le navigateur envoie la requete avec <code>Origin</code></li>
+                <li data-step="3">Le serveur repond (200 OK) mais sans en-tete CORS</li>
+                <li data-step="4">Le navigateur bloque la lecture de la reponse</li>
+            </ul>
+            <div class="sc-result blocked">Resultat : lecture bloquee par le navigateur</div>
+        </div>
+
+        <!-- Scenario 2 -->
+        <div class="scenario-card open">
+            <div class="sc-header">
+                <div class="sc-icon">&#x1f310;</div>
+                <div>
+                    <div class="sc-title">2. Wildcard *</div>
+                    <div class="sc-subtitle">API publique — ouvert a tous, sans cookies</div>
+                </div>
+            </div>
+            <ul class="sc-steps">
+                <li data-step="1">JS appelle <code>fetch()</code> vers l'API</li>
+                <li data-step="2">Le serveur repond avec <code>ACAO: *</code></li>
+                <li data-step="3">Sans <code>credentials</code> → lecture autorisee</li>
+                <li data-step="4">Avec <code>credentials: 'include'</code> → bloque !</li>
+            </ul>
+            <div class="sc-result partial">Resultat : donnees publiques OK, pas de cookies</div>
+        </div>
+
+        <!-- Scenario 3 -->
+        <div class="scenario-card danger">
+            <div class="sc-header">
+                <div class="sc-icon">&#x1f4a3;</div>
+                <div>
+                    <div class="sc-title">3. Vulnerable</div>
+                    <div class="sc-subtitle">Reflexion d'origine + credentials = desastre</div>
+                </div>
+            </div>
+            <ul class="sc-steps">
+                <li data-step="1">La victime est connectee (cookie de session)</li>
+                <li data-step="2">evil.com fait <code>fetch()</code> avec credentials</li>
+                <li data-step="3">Le serveur reflete l'origine + envoie les donnees</li>
+                <li data-step="4">Le navigateur autorise la lecture → vol de donnees</li>
+            </ul>
+            <div class="sc-result stolen">Resultat : IBAN, solde, transactions voles !</div>
+        </div>
+
+        <!-- Scenario 4 -->
+        <div class="scenario-card safe">
+            <div class="sc-header">
+                <div class="sc-icon">&#x2705;</div>
+                <div>
+                    <div class="sc-title">4. Securise</div>
+                    <div class="sc-subtitle">Whitelist d'origines + credentials</div>
+                </div>
+            </div>
+            <ul class="sc-steps">
+                <li data-step="1">L'API n'accepte que <code>localhost:5301</code></li>
+                <li data-step="2">Requete depuis localhost:5301 → <code>ACAO</code> correct</li>
+                <li data-step="3">Requete depuis evil.com → pas d'en-tete CORS</li>
+                <li data-step="4">Cookies envoyes uniquement pour l'origine autorisee</li>
+            </ul>
+            <div class="sc-result success">Resultat : seul le client legitime accede aux donnees</div>
+        </div>
+    </div>
+
+    <!-- Visual impact table -->
+    <div class="diagram-container">
+        <div class="diagram-title">Matrice de securite CORS</div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Configuration</th>
+                    <th>Lecture cross-origin</th>
+                    <th>Cookies envoyes</th>
+                    <th>Attaque possible</th>
+                    <th>Cas d'usage</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>Aucun CORS</code></td>
+                    <td style="color:#ff4757">Non</td>
+                    <td style="color:#ff4757">Non</td>
+                    <td style="color:#2ed573">Non</td>
+                    <td>API interne / meme origine</td>
+                </tr>
+                <tr>
+                    <td><code>ACAO: *</code></td>
+                    <td style="color:#2ed573">Oui</td>
+                    <td style="color:#ff4757">Non (interdit)</td>
+                    <td style="color:#ffa502">Limite (pas de session)</td>
+                    <td>API publique (meteo, taux...)</td>
+                </tr>
+                <tr style="background:rgba(255,71,87,0.08)">
+                    <td><code>Origin reflechie + creds</code></td>
+                    <td style="color:#2ed573">Oui</td>
+                    <td style="color:#2ed573">Oui</td>
+                    <td style="color:#ff4757;font-weight:700">OUI — vol de donnees</td>
+                    <td style="color:#ff4757">JAMAIS !</td>
+                </tr>
+                <tr>
+                    <td><code>WithOrigins() + creds</code></td>
+                    <td style="color:#ffa502">Origines listees seulement</td>
+                    <td style="color:#2ed573">Oui (origines listees)</td>
+                    <td style="color:#2ed573">Non</td>
+                    <td>API avec auth (SPA, mobile)</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <h3>Comprendre les 4 scenarios</h3>
+
+    <p><strong>Scenario 1 — Sans CORS (bleu) :</strong>
+        C'est le comportement par defaut. Le serveur ne renvoie aucun en-tete CORS, donc le navigateur
+        applique la Same-Origin Policy et bloque la lecture. C'est la configuration la plus restrictive
+        et la plus sure. Elle convient aux API qui ne sont appelees que depuis la meme origine
+        (ex: une application MVC classique ou le front-end et le back-end partagent le meme domaine).
+    </p>
+
+    <p><strong>Scenario 2 — Wildcard * (orange) :</strong>
+        Le serveur repond avec <code>Access-Control-Allow-Origin: *</code>, ce qui autorise <em>toute</em>
+        origine a lire la reponse. Cependant, la specification CORS interdit formellement la combinaison
+        <code>*</code> + <code>credentials</code>. Le navigateur refuse d'envoyer des cookies si
+        l'en-tete <code>ACAO</code> vaut <code>*</code>. C'est une protection deliberee : si n'importe qui
+        peut lire, alors les donnees authentifiees ne doivent pas fuiter. Cette configuration est adaptee
+        aux API publiques qui servent des donnees ouvertes (meteo, taux de change, catalogue produits...).
+    </p>
+
+    <p><strong>Scenario 3 — Vulnerable (rouge) :</strong>
+        Le serveur accepte n'importe quelle origine (<code>SetIsOriginAllowed(_ => true)</code>) ET autorise
+        les credentials. Pour contourner la limitation du wildcard, ASP.NET Core reflete l'en-tete
+        <code>Origin</code> de la requete dans <code>Access-Control-Allow-Origin</code>.
+        Resultat : le navigateur voit une origine specifique (pas <code>*</code>) avec
+        <code>Access-Control-Allow-Credentials: true</code>, et autorise tout — y compris l'envoi de cookies.
+        C'est la <strong>pire configuration possible</strong>. Elle revient a desactiver completement
+        la protection CORS.
+    </p>
+
+    <p><strong>Scenario 4 — Securise (vert) :</strong>
+        Le serveur n'autorise qu'une liste precise d'origines (<code>WithOrigins("http://localhost:5301")</code>).
+        Quand une requete arrive depuis une origine non listee, le serveur ne renvoie tout simplement pas
+        d'en-tete <code>Access-Control-Allow-Origin</code>, et le navigateur bloque la lecture.
+        Les cookies sont autorises mais uniquement pour les origines de confiance. C'est la seule
+        configuration correcte pour une API avec authentification.
+    </p>
+
+    <h3>Lecture de la matrice de securite</h3>
+    <p>
+        La matrice ci-dessus croise quatre criteres pour chaque configuration :
+    </p>
+    <ul>
+        <li><strong>Lecture cross-origin :</strong> est-ce qu'un script sur une autre origine peut lire la reponse ?</li>
+        <li><strong>Cookies envoyes :</strong> est-ce que le navigateur attache les cookies a la requete cross-origin ?</li>
+        <li><strong>Attaque possible :</strong> est-ce qu'un site malveillant peut voler les donnees d'un utilisateur connecte ?</li>
+        <li><strong>Cas d'usage :</strong> dans quel contexte cette configuration est-elle appropriee ?</li>
+    </ul>
+    <p>
+        La ligne rouge (origin reflechie + credentials) ne devrait <strong>jamais</strong> apparaitre dans une application
+        en production. Si vous voyez <code>SetIsOriginAllowed(_ => true)</code> combine avec
+        <code>AllowCredentials()</code> dans un code review, c'est une faille de securite critique a corriger
+        immediatement.
+    </p>
+
+    <!-- ============================================================ -->
+    <h2 id="diag-decision">Arbre de decision CORS</h2>
+    <p>Pour choisir la bonne configuration CORS :</p>
+
+    <div class="decision-tree">
+        <div class="dt-node dt-question">Votre API necessite-t-elle des cookies / credentials ?</div>
+        <div class="dt-connector"></div>
+        <div class="dt-branches">
+            <div class="dt-branch">
+                <div class="dt-label">Non</div>
+                <div class="dt-connector"></div>
+                <div class="dt-node dt-question">L'API est-elle publique ?</div>
+                <div class="dt-connector"></div>
+                <div class="dt-branches">
+                    <div class="dt-branch">
+                        <div class="dt-label">Oui</div>
+                        <div class="dt-connector"></div>
+                        <div class="dt-node dt-answer warn">
+                            AllowAnyOrigin()<br>
+                            <small>ACAO: * — ouvert a tous</small>
+                        </div>
+                    </div>
+                    <div class="dt-branch">
+                        <div class="dt-label">Non</div>
+                        <div class="dt-connector"></div>
+                        <div class="dt-node dt-answer good">
+                            Pas de CORS<br>
+                            <small>SOP par defaut — le plus securise</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="dt-branch">
+                <div class="dt-label">Oui</div>
+                <div class="dt-connector"></div>
+                <div class="dt-node dt-question">Connaissez-vous les origines autorisees ?</div>
+                <div class="dt-connector"></div>
+                <div class="dt-branches">
+                    <div class="dt-branch">
+                        <div class="dt-label">Oui</div>
+                        <div class="dt-connector"></div>
+                        <div class="dt-node dt-answer good">
+                            WithOrigins("...") + AllowCredentials()<br>
+                            <small>Whitelist explicite — recommande</small>
+                        </div>
+                    </div>
+                    <div class="dt-branch">
+                        <div class="dt-label">Non / Toutes</div>
+                        <div class="dt-connector"></div>
+                        <div class="dt-node dt-answer bad">
+                            SetIsOriginAllowed(_ => true) + creds<br>
+                            <small>DANGER — ne jamais faire en production !</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <h3>Comment utiliser cet arbre</h3>
+    <p>
+        Commencez par la question du haut et suivez les branches selon votre cas.
+        La premiere question est la plus importante : <strong>votre API utilise-t-elle des cookies
+        ou des en-tetes d'authentification ?</strong>
+    </p>
+
+    <p>
+        <strong>Si non (branche gauche) :</strong> votre API ne gere pas de sessions utilisateur.
+        Si elle sert des donnees publiques accessibles a tous (ex: une API meteo), utilisez
+        <code>AllowAnyOrigin()</code> (wildcard <code>*</code>). Si elle est interne et ne doit pas
+        etre appelee depuis d'autres origines, ne configurez pas CORS du tout — la SOP fera le travail.
+    </p>
+
+    <p>
+        <strong>Si oui (branche droite) :</strong> votre API utilise des cookies ou des tokens.
+        La question devient : connaissez-vous les origines qui doivent y acceder ?
+        Si oui (ex: votre SPA est sur <code>app.example.com</code> et votre API sur <code>api.example.com</code>),
+        listez-les explicitement avec <code>WithOrigins()</code>. C'est la configuration recommandee.
+    </p>
+
+    <p>
+        La branche rouge en bas a droite (<code>SetIsOriginAllowed(_ => true)</code> + credentials)
+        n'est <strong>jamais</strong> la bonne reponse en production. Si vous ne connaissez pas vos origines,
+        c'est un probleme d'architecture a resoudre, pas une raison d'ouvrir toutes les portes.
+    </p>
+
+    <div class="alert alert-success">
+        <strong>Regle d'or</strong>
+        En cas de doute, ne configurez pas CORS du tout. La SOP protege par defaut.
+        N'ouvrez CORS que pour les origines dont vous avez explicitement besoin.
+    </div>
+
+    <!-- ============================================================ -->
+    <h2 id="headers">En-tetes CORS</h2>
+
+    <table>
+        <thead><tr><th>En-tete</th><th>Role</th><th>Valeurs possibles</th></tr></thead>
+        <tbody>
+            <tr>
+                <td><code>Access-Control-Allow-Origin</code></td>
+                <td>Origine(s) autorisee(s) a lire la reponse</td>
+                <td><code>*</code>, ou une origine specifique</td>
+            </tr>
+            <tr>
+                <td><code>Access-Control-Allow-Credentials</code></td>
+                <td>Autorise les cookies/credentials</td>
+                <td><code>true</code> (incompatible avec <code>*</code>)</td>
+            </tr>
+            <tr>
+                <td><code>Access-Control-Allow-Methods</code></td>
+                <td>Methodes HTTP autorisees</td>
+                <td><code>GET, POST, PUT, DELETE</code></td>
+            </tr>
+            <tr>
+                <td><code>Access-Control-Allow-Headers</code></td>
+                <td>En-tetes personnalises autorises</td>
+                <td><code>Content-Type, Authorization</code></td>
+            </tr>
+            <tr>
+                <td><code>Access-Control-Max-Age</code></td>
+                <td>Duree du cache preflight (secondes)</td>
+                <td><code>3600</code></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <!-- ============================================================ -->
+    <h2 id="preflight">Requetes preflight</h2>
+
+    <p>Pour certaines requetes (methodes autres que GET/POST, en-tetes personnalises, etc.),
+    le navigateur envoie d'abord une requete <strong>OPTIONS</strong> (preflight) pour demander au serveur
+    si la requete reelle est autorisee.</p>
+
+    <div class="flow">
+        <div class="flow-box browser">Navigateur</div>
+        <div class="flow-arrow">→ OPTIONS →</div>
+        <div class="flow-box server">Serveur</div>
+        <div class="flow-arrow">← 204 ←</div>
+        <div class="flow-box browser">Navigateur</div>
+        <div class="flow-arrow">→ GET/POST →</div>
+        <div class="flow-box server">Serveur</div>
+    </div>
+
+    <pre><code><span class="cmt">// 1. Requete preflight (envoyee automatiquement par le navigateur)</span>
+OPTIONS /api/secure/compte HTTP/1.1
+Host: localhost:5300
+Origin: http://localhost:5301
+Access-Control-Request-Method: GET
+Access-Control-Request-Headers: content-type
+
+<span class="cmt">// 2. Reponse preflight du serveur</span>
+HTTP/1.1 204 No Content
+Access-Control-Allow-Origin: http://localhost:5301
+Access-Control-Allow-Methods: GET
+Access-Control-Allow-Headers: content-type
+Access-Control-Allow-Credentials: true
+
+<span class="cmt">// 3. Requete reelle (envoyee seulement si le preflight est OK)</span>
+GET /api/secure/compte HTTP/1.1
+Host: localhost:5300
+Origin: http://localhost:5301
+Cookie: session_banque=user_jean_dupont</code></pre>
+
+    <!-- ============================================================ -->
+    <h2 id="config">Configuration ASP.NET Core</h2>
+
+    <h3>Politiques nommees</h3>
+
+    <pre><code>builder.Services.<span class="fn">AddCors</span>(options <span class="kw">=></span>
+{
+    <span class="cmt">// Politique securisee</span>
+    options.<span class="fn">AddPolicy</span>(<span class="str">"Secure"</span>, policy <span class="kw">=></span>
+    {
+        policy.<span class="fn">WithOrigins</span>(<span class="str">"http://localhost:5301"</span>)
+              .<span class="fn">AllowAnyHeader</span>()
+              .<span class="fn">AllowAnyMethod</span>()
+              .<span class="fn">AllowCredentials</span>();
+    });
+});</code></pre>
+
+    <h3>Application par route</h3>
+
+    <pre><code><span class="cmt">// Appliquer une politique CORS a une route specifique</span>
+app.<span class="fn">MapGet</span>(<span class="str">"/api/secure/compte"</span>, () <span class="kw">=></span> Results.<span class="fn">Json</span>(compte))
+    .<span class="fn">RequireCors</span>(<span class="str">"Secure"</span>);
+
+<span class="cmt">// Route sans politique CORS (bloquee par SOP)</span>
+app.<span class="fn">MapGet</span>(<span class="str">"/api/no-cors/compte"</span>, () <span class="kw">=></span> Results.<span class="fn">Json</span>(compte));
+<span class="cmt">// Pas de .RequireCors() → aucun en-tete CORS</span></code></pre>
+
+    <!-- ============================================================ -->
+    <h2 id="bonnes-pratiques">Bonnes pratiques</h2>
+
+    <ol>
+        <li><strong>Ne jamais utiliser <code>SetIsOriginAllowed(_ => true)</code> avec <code>AllowCredentials()</code></strong>
+        — c'est la faille la plus grave</li>
+        <li><strong>Utiliser <code>WithOrigins()</code></strong> avec une liste explicite d'origines de confiance</li>
+        <li><strong><code>*</code> uniquement pour les API publiques</strong> sans authentification</li>
+        <li><strong>Appliquer CORS par route</strong> (avec <code>.RequireCors()</code>) plutot que globalement</li>
+        <li><strong>Limiter les methodes et en-tetes</strong> autorises au minimum necessaire</li>
+        <li><strong>Configurer <code>Access-Control-Max-Age</code></strong> pour eviter les preflight repetitifs</li>
+        <li><strong>Ne pas confondre CORS et authentification</strong> — CORS controle qui peut <em>lire</em> la reponse,
+        pas qui peut <em>envoyer</em> des requetes</li>
+    </ol>
+
+    <div class="alert alert-warning">
+        <strong>Rappel</strong>
+        CORS est un mecanisme du <em>navigateur</em>. Un script cote serveur (cURL, Postman, etc.)
+        peut toujours acceder a l'API sans restriction CORS. C'est pour cela que CORS ne remplace pas
+        l'authentification et l'autorisation cote serveur.
+    </div>
+</main>
+
+<footer>
+    Condorcet 2026 - BAC Cyber Securite - Programmation Securisee - Labo 4 : CORS
+</footer>
+
+</body>
+</html>
