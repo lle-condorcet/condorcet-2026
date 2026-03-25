@@ -1,0 +1,1347 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ELK Logging Lab - Centralisation des Logs</title>
+    <style>
+        :root {
+            --bg: #0f1117;
+            --surface: #1a1d27;
+            --surface-2: #242736;
+            --accent: #ffa502;
+            --accent-light: #ffbe33;
+            --danger: #ff4757;
+            --success: #2ed573;
+            --warning: #ffa502;
+            --info: #1e90ff;
+            --text: #e4e6eb;
+            --text-muted: #8b8fa3;
+            --border: #2e3142;
+            --code-bg: #12131a;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+        }
+
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 260px;
+            height: 100vh;
+            background: var(--surface);
+            border-right: 1px solid var(--border);
+            padding: 2rem 1.5rem;
+            overflow-y: auto;
+            z-index: 100;
+        }
+
+        nav .logo { font-size: 1.4rem; font-weight: 800; margin-bottom: 2rem; }
+        nav .logo span { color: var(--accent); }
+        nav .section-title {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--text-muted);
+            margin: 1.5rem 0 0.5rem;
+        }
+        nav a {
+            display: block;
+            color: var(--text-muted);
+            text-decoration: none;
+            padding: 0.3rem 0;
+            font-size: 0.9rem;
+            transition: color 0.2s;
+        }
+        nav a:hover { color: var(--accent); }
+
+        main {
+            margin-left: 260px;
+            max-width: 900px;
+            padding: 3rem 4rem;
+        }
+
+        h1 { font-size: 2.2rem; font-weight: 800; margin-bottom: 0.5rem; }
+        h1 span { color: var(--accent); }
+
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            margin-bottom: 3rem;
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin: 3rem 0 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--accent);
+        }
+
+        h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            margin: 2rem 0 0.8rem;
+            color: var(--accent-light);
+        }
+
+        p { margin-bottom: 1rem; }
+
+        code {
+            background: var(--code-bg);
+            padding: 0.15rem 0.4rem;
+            border-radius: 4px;
+            font-size: 0.88em;
+            color: var(--accent-light);
+        }
+
+        pre {
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.2rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-size: 0.88rem;
+            line-height: 1.6;
+        }
+
+        pre code { background: none; padding: 0; color: var(--text); }
+
+        .kw { color: #c678dd; }
+        .str { color: #98c379; }
+        .cmt { color: #5c6370; }
+        .fn { color: #61afef; }
+        .val { color: #d19a66; }
+        .danger-hl { color: #ff4757; }
+        .success-hl { color: #2ed573; }
+
+        .alert {
+            padding: 1rem 1.2rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            border-left: 4px solid;
+        }
+
+        .alert-danger { background: rgba(255, 71, 87, 0.1); border-color: var(--danger); }
+        .alert-success { background: rgba(46, 213, 115, 0.1); border-color: var(--success); }
+        .alert-warning { background: rgba(255, 165, 2, 0.1); border-color: var(--warning); }
+        .alert-info { background: rgba(30, 144, 255, 0.1); border-color: var(--info); }
+
+        .comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.5rem;
+        }
+
+        .card.bad { border-color: var(--danger); }
+        .card.good { border-color: var(--success); }
+
+        .card h4 { font-size: 1rem; margin-bottom: 1rem; }
+        .card.bad h4 { color: var(--danger); }
+        .card.good h4 { color: var(--success); }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+
+        th, td {
+            padding: 0.6rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th {
+            background: var(--surface-2);
+            font-weight: 600;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        ul, ol { margin: 0.5rem 0 1rem 1.5rem; }
+        li { margin-bottom: 0.3rem; }
+        strong { color: var(--text); }
+
+        .ascii-diagram {
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.82rem;
+            line-height: 1.4;
+            overflow-x: auto;
+            white-space: pre;
+            color: var(--text-muted);
+        }
+
+        .flow-step {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin: 0.8rem 0;
+        }
+
+        .flow-step .step-num {
+            background: var(--accent);
+            color: var(--bg);
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.85rem;
+            flex-shrink: 0;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+
+        .stat-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.2rem;
+            text-align: center;
+        }
+
+        .stat-card .stat-value {
+            font-size: 2rem;
+            font-weight: 800;
+            margin-bottom: 0.3rem;
+        }
+
+        .stat-card .stat-label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        footer {
+            margin-left: 260px;
+            padding: 2rem 4rem;
+            border-top: 1px solid var(--border);
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        @media (max-width: 768px) {
+            nav { display: none; }
+            main, footer { margin-left: 0; padding: 1.5rem; }
+            .stats-grid { grid-template-columns: 1fr; }
+            .comparison { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ============================== NAV ============================== -->
+<nav>
+    <div class="logo"><span>ELK</span> Logging Lab</div>
+
+    <div class="section-title">Introduction</div>
+    <a href="#introduction">Pourquoi centraliser les logs ?</a>
+    <a href="#elk-stack">Qu'est-ce que ELK ?</a>
+
+    <div class="section-title">Architecture</div>
+    <a href="#architecture">Composants ELK</a>
+    <a href="#flux-donnees">Flux de donnees</a>
+
+    <div class="section-title">Installation</div>
+    <a href="#prerequis">Prerequis</a>
+    <a href="#installation">Docker Compose</a>
+    <a href="#verification">Verification</a>
+
+    <div class="section-title">Application .NET</div>
+    <a href="#app-overview">Vue d'ensemble</a>
+    <a href="#serilog">Configuration Serilog</a>
+    <a href="#request-logging">Logging HTTP</a>
+    <a href="#slow-queries">Requetes EF lentes</a>
+    <a href="#security-audit">Audit de securite</a>
+
+    <div class="section-title">Kibana</div>
+    <a href="#dashboards">Tableaux de bord</a>
+    <a href="#alertes">Alertes</a>
+    <a href="#correlation">Correlation des logs</a>
+
+    <div class="section-title">Bonnes pratiques</div>
+    <a href="#bonnes-pratiques">Regles essentielles</a>
+
+    <div class="section-title">Exercices</div>
+    <a href="#exercices">Exercices pratiques</a>
+</nav>
+
+<!-- ============================== MAIN ============================== -->
+<main>
+
+<h1><span>ELK</span> Logging Lab</h1>
+<p class="subtitle">Centralisation et analyse des logs avec Elasticsearch, Logstash et Kibana</p>
+
+<!-- ==================== INTRODUCTION ==================== -->
+<h2 id="introduction">Pourquoi centraliser les logs ?</h2>
+
+<p>Dans une architecture moderne, les applications generent des milliers de lignes de logs chaque minute.
+Sans centralisation, ces logs sont disperses sur differents serveurs, difficiles a correler et impossibles
+a analyser en temps reel. La centralisation des logs est un pilier fondamental de la <strong>securite informatique</strong>
+et de l'<strong>observabilite</strong>.</p>
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-value" style="color: var(--danger);">197</div>
+        <div class="stat-label">Jours en moyenne pour detecter une breche</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value" style="color: var(--accent);">69</div>
+        <div class="stat-label">Jours supplementaires pour la contenir</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value" style="color: var(--info);">80%</div>
+        <div class="stat-label">Des breches detectees par des tiers</div>
+    </div>
+</div>
+
+<p>Les raisons principales de centraliser les logs :</p>
+<ul>
+    <li><strong>Detection des intrusions</strong> — Identifier les tentatives d'attaque (injection SQL, XSS, brute force) en temps reel</li>
+    <li><strong>Conformite reglementaire</strong> — RGPD, NIS2, PCI-DSS exigent la conservation et l'audit des logs</li>
+    <li><strong>Diagnostic rapide</strong> — Correler les evenements entre plusieurs services pour trouver la cause racine</li>
+    <li><strong>Monitoring de performance</strong> — Detecter les requetes lentes, les pics d'erreurs, les anomalies</li>
+    <li><strong>Forensique</strong> — Reconstruire la chronologie d'un incident de securite</li>
+</ul>
+
+<h2 id="elk-stack">Qu'est-ce que la stack ELK ?</h2>
+
+<p>ELK est l'acronyme de trois projets open-source developpes par <strong>Elastic</strong> qui, ensemble,
+forment une plateforme complete de gestion des logs :</p>
+
+<table>
+    <thead>
+        <tr>
+            <th>Composant</th>
+            <th>Role</th>
+            <th>Port par defaut</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><strong>Elasticsearch</strong></td>
+            <td>Moteur de recherche et d'analyse distribue, stocke et indexe les logs</td>
+            <td><code>9200</code></td>
+        </tr>
+        <tr>
+            <td><strong>Logstash</strong></td>
+            <td>Pipeline de traitement : recoit, transforme et envoie les logs vers Elasticsearch</td>
+            <td><code>5044</code>, <code>5000</code></td>
+        </tr>
+        <tr>
+            <td><strong>Kibana</strong></td>
+            <td>Interface web de visualisation : tableaux de bord, recherche, alertes</td>
+            <td><code>5601</code></td>
+        </tr>
+    </tbody>
+</table>
+
+<div class="alert alert-info">
+    <strong>Note :</strong> Dans notre lab, l'application .NET envoie les logs directement a Elasticsearch
+    via le sink Serilog. Logstash est configure pour recevoir des logs supplementaires et les enrichir.
+</div>
+
+<!-- ==================== ARCHITECTURE ==================== -->
+<h2 id="architecture">Architecture du lab</h2>
+
+<div class="ascii-diagram">
++------------------+       +------------------+       +------------------+
+|                  |       |                  |       |                  |
+|   .NET 10 App    |------&gt;|  Elasticsearch   |&lt;------|    Logstash      |
+|   (Serilog)      |       |  (Stockage +     |       |  (Pipeline de    |
+|                  |       |   Indexation)     |       |   traitement)    |
+|  Port: 8080      |       |  Port: 9200      |       |  Port: 5000      |
++------------------+       +--------+---------+       +------------------+
+                                    |
+                                    v
+                           +------------------+
+                           |                  |
+                           |     Kibana       |
+                           |  (Visualisation  |
+                           |   + Alertes)     |
+                           |  Port: 5601      |
+                           +------------------+
+</div>
+
+<h3 id="flux-donnees">Flux de donnees detaille</h3>
+
+<div class="flow-step">
+    <div class="step-num">1</div>
+    <div>L'application .NET genere des <strong>logs structures</strong> via Serilog (JSON)</div>
+</div>
+<div class="flow-step">
+    <div class="step-num">2</div>
+    <div>Le <strong>sink Elasticsearch</strong> de Serilog envoie les logs directement a Elasticsearch via HTTP</div>
+</div>
+<div class="flow-step">
+    <div class="step-num">3</div>
+    <div>Elasticsearch <strong>indexe</strong> les logs dans des index journaliers (<code>elklab-logs-2026.03.25</code>)</div>
+</div>
+<div class="flow-step">
+    <div class="step-num">4</div>
+    <div>Kibana interroge Elasticsearch pour <strong>visualiser</strong> les donnees en temps reel</div>
+</div>
+<div class="flow-step">
+    <div class="step-num">5</div>
+    <div>Des <strong>alertes</strong> Kibana notifient en cas d'evenements de securite critiques</div>
+</div>
+
+<!-- ==================== PREREQUIS ==================== -->
+<h2 id="prerequis">Prerequis</h2>
+
+<ul>
+    <li><strong>Docker Desktop</strong> &ge; 4.x avec Docker Compose v2</li>
+    <li><strong>.NET 10 SDK</strong> (preview) — <code>dotnet --version</code> doit retourner <code>10.0.x</code></li>
+    <li><strong>Memoire RAM</strong> &ge; 8 Go (Elasticsearch consomme ~512 Mo minimum)</li>
+    <li><strong>Espace disque</strong> &ge; 5 Go libres pour les images Docker et les index</li>
+    <li><strong>curl</strong> ou <strong>Postman</strong> pour tester les API</li>
+</ul>
+
+<div class="alert alert-warning">
+    <strong>Important :</strong> Sur Windows/WSL2, augmentez la limite de memoire virtuelle si necessaire :
+    <code>wsl -d docker-desktop sysctl -w vm.max_map_count=262144</code>
+</div>
+
+<!-- ==================== INSTALLATION ==================== -->
+<h2 id="installation">Installation avec Docker Compose</h2>
+
+<h3>Etape 1 : Cloner et naviguer</h3>
+
+<pre><code><span class="cmt"># Naviguer vers le dossier Docker</span>
+<span class="kw">cd</span> ElkLoggingLabApp/docker</code></pre>
+
+<h3>Etape 2 : Lancer la stack ELK</h3>
+
+<pre><code><span class="cmt"># Demarrer tous les services en arriere-plan</span>
+<span class="kw">docker compose</span> up -d
+
+<span class="cmt"># Suivre les logs de demarrage</span>
+<span class="kw">docker compose</span> logs -f</code></pre>
+
+<p>Le demarrage complet prend environ <strong>1 a 2 minutes</strong>. Elasticsearch doit etre sain avant que
+Kibana et Logstash ne demarrent (grace aux health checks).</p>
+
+<h3>Etape 3 : Verifier le demarrage</h3>
+
+<pre><code><span class="cmt"># Verifier l'etat des conteneurs</span>
+<span class="kw">docker compose</span> ps
+
+<span class="cmt"># Verifier Elasticsearch</span>
+<span class="kw">curl</span> http://localhost:9200/_cluster/health?pretty
+
+<span class="cmt"># Verifier Kibana</span>
+<span class="kw">curl</span> http://localhost:5601/api/status</code></pre>
+
+<h3 id="verification">Verification complete</h3>
+
+<table>
+    <thead>
+        <tr>
+            <th>Service</th>
+            <th>URL</th>
+            <th>Resultat attendu</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>Elasticsearch</td>
+            <td><code>http://localhost:9200</code></td>
+            <td>JSON avec version et cluster name</td>
+        </tr>
+        <tr>
+            <td>Kibana</td>
+            <td><code>http://localhost:5601</code></td>
+            <td>Interface web Kibana</td>
+        </tr>
+        <tr>
+            <td>Logstash</td>
+            <td><code>http://localhost:9600</code></td>
+            <td>API de monitoring Logstash</td>
+        </tr>
+        <tr>
+            <td>Application .NET</td>
+            <td><code>http://localhost:8080</code></td>
+            <td>JSON avec la liste des endpoints</td>
+        </tr>
+    </tbody>
+</table>
+
+<!-- ==================== APPLICATION .NET ==================== -->
+<h2 id="app-overview">Application .NET de demonstration</h2>
+
+<p>L'application est une <strong>API REST ASP.NET Core 10</strong> qui simule un systeme de gestion de produits
+et de commandes. Elle est concue specifiquement pour generer des logs riches et varies :</p>
+
+<table>
+    <thead>
+        <tr>
+            <th>Composant</th>
+            <th>Description</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><code>ProductsController</code></td>
+            <td>CRUD complet sur les produits avec recherche avancee</td>
+        </tr>
+        <tr>
+            <td><code>OrdersController</code></td>
+            <td>Gestion des commandes avec logique metier (commandes haute valeur)</td>
+        </tr>
+        <tr>
+            <td><code>AuditController</code></td>
+            <td>Consultation des logs d'audit stockes en base</td>
+        </tr>
+        <tr>
+            <td><code>DiagnosticsController</code></td>
+            <td>Endpoints de diagnostic : requete lente, exception, pression memoire, rafale de logs</td>
+        </tr>
+        <tr>
+            <td><code>RequestLoggingMiddleware</code></td>
+            <td>Capture chaque requete HTTP avec duree, IP, user agent, correlation ID</td>
+        </tr>
+        <tr>
+            <td><code>SecurityAuditMiddleware</code></td>
+            <td>Detecte les tentatives d'injection SQL, XSS, methodes HTTP suspectes, rate limiting</td>
+        </tr>
+    </tbody>
+</table>
+
+<h3>Structure du projet</h3>
+
+<pre><code>ElkLoggingLabApp/
+  ├── Controllers/
+  │   ├── <span class="fn">ProductsController.cs</span>
+  │   ├── <span class="fn">OrdersController.cs</span>
+  │   ├── <span class="fn">AuditController.cs</span>
+  │   └── <span class="fn">DiagnosticsController.cs</span>
+  ├── Data/
+  │   └── <span class="fn">AppDbContext.cs</span>
+  ├── Middleware/
+  │   ├── <span class="fn">RequestLoggingMiddleware.cs</span>
+  │   └── <span class="fn">SecurityAuditMiddleware.cs</span>
+  ├── Models/
+  │   ├── <span class="fn">Product.cs</span>
+  │   ├── <span class="fn">Order.cs</span>
+  │   └── <span class="fn">AuditLog.cs</span>
+  ├── Services/
+  │   ├── <span class="fn">ProductService.cs</span>
+  │   ├── <span class="fn">OrderService.cs</span>
+  │   └── <span class="fn">AuditService.cs</span>
+  ├── docker/
+  │   ├── <span class="fn">docker-compose.yml</span>
+  │   ├── <span class="fn">Dockerfile</span>
+  │   ├── <span class="fn">.env</span>
+  │   └── logstash/pipeline/<span class="fn">logstash.conf</span>
+  ├── <span class="fn">Program.cs</span>
+  └── <span class="fn">appsettings.json</span></code></pre>
+
+<!-- ==================== SERILOG ==================== -->
+<h2 id="serilog">Configuration Serilog</h2>
+
+<p><strong>Serilog</strong> est la bibliotheque de logging structuree la plus populaire pour .NET. Contrairement au
+logging standard qui produit du texte brut, Serilog genere des <strong>evenements structures</strong> en JSON,
+parfaitement adaptes a l'indexation par Elasticsearch.</p>
+
+<h3>Packages NuGet</h3>
+
+<pre><code><span class="cmt">&lt;!-- Packages Serilog dans le .csproj --&gt;</span>
+&lt;<span class="kw">PackageReference</span> Include=<span class="str">"Serilog.AspNetCore"</span> Version=<span class="str">"9.0.0"</span> /&gt;
+&lt;<span class="kw">PackageReference</span> Include=<span class="str">"Serilog.Sinks.Elasticsearch"</span> Version=<span class="str">"10.0.0"</span> /&gt;
+&lt;<span class="kw">PackageReference</span> Include=<span class="str">"Serilog.Enrichers.Environment"</span> Version=<span class="str">"3.0.1"</span> /&gt;
+&lt;<span class="kw">PackageReference</span> Include=<span class="str">"Serilog.Enrichers.Process"</span> Version=<span class="str">"3.0.0"</span> /&gt;
+&lt;<span class="kw">PackageReference</span> Include=<span class="str">"Serilog.Enrichers.Thread"</span> Version=<span class="str">"4.0.0"</span> /&gt;</code></pre>
+
+<h3>Configuration dans Program.cs</h3>
+
+<pre><code><span class="kw">using</span> Serilog;
+<span class="kw">using</span> Serilog.Events;
+<span class="kw">using</span> Serilog.Sinks.Elasticsearch;
+
+Log.Logger = <span class="kw">new</span> <span class="fn">LoggerConfiguration</span>()
+    <span class="cmt">// Niveau minimum global</span>
+    .<span class="fn">MinimumLevel</span>.<span class="fn">Debug</span>()
+
+    <span class="cmt">// Surcharges par namespace (reduire le bruit)</span>
+    .<span class="fn">MinimumLevel</span>.<span class="fn">Override</span>(<span class="str">"Microsoft"</span>, LogEventLevel.Information)
+    .<span class="fn">MinimumLevel</span>.<span class="fn">Override</span>(<span class="str">"Microsoft.AspNetCore"</span>, LogEventLevel.Warning)
+    .<span class="fn">MinimumLevel</span>.<span class="fn">Override</span>(<span class="str">"Microsoft.EntityFrameworkCore"</span>, LogEventLevel.Information)
+
+    <span class="cmt">// Enrichisseurs : ajoutent du contexte a chaque log</span>
+    .<span class="fn">Enrich</span>.<span class="fn">FromLogContext</span>()
+    .<span class="fn">Enrich</span>.<span class="fn">WithMachineName</span>()
+    .<span class="fn">Enrich</span>.<span class="fn">WithProcessId</span>()
+    .<span class="fn">Enrich</span>.<span class="fn">WithThreadId</span>()
+    .<span class="fn">Enrich</span>.<span class="fn">WithEnvironmentName</span>()
+    .<span class="fn">Enrich</span>.<span class="fn">WithProperty</span>(<span class="str">"Application"</span>, <span class="str">"ElkLoggingLabApp"</span>)
+
+    <span class="cmt">// Sink Console (developpement local)</span>
+    .<span class="fn">WriteTo</span>.<span class="fn">Console</span>(outputTemplate:
+        <span class="str">"[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj} {Properties:j}{NewLine}{Exception}"</span>)
+
+    <span class="cmt">// Sink Elasticsearch (centralisation)</span>
+    .<span class="fn">WriteTo</span>.<span class="fn">Elasticsearch</span>(<span class="kw">new</span> <span class="fn">ElasticsearchSinkOptions</span>(
+        <span class="kw">new</span> Uri(<span class="str">"http://localhost:9200"</span>))
+    {
+        AutoRegisterTemplate = <span class="val">true</span>,
+        IndexFormat = <span class="str">"elklab-logs-{0:yyyy.MM.dd}"</span>,
+        NumberOfShards = <span class="val">1</span>,
+        NumberOfReplicas = <span class="val">0</span>,
+    })
+    .<span class="fn">CreateLogger</span>();</code></pre>
+
+<h3>Les enrichisseurs expliques</h3>
+
+<table>
+    <thead>
+        <tr>
+            <th>Enrichisseur</th>
+            <th>Champ ajoute</th>
+            <th>Utilite</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><code>WithMachineName</code></td>
+            <td><code>MachineName</code></td>
+            <td>Identifier le serveur source dans un cluster</td>
+        </tr>
+        <tr>
+            <td><code>WithProcessId</code></td>
+            <td><code>ProcessId</code></td>
+            <td>Distinguer les instances de l'application</td>
+        </tr>
+        <tr>
+            <td><code>WithThreadId</code></td>
+            <td><code>ThreadId</code></td>
+            <td>Diagnostiquer les problemes de concurrence</td>
+        </tr>
+        <tr>
+            <td><code>WithEnvironmentName</code></td>
+            <td><code>EnvironmentName</code></td>
+            <td>Distinguer les environnements (Dev, Staging, Prod)</td>
+        </tr>
+        <tr>
+            <td><code>FromLogContext</code></td>
+            <td>Proprietes dynamiques</td>
+            <td>Ajouter du contexte specifique a chaque requete</td>
+        </tr>
+    </tbody>
+</table>
+
+<h3>Exemple de log structure genere</h3>
+
+<pre><code>{
+  <span class="str">"@timestamp"</span>: <span class="str">"2026-03-25T10:15:30.123Z"</span>,
+  <span class="str">"level"</span>: <span class="str">"Information"</span>,
+  <span class="str">"messageTemplate"</span>: <span class="str">"HTTP {Method} {Path} completed {StatusCode} in {Duration}ms"</span>,
+  <span class="str">"message"</span>: <span class="str">"HTTP GET /api/products completed 200 in 45ms"</span>,
+  <span class="str">"fields"</span>: {
+    <span class="str">"Method"</span>: <span class="str">"GET"</span>,
+    <span class="str">"Path"</span>: <span class="str">"/api/products"</span>,
+    <span class="str">"StatusCode"</span>: <span class="val">200</span>,
+    <span class="str">"Duration"</span>: <span class="val">45</span>,
+    <span class="str">"CorrelationId"</span>: <span class="str">"a1b2c3d4e5f6"</span>,
+    <span class="str">"MachineName"</span>: <span class="str">"elk-dotnet-app"</span>,
+    <span class="str">"ProcessId"</span>: <span class="val">1</span>,
+    <span class="str">"ThreadId"</span>: <span class="val">12</span>,
+    <span class="str">"Application"</span>: <span class="str">"ElkLoggingLabApp"</span>
+  }
+}</code></pre>
+
+<!-- ==================== REQUEST LOGGING ==================== -->
+<h2 id="request-logging">Logging des requetes HTTP</h2>
+
+<p>Le <code>RequestLoggingMiddleware</code> intercepte chaque requete HTTP entrante et genere des logs
+structures contenant toutes les informations necessaires au monitoring et au debugging.</p>
+
+<h3>Informations capturees</h3>
+
+<ul>
+    <li><strong>Methode HTTP</strong> — GET, POST, PUT, DELETE, etc.</li>
+    <li><strong>Chemin et query string</strong> — URL complete de la requete</li>
+    <li><strong>Code de statut</strong> — 200, 404, 500, etc.</li>
+    <li><strong>Duree</strong> — Temps de traitement en millisecondes</li>
+    <li><strong>Adresse IP client</strong> — Pour le suivi et le rate limiting</li>
+    <li><strong>User Agent</strong> — Navigateur ou client HTTP utilise</li>
+    <li><strong>Taille requete/reponse</strong> — En octets</li>
+    <li><strong>Correlation ID</strong> — Identifiant unique pour tracer la requete</li>
+</ul>
+
+<h3>Implementation du middleware</h3>
+
+<pre><code><span class="kw">public async</span> Task <span class="fn">InvokeAsync</span>(HttpContext context)
+{
+    <span class="cmt">// Generer ou recuperer le Correlation ID</span>
+    <span class="kw">var</span> correlationId = context.Request.Headers[<span class="str">"X-Correlation-ID"</span>]
+        .FirstOrDefault() ?? Guid.NewGuid().ToString(<span class="str">"N"</span>);
+    context.Items[<span class="str">"CorrelationId"</span>] = correlationId;
+    context.Response.Headers[<span class="str">"X-Correlation-ID"</span>] = correlationId;
+
+    <span class="kw">var</span> stopwatch = Stopwatch.StartNew();
+
+    <span class="cmt">// Log de debut de requete</span>
+    _logger.<span class="fn">LogInformation</span>(
+        <span class="str">"HTTP {Method} {Path} started | IP: {ClientIp} | CorrelationId: {CorrelationId}"</span>,
+        method, path, clientIp, correlationId);
+
+    <span class="kw">await</span> _next(context);
+    stopwatch.Stop();
+
+    <span class="cmt">// Niveau de log adapte au code de statut</span>
+    <span class="kw">var</span> logLevel = statusCode >= <span class="val">500</span> ? LogLevel.Error
+        : statusCode >= <span class="val">400</span> ? LogLevel.Warning
+        : LogLevel.Information;
+
+    <span class="cmt">// Detection des requetes lentes</span>
+    <span class="kw">if</span> (duration > <span class="val">500</span>)
+        _logger.<span class="fn">LogWarning</span>(<span class="str">"SLOW REQUEST: {Method} {Path} took {Duration}ms"</span>,
+            method, path, duration);
+}</code></pre>
+
+<div class="alert alert-info">
+    <strong>Astuce :</strong> Le niveau de log est automatiquement ajuste en fonction du code de statut HTTP.
+    Les erreurs 5xx generent des logs <code>Error</code>, les 4xx des <code>Warning</code>, et les 2xx des <code>Information</code>.
+</div>
+
+<!-- ==================== SLOW QUERIES ==================== -->
+<h2 id="slow-queries">Detection des requetes EF Core lentes</h2>
+
+<p>Les requetes de base de donnees lentes sont l'une des causes les plus frequentes de degradation de
+performance. Notre application configure Entity Framework Core pour <strong>mesurer le temps d'execution</strong>
+de chaque requete SQL et generer des alertes selon des seuils configurables.</p>
+
+<h3>Seuils de detection</h3>
+
+<table>
+    <thead>
+        <tr>
+            <th>Duree</th>
+            <th>Niveau de log</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>&lt; 100ms</td>
+            <td><span class="success-hl">Normal</span></td>
+            <td>Pas de log supplementaire</td>
+        </tr>
+        <tr>
+            <td>100ms - 500ms</td>
+            <td><span style="color: var(--warning);">Warning</span></td>
+            <td>Log d'avertissement avec la requete SQL</td>
+        </tr>
+        <tr>
+            <td>&gt; 500ms</td>
+            <td><span class="danger-hl">Error</span></td>
+            <td>Log d'erreur + visible dans le dashboard Kibana</td>
+        </tr>
+    </tbody>
+</table>
+
+<h3>Configuration dans Program.cs</h3>
+
+<pre><code>builder.Services.<span class="fn">AddDbContext</span>&lt;AppDbContext&gt;(options =>
+{
+    options.<span class="fn">UseSqlite</span>(connectionString);
+
+    options.<span class="fn">LogTo</span>(
+        (eventId, level) => eventId.Id ==
+            RelationalEventId.CommandExecuted.Id,
+        eventData =>
+        {
+            <span class="kw">if</span> (eventData <span class="kw">is</span> CommandExecutedEventData cmdData)
+            {
+                <span class="kw">var</span> duration = cmdData.Duration.TotalMilliseconds;
+
+                <span class="kw">if</span> (duration > <span class="val">500</span>)
+                    Log.<span class="fn">Error</span>(
+                        <span class="str">"EF SLOW QUERY ({Duration}ms): {Command}"</span>,
+                        duration, cmdData.Command.CommandText);
+                <span class="kw">else if</span> (duration > <span class="val">100</span>)
+                    Log.<span class="fn">Warning</span>(
+                        <span class="str">"EF MODERATE QUERY ({Duration}ms): {Command}"</span>,
+                        duration, cmdData.Command.CommandText);
+            }
+        });
+});</code></pre>
+
+<h3>Endpoint de demonstration</h3>
+
+<p>L'endpoint <code>GET /api/products/slow</code> declenche deliberement une requete lente pour
+tester la detection :</p>
+
+<pre><code><span class="cmt">// Simuler une requete lente</span>
+<span class="kw">await</span> Task.<span class="fn">Delay</span>(<span class="val">600</span>); <span class="cmt">// Delai artificiel</span>
+
+<span class="kw">var</span> products = <span class="kw">await</span> _db.Products
+    .<span class="fn">OrderBy</span>(p => p.Name)
+    .<span class="fn">ThenBy</span>(p => p.Price)
+    .<span class="fn">ThenBy</span>(p => p.Category)
+    .<span class="fn">ThenByDescending</span>(p => p.CreatedAt)
+    .<span class="fn">ToListAsync</span>();</code></pre>
+
+<pre><code><span class="cmt"># Tester l'endpoint de requete lente</span>
+<span class="kw">curl</span> http://localhost:8080/api/products/slow
+
+<span class="cmt"># Verifier dans Kibana : filtrer sur "SLOW" dans le message</span></code></pre>
+
+<!-- ==================== SECURITY AUDIT ==================== -->
+<h2 id="security-audit">Audit de securite</h2>
+
+<p>Le <code>SecurityAuditMiddleware</code> analyse chaque requete entrante pour detecter des
+<strong>patterns d'attaque courants</strong>. C'est une couche de defense en profondeur qui ne bloque pas
+les requetes mais les signale pour investigation.</p>
+
+<h3>Patterns detectes</h3>
+
+<div class="comparison">
+    <div class="card bad">
+        <h4>Injection SQL</h4>
+        <ul>
+            <li>Mots-cles SQL : <code>SELECT</code>, <code>UNION</code>, <code>DROP</code></li>
+            <li>Caracteres speciaux : <code>--</code>, <code>;</code>, <code>'</code></li>
+            <li>Tautologies : <code>OR 1=1</code>, <code>AND 1=1</code></li>
+        </ul>
+    </div>
+    <div class="card bad">
+        <h4>Cross-Site Scripting (XSS)</h4>
+        <ul>
+            <li>Balises script : <code>&lt;script&gt;</code></li>
+            <li>Protocoles : <code>javascript:</code></li>
+            <li>Handlers : <code>onerror=</code>, <code>onload=</code></li>
+            <li>Iframes malveillants</li>
+        </ul>
+    </div>
+</div>
+
+<h3>Detection des methodes HTTP suspectes</h3>
+
+<pre><code><span class="kw">private static readonly</span> HashSet&lt;<span class="kw">string</span>&gt; SuspiciousMethods = <span class="kw">new</span>()
+{
+    <span class="str">"TRACE"</span>, <span class="str">"TRACK"</span>, <span class="str">"CONNECT"</span>, <span class="str">"OPTIONS"</span>
+};
+
+<span class="kw">if</span> (SuspiciousMethods.<span class="fn">Contains</span>(context.Request.Method))
+{
+    _logger.<span class="fn">LogWarning</span>(
+        <span class="str">"SECURITY: Suspicious HTTP method {Method} from {ClientIp}"</span>,
+        context.Request.Method, clientIp);
+}</code></pre>
+
+<h3>Rate limiting basique</h3>
+
+<p>Le middleware suit le nombre de requetes par adresse IP et genere un avertissement
+lorsqu'un client depasse <strong>50 requetes par minute</strong> :</p>
+
+<pre><code><span class="cmt">// Verifier le taux de requetes par IP</span>
+<span class="kw">if</span> (requestCount > <span class="val">50</span>)
+{
+    _logger.<span class="fn">LogWarning</span>(
+        <span class="str">"SECURITY: Rate limit exceeded for {ClientIp} | Requests: {Count}"</span>,
+        clientIp, requestCount);
+}</code></pre>
+
+<h3>Tester les detections</h3>
+
+<pre><code><span class="cmt"># Test injection SQL (sera detectee et logguee)</span>
+<span class="kw">curl</span> <span class="str">"http://localhost:8080/api/products/search?name=test' OR 1=1--"</span>
+
+<span class="cmt"># Test XSS (sera detectee et logguee)</span>
+<span class="kw">curl</span> <span class="str">"http://localhost:8080/api/products/search?name=&lt;script&gt;alert(1)&lt;/script&gt;"</span>
+
+<span class="cmt"># Les deux generent des logs CRITICAL visibles dans Kibana</span></code></pre>
+
+<div class="alert alert-danger">
+    <strong>Attention :</strong> Ce middleware est a des fins pedagogiques. En production, utilisez un WAF
+    (Web Application Firewall) comme ModSecurity ou les fonctionnalites integrees d'Azure/AWS
+    pour une protection reelle.
+</div>
+
+<!-- ==================== DASHBOARDS KIBANA ==================== -->
+<h2 id="dashboards">Tableaux de bord Kibana</h2>
+
+<p>Kibana permet de creer des visualisations interactives a partir des logs indexes dans Elasticsearch.
+Voici comment configurer les tableaux de bord essentiels.</p>
+
+<h3>Etape 1 : Creer le Data View</h3>
+
+<div class="flow-step">
+    <div class="step-num">1</div>
+    <div>Ouvrir Kibana sur <code>http://localhost:5601</code></div>
+</div>
+<div class="flow-step">
+    <div class="step-num">2</div>
+    <div>Aller dans <strong>Stack Management</strong> &rarr; <strong>Data Views</strong></div>
+</div>
+<div class="flow-step">
+    <div class="step-num">3</div>
+    <div>Creer un data view avec le pattern <code>elklab-logs-*</code></div>
+</div>
+<div class="flow-step">
+    <div class="step-num">4</div>
+    <div>Selectionner <code>@timestamp</code> comme champ temporel</div>
+</div>
+
+<p>Ou utiliser les scripts fournis pour creer automatiquement le Data View, les 4 visualisations et le dashboard principal :</p>
+
+<pre><code><span class="cmt"># Linux / macOS</span>
+<span class="kw">bash</span> docker/kibana/import-dashboards.sh
+
+<span class="cmt"># Windows (PowerShell)</span>
+<span class="kw">.\</span>docker/kibana/import-dashboards.ps1</code></pre>
+
+<div class="alert alert-info">
+    <strong>Script PowerShell</strong> — Le script <code>import-dashboards.ps1</code> cree automatiquement :
+    <strong>1)</strong> le Data View <code>elklab-logs-*</code>,
+    <strong>2)</strong> la visualisation de latence HTTP (bar chart),
+    <strong>3)</strong> le taux d'erreurs (line chart),
+    <strong>4)</strong> les evenements de securite (table),
+    <strong>5)</strong> les requetes lentes (area chart),
+    et <strong>6)</strong> un dashboard principal regroupant les 4 vues.
+    Lancez-le apres avoir demarre la stack et genere quelques logs.
+</div>
+
+<p>Apres l'import, ouvrir le dashboard : <code>http://localhost:5601/app/dashboards#/view/elklab-main-dashboard</code></p>
+
+<h3>Etape 2 : Dashboard de latence HTTP</h3>
+
+<p>Creer un graphique en barres (histogram) pour visualiser la distribution des temps de reponse :</p>
+
+<ul>
+    <li><strong>Type</strong> : Lens &rarr; Bar chart</li>
+    <li><strong>Axe X</strong> : <code>@timestamp</code> (intervalle automatique)</li>
+    <li><strong>Axe Y</strong> : Median de <code>fields.Duration</code></li>
+    <li><strong>Filtre</strong> : <code>messageTemplate: *completed*</code></li>
+</ul>
+
+<h3>Etape 3 : Dashboard des erreurs</h3>
+
+<ul>
+    <li><strong>Type</strong> : Lens &rarr; Line chart</li>
+    <li><strong>Axe X</strong> : <code>@timestamp</code></li>
+    <li><strong>Axe Y</strong> : Count</li>
+    <li><strong>Filtre</strong> : <code>level: "Error" OR level: "Fatal"</code></li>
+    <li><strong>Split</strong> : Par <code>fields.Path</code> pour identifier les endpoints problematiques</li>
+</ul>
+
+<h3>Etape 4 : Dashboard de securite</h3>
+
+<ul>
+    <li><strong>Type</strong> : Table de donnees</li>
+    <li><strong>Filtre</strong> : <code>message: "SECURITY*"</code></li>
+    <li><strong>Colonnes</strong> : timestamp, level, message, fields.ClientIp</li>
+    <li>Ajouter un compteur d'alertes de securite par heure (Metric visualization)</li>
+</ul>
+
+<h3>Etape 5 : Dashboard des requetes lentes</h3>
+
+<ul>
+    <li><strong>Filtre</strong> : <code>tags: "slow_query" OR message: "SLOW*"</code></li>
+    <li>Graphique montrant le nombre de requetes lentes dans le temps</li>
+    <li>Table avec les details : duree, requete SQL, timestamp</li>
+</ul>
+
+<!-- ==================== ALERTES ==================== -->
+<h2 id="alertes">Alertes et notifications</h2>
+
+<p>Kibana permet de configurer des <strong>regles d'alerte</strong> qui declenchent des notifications
+lorsque certaines conditions sont remplies.</p>
+
+<h3>Creer une alerte de securite</h3>
+
+<div class="flow-step">
+    <div class="step-num">1</div>
+    <div>Dans Kibana, aller dans <strong>Stack Management</strong> &rarr; <strong>Rules and Connectors</strong></div>
+</div>
+<div class="flow-step">
+    <div class="step-num">2</div>
+    <div>Creer une nouvelle regle de type <strong>Elasticsearch query</strong></div>
+</div>
+<div class="flow-step">
+    <div class="step-num">3</div>
+    <div>Configurer la requete pour detecter les evenements de securite :</div>
+</div>
+
+<pre><code>{
+  <span class="str">"query"</span>: {
+    <span class="str">"bool"</span>: {
+      <span class="str">"must"</span>: [
+        { <span class="str">"match"</span>: { <span class="str">"level"</span>: <span class="str">"Fatal"</span> } },
+        { <span class="str">"wildcard"</span>: { <span class="str">"message"</span>: <span class="str">"*SECURITY*"</span> } }
+      ],
+      <span class="str">"filter"</span>: [
+        { <span class="str">"range"</span>: { <span class="str">"@timestamp"</span>: { <span class="str">"gte"</span>: <span class="str">"now-5m"</span> } } }
+      ]
+    }
+  }
+}</code></pre>
+
+<h3>Alertes recommandees</h3>
+
+<table>
+    <thead>
+        <tr>
+            <th>Alerte</th>
+            <th>Condition</th>
+            <th>Severite</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>Tentative d'injection SQL</td>
+            <td>Message contient "SQL Injection" dans les 5 dernires minutes</td>
+            <td><span class="danger-hl">Critique</span></td>
+        </tr>
+        <tr>
+            <td>Pic d'erreurs 500</td>
+            <td>Plus de 10 erreurs 500 en 5 minutes</td>
+            <td><span class="danger-hl">Critique</span></td>
+        </tr>
+        <tr>
+            <td>Requetes lentes</td>
+            <td>Plus de 5 requetes &gt; 500ms en 10 minutes</td>
+            <td><span style="color: var(--warning);">Warning</span></td>
+        </tr>
+        <tr>
+            <td>Rate limit depasse</td>
+            <td>Message contient "Rate limit exceeded"</td>
+            <td><span style="color: var(--warning);">Warning</span></td>
+        </tr>
+        <tr>
+            <td>Tentative XSS</td>
+            <td>Message contient "XSS attempt"</td>
+            <td><span class="danger-hl">Critique</span></td>
+        </tr>
+    </tbody>
+</table>
+
+<!-- ==================== CORRELATION ==================== -->
+<h2 id="correlation">Correlation des logs</h2>
+
+<p>La <strong>correlation des logs</strong> est la capacite a relier tous les evenements generes par
+une meme requete HTTP. C'est essentiel pour le debugging et l'investigation d'incidents.</p>
+
+<h3>Fonctionnement du Correlation ID</h3>
+
+<pre><code><span class="cmt">// Le middleware genere un ID unique pour chaque requete</span>
+<span class="kw">var</span> correlationId = context.Request.Headers[<span class="str">"X-Correlation-ID"</span>]
+    .FirstOrDefault() ?? Guid.<span class="fn">NewGuid</span>().ToString(<span class="str">"N"</span>);
+
+<span class="cmt">// L'ID est propage dans la reponse HTTP</span>
+context.Response.Headers[<span class="str">"X-Correlation-ID"</span>] = correlationId;
+
+<span class="cmt">// Et inclus dans chaque message de log</span>
+_logger.<span class="fn">LogInformation</span>(
+    <span class="str">"... | CorrelationId: {CorrelationId}"</span>, correlationId);</code></pre>
+
+<h3>Recherche par Correlation ID dans Kibana</h3>
+
+<p>Pour retrouver tous les logs d'une requete specifique :</p>
+
+<pre><code><span class="cmt"># Dans la barre de recherche Kibana (KQL) :</span>
+fields.CorrelationId: "a1b2c3d4e5f6"</code></pre>
+
+<p>Cela affiche chronologiquement :</p>
+<ol>
+    <li>Le log de debut de requete (methode, path, IP)</li>
+    <li>Les logs de traitement (service, requetes SQL)</li>
+    <li>Les eventuels avertissements de securite</li>
+    <li>Le log de fin de requete (statut, duree)</li>
+</ol>
+
+<div class="alert alert-success">
+    <strong>Bonne pratique :</strong> Si votre architecture comporte plusieurs microservices,
+    propagez le <code>X-Correlation-ID</code> entre les appels HTTP. Ainsi, vous pouvez tracer
+    une requete utilisateur a travers tout le systeme.
+</div>
+
+<!-- ==================== BONNES PRATIQUES ==================== -->
+<h2 id="bonnes-pratiques">Bonnes pratiques de logging</h2>
+
+<h3>Ce qu'il faut logger</h3>
+
+<div class="card good" style="margin-bottom: 1rem;">
+    <h4>A faire</h4>
+    <ul>
+        <li>Requetes HTTP entrantes (methode, path, duree, statut)</li>
+        <li>Erreurs et exceptions avec stack trace</li>
+        <li>Tentatives d'authentification (succes et echecs)</li>
+        <li>Operations CRUD sur les donnees sensibles</li>
+        <li>Modifications de configuration</li>
+        <li>Requetes de base de donnees lentes</li>
+        <li>Evenements de securite (tentatives d'injection, rate limiting)</li>
+        <li>Correlation IDs pour le tracage distribue</li>
+    </ul>
+</div>
+
+<div class="card bad">
+    <h4>A ne JAMAIS logger</h4>
+    <ul>
+        <li><strong>Mots de passe</strong> — Ni en clair, ni hashes</li>
+        <li><strong>Tokens d'authentification</strong> — JWT, API keys, session tokens</li>
+        <li><strong>Donnees personnelles sensibles</strong> — Numeros de carte bancaire, IBAN</li>
+        <li><strong>Donnees de sante</strong> — Informations medicales (RGPD/HIPAA)</li>
+        <li><strong>Cles de chiffrement</strong> — Cles privees, secrets cryptographiques</li>
+        <li><strong>Corps de requete complet</strong> — Peut contenir des donnees sensibles</li>
+    </ul>
+</div>
+
+<h3>Niveaux de log et leur usage</h3>
+
+<table>
+    <thead>
+        <tr>
+            <th>Niveau</th>
+            <th>Usage</th>
+            <th>Exemple</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><code>Trace</code></td>
+            <td>Details tres fins, rarement active en production</td>
+            <td>Entree/sortie de methodes internes</td>
+        </tr>
+        <tr>
+            <td><code>Debug</code></td>
+            <td>Informations utiles au developpement</td>
+            <td>Valeur d'une variable, chemin d'execution</td>
+        </tr>
+        <tr>
+            <td><code>Information</code></td>
+            <td>Flux normal de l'application</td>
+            <td>Requete traitee, commande creee</td>
+        </tr>
+        <tr>
+            <td><code>Warning</code></td>
+            <td>Situation anormale mais non bloquante</td>
+            <td>Requete lente, tentative de rate limiting</td>
+        </tr>
+        <tr>
+            <td><code>Error</code></td>
+            <td>Erreur qui empeche une operation</td>
+            <td>Exception non geree, echec d'appel externe</td>
+        </tr>
+        <tr>
+            <td><code>Fatal</code></td>
+            <td>Erreur critique, arret de l'application</td>
+            <td>Base de donnees inaccessible, configuration manquante</td>
+        </tr>
+    </tbody>
+</table>
+
+<h3>Retention des logs</h3>
+
+<p>En production, configurez des <strong>politiques de retention</strong> dans Elasticsearch via
+ILM (Index Lifecycle Management) :</p>
+
+<ul>
+    <li><strong>Hot</strong> — 7 jours : index actifs, recherche rapide</li>
+    <li><strong>Warm</strong> — 30 jours : index en lecture seule, moins de resources</li>
+    <li><strong>Cold</strong> — 90 jours : archivage, recherche lente acceptable</li>
+    <li><strong>Delete</strong> — Apres 90 jours (sauf obligation reglementaire)</li>
+</ul>
+
+<div class="alert alert-warning">
+    <strong>Conformite :</strong> Verifiez les obligations de retention de votre secteur.
+    PCI-DSS exige 1 an minimum, NIS2 impose des durees specifiques selon le type de donnees.
+</div>
+
+<!-- ==================== EXERCICES ==================== -->
+<h2 id="exercices">Exercices pratiques</h2>
+
+<h3>Exercice 1 : Mise en place et exploration</h3>
+
+<p><strong>Objectif :</strong> Deployer la stack ELK et explorer les logs generes.</p>
+
+<ol>
+    <li>Demarrer la stack avec <code>docker compose up -d</code></li>
+    <li>Verifier que tous les services sont en etat <code>healthy</code></li>
+    <li>Creer le data view <code>elklab-logs-*</code> dans Kibana</li>
+    <li>Effectuer plusieurs appels API :</li>
+</ol>
+
+<pre><code><span class="cmt"># Lister les produits</span>
+<span class="kw">curl</span> http://localhost:8080/api/products
+
+<span class="cmt"># Creer un produit</span>
+<span class="kw">curl</span> -X POST http://localhost:8080/api/products \
+  -H <span class="str">"Content-Type: application/json"</span> \
+  -d <span class="str">'{"name":"Tablette","description":"Tablette 10 pouces","price":399.99,"category":"Electronique"}'</span>
+
+<span class="cmt"># Creer une commande</span>
+<span class="kw">curl</span> -X POST http://localhost:8080/api/orders \
+  -H <span class="str">"Content-Type: application/json"</span> \
+  -d <span class="str">'{"productId":1,"quantity":2,"customerEmail":"test@example.com"}'</span>
+
+<span class="cmt"># Generer une rafale de logs</span>
+<span class="kw">curl</span> http://localhost:8080/api/diagnostics/log-burst?count=50</code></pre>
+
+<ol start="5">
+    <li>Dans Kibana Discover, observer les logs structures et identifier les differents champs</li>
+</ol>
+
+<h3>Exercice 2 : Detection des requetes lentes</h3>
+
+<p><strong>Objectif :</strong> Configurer un dashboard pour detecter les problemes de performance.</p>
+
+<ol>
+    <li>Declencher des requetes lentes :</li>
+</ol>
+
+<pre><code><span class="cmt"># Endpoint deliberement lent</span>
+<span class="kw">curl</span> http://localhost:8080/api/products/slow
+
+<span class="cmt"># Simuler une requete BD lente</span>
+<span class="kw">curl</span> http://localhost:8080/api/diagnostics/slow-query</code></pre>
+
+<ol start="2">
+    <li>Dans Kibana, creer un filtre KQL : <code>message: "SLOW*"</code></li>
+    <li>Creer une visualisation "Metric" montrant le nombre de requetes lentes</li>
+    <li>Creer un graphique en ligne montrant l'evolution des requetes lentes dans le temps</li>
+    <li>Ajouter un tableau avec les details de chaque requete lente</li>
+</ol>
+
+<h3>Exercice 3 : Audit de securite</h3>
+
+<p><strong>Objectif :</strong> Simuler des attaques et observer les alertes dans Kibana.</p>
+
+<ol>
+    <li>Simuler une tentative d'injection SQL :</li>
+</ol>
+
+<pre><code><span class="cmt"># Injection SQL via query string</span>
+<span class="kw">curl</span> <span class="str">"http://localhost:8080/api/products/search?name=test'+OR+1=1--"</span>
+<span class="kw">curl</span> <span class="str">"http://localhost:8080/api/products/search?name=';DROP+TABLE+Products;--"</span></code></pre>
+
+<ol start="2">
+    <li>Simuler une tentative XSS :</li>
+</ol>
+
+<pre><code><span class="kw">curl</span> <span class="str">"http://localhost:8080/api/products/search?name=&lt;script&gt;alert('xss')&lt;/script&gt;"</span>
+<span class="kw">curl</span> <span class="str">"http://localhost:8080/api/products/search?name=&lt;img+onerror=alert(1)+src=x&gt;"</span></code></pre>
+
+<ol start="3">
+    <li>Dans Kibana, filtrer les evenements de securite : <code>message: "SECURITY*"</code></li>
+    <li>Creer un dashboard "Security Events" avec :
+        <ul>
+            <li>Compteur total d'alertes de securite</li>
+            <li>Repartition par type (SQLi vs XSS vs Rate Limit)</li>
+            <li>Top 10 des adresses IP suspectes</li>
+        </ul>
+    </li>
+</ol>
+
+<h3>Exercice 4 : Correlation et tracage</h3>
+
+<p><strong>Objectif :</strong> Utiliser les Correlation IDs pour tracer une requete complete.</p>
+
+<ol>
+    <li>Envoyer une requete avec un Correlation ID personnalise :</li>
+</ol>
+
+<pre><code><span class="kw">curl</span> -H <span class="str">"X-Correlation-ID: MON-TEST-001"</span> \
+  http://localhost:8080/api/products</code></pre>
+
+<ol start="2">
+    <li>Dans Kibana, rechercher : <code>fields.CorrelationId: "MON-TEST-001"</code></li>
+    <li>Observer la chronologie complete de la requete :</li>
+</ol>
+
+<ul>
+    <li>Log de debut (RequestLoggingMiddleware)</li>
+    <li>Eventuels logs de securite (SecurityAuditMiddleware)</li>
+    <li>Logs metier (ProductService)</li>
+    <li>Log de fin avec la duree et le statut</li>
+</ul>
+
+<ol start="4">
+    <li>Declencher une exception avec un Correlation ID :</li>
+</ol>
+
+<pre><code><span class="kw">curl</span> -H <span class="str">"X-Correlation-ID: ERROR-TEST-001"</span> \
+  http://localhost:8080/api/diagnostics/exception</code></pre>
+
+<ol start="5">
+    <li>Retrouver la stack trace complete en cherchant <code>ERROR-TEST-001</code> dans Kibana</li>
+</ol>
+
+<h3>Exercice 5 : Pipeline Logstash personnalisee</h3>
+
+<p><strong>Objectif :</strong> Modifier la pipeline Logstash pour enrichir les logs.</p>
+
+<ol>
+    <li>Editer <code>docker/logstash/pipeline/logstash.conf</code></li>
+    <li>Ajouter un filtre <code>geoip</code> pour geolocaliser les adresses IP :</li>
+</ol>
+
+<pre><code><span class="kw">filter</span> {
+  <span class="kw">if</span> [fields][ClientIp] {
+    <span class="fn">geoip</span> {
+      source => <span class="str">"[fields][ClientIp]"</span>
+      target => <span class="str">"geoip"</span>
+    }
+  }
+
+  <span class="cmt"># Ajouter un champ "severity_score" numerique</span>
+  <span class="kw">if</span> [level] == <span class="str">"Fatal"</span> {
+    <span class="fn">mutate</span> { add_field => { <span class="str">"severity_score"</span> => <span class="val">5</span> } }
+  } <span class="kw">else if</span> [level] == <span class="str">"Error"</span> {
+    <span class="fn">mutate</span> { add_field => { <span class="str">"severity_score"</span> => <span class="val">4</span> } }
+  } <span class="kw">else if</span> [level] == <span class="str">"Warning"</span> {
+    <span class="fn">mutate</span> { add_field => { <span class="str">"severity_score"</span> => <span class="val">3</span> } }
+  }
+}</code></pre>
+
+<ol start="3">
+    <li>Redemarrer Logstash : <code>docker compose restart logstash</code></li>
+    <li>Verifier que les nouveaux champs apparaissent dans Kibana</li>
+</ol>
+
+<div class="alert alert-success">
+    <strong>Challenge bonus :</strong> Creer une alerte Kibana qui envoie un email (ou un webhook Slack)
+    lorsque plus de 3 tentatives d'injection SQL sont detectees en moins de 5 minutes depuis la meme IP.
+</div>
+
+</main>
+
+<!-- ============================== FOOTER ============================== -->
+<footer>
+    Condorcet 2026 — Programmation Securisee
+</footer>
+
+</body>
+</html>

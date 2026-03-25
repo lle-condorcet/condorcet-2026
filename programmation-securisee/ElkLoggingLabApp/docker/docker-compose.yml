@@ -1,0 +1,103 @@
+version: "3.8"
+
+services:
+  # ==================== ELASTICSEARCH ====================
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:${ELASTIC_VERSION:-8.13.4}
+    container_name: elk-elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - xpack.security.enrollment.enabled=false
+      - ES_JAVA_OPTS=${ES_JAVA_OPTS:--Xms512m -Xmx512m}
+      - cluster.name=elk-logging-lab
+      - bootstrap.memory_lock=true
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - elasticsearch-data:/usr/share/elasticsearch/data
+    ports:
+      - "${ELASTICSEARCH_PORT:-9200}:9200"
+    networks:
+      - elk-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+
+  # ==================== LOGSTASH ====================
+  logstash:
+    image: docker.elastic.co/logstash/logstash:${ELASTIC_VERSION:-8.13.4}
+    container_name: elk-logstash
+    environment:
+      - LS_JAVA_OPTS=${LS_JAVA_OPTS:--Xms256m -Xmx256m}
+      - xpack.monitoring.enabled=false
+    volumes:
+      - ./logstash/pipeline:/usr/share/logstash/pipeline:ro
+    ports:
+      - "${LOGSTASH_PORT:-5044}:5044"
+      - "5000:5000/tcp"
+      - "5000:5000/udp"
+      - "9600:9600"
+    networks:
+      - elk-network
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+
+  # ==================== KIBANA ====================
+  kibana:
+    image: docker.elastic.co/kibana/kibana:${ELASTIC_VERSION:-8.13.4}
+    container_name: elk-kibana
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+      - xpack.security.enabled=false
+      - xpack.encryptedSavedObjects.encryptionKey=a]iq-3:KC4:mT8s6e>bD/oPmwFi2?+gp
+    ports:
+      - "${KIBANA_PORT:-5601}:5601"
+    networks:
+      - elk-network
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:5601/api/status || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 45s
+
+  # ==================== .NET APPLICATION ====================
+  elklab-app:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: elk-dotnet-app
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ELASTICSEARCH_URL=http://elasticsearch:9200
+      - ConnectionStrings__DefaultConnection=Data Source=/app/data/elklab.db
+    ports:
+      - "${APP_PORT:-8080}:8080"
+    volumes:
+      - app-data:/app/data
+    networks:
+      - elk-network
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  elasticsearch-data:
+    driver: local
+  app-data:
+    driver: local
+
+networks:
+  elk-network:
+    driver: bridge
