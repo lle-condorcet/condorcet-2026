@@ -1,0 +1,1373 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Labo SonarQube | Analyse Statique de Code</title>
+    <style>
+        :root {
+            --bg: #0f1117; --surface: #1a1d27; --surface-2: #242736;
+            --accent: #ffa502; --accent-light: #ffbe76;
+            --danger: #ff4757; --success: #2ed573; --warning: #ffa502;
+            --text: #e4e6eb; --text-muted: #8b8fa3; --border: #2e3142; --code-bg: #12131a;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family:'Segoe UI',system-ui,sans-serif; background:var(--bg); color:var(--text); line-height:1.7; }
+
+        nav { position:fixed; top:0; left:0; width:260px; height:100vh; background:var(--surface); border-right:1px solid var(--border); padding:2rem 0; overflow-y:auto; z-index:100; }
+        nav .logo { padding:0 1.5rem 1.5rem; border-bottom:1px solid var(--border); margin-bottom:1rem; }
+        nav .logo h2 { font-size:1.1rem; color:var(--accent); }
+        nav .logo span { font-size:0.75rem; color:var(--text-muted); }
+        nav a { display:block; padding:0.6rem 1.5rem; color:var(--text-muted); text-decoration:none; font-size:0.9rem; transition:all 0.2s; border-left:3px solid transparent; }
+        nav a:hover { color:var(--text); background:var(--surface-2); border-left-color:var(--accent); }
+
+        main { margin-left:260px; max-width:900px; padding:3rem 4rem; }
+        h1 { font-size:2.5rem; margin-bottom:0.5rem; color:#fff; }
+        .subtitle { color:var(--text-muted); font-size:1.1rem; margin-bottom:3rem; }
+        h2 { font-size:1.6rem; margin-top:3rem; margin-bottom:1rem; padding-bottom:0.5rem; border-bottom:2px solid var(--accent); color:#fff; }
+        h3 { font-size:1.2rem; margin-top:2rem; margin-bottom:0.7rem; color:var(--accent-light); }
+        p { margin-bottom:1rem; }
+
+        .alert { padding:1rem 1.2rem; border-radius:8px; margin:1.5rem 0; border-left:4px solid; }
+        .alert-danger { background:rgba(255,71,87,0.1); border-color:var(--danger); }
+        .alert-success { background:rgba(46,213,115,0.1); border-color:var(--success); }
+        .alert-warning { background:rgba(255,165,2,0.1); border-color:var(--warning); }
+        .alert-info { background:rgba(108,99,255,0.1); border-color:#6c63ff; }
+        .alert strong { display:block; margin-bottom:0.3rem; }
+
+        pre { background:var(--code-bg); border:1px solid var(--border); border-radius:8px; padding:1.2rem; overflow-x:auto; margin:1rem 0 1.5rem; font-size:0.85rem; }
+        code { font-family:'Cascadia Code','Fira Code','Consolas',monospace; color:var(--accent-light); }
+        pre code { color:var(--text); }
+        .kw { color:#c678dd; } .str { color:#98c379; } .cmt { color:#5c6370; font-style:italic; }
+        .fn { color:#61afef; } .val { color:#d19a66; } .danger-hl { color:#ff4757; font-weight:bold; }
+        .safe-hl { color:#2ed573; font-weight:bold; }
+
+        table { width:100%; border-collapse:collapse; margin:1.5rem 0; font-size:0.92rem; }
+        th, td { padding:0.8rem 1rem; text-align:left; border:1px solid var(--border); }
+        th { background:var(--surface-2); color:var(--accent-light); font-weight:600; }
+        tr:hover td { background:var(--surface); }
+
+        .badge { display:inline-block; padding:0.15rem 0.5rem; border-radius:4px; font-size:0.75rem; font-weight:600; text-transform:uppercase; }
+        .badge-danger { background:rgba(255,71,87,0.2); color:var(--danger); }
+        .badge-success { background:rgba(46,213,115,0.2); color:var(--success); }
+        .badge-warning { background:rgba(255,165,2,0.2); color:var(--warning); }
+
+        .comparison { display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; margin:1.5rem 0; }
+        .card { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:1.5rem; }
+        .card h4 { margin-bottom:0.8rem; font-size:1rem; }
+        .card.bad { border-top:3px solid var(--danger); } .card.bad h4 { color:var(--danger); }
+        .card.good { border-top:3px solid var(--success); } .card.good h4 { color:var(--success); }
+
+        ul, ol { margin:0.8rem 0 1.2rem 1.5rem; } li { margin-bottom:0.4rem; }
+
+        .diagram { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:2rem; margin:2rem 0; text-align:center; }
+        .diagram .box { display:inline-block; background:var(--surface-2); border:1px solid var(--border); border-radius:8px; padding:0.8rem 1.2rem; margin:0.5rem; font-size:0.9rem; }
+        .diagram .box.primary { border-color:var(--accent); color:var(--accent); }
+        .diagram .box.secondary { border-color:#6c63ff; color:#6c63ff; }
+        .diagram .box.db { border-color:var(--success); color:var(--success); }
+        .diagram .arrow { color:var(--text-muted); font-size:1.5rem; vertical-align:middle; margin:0 0.5rem; }
+
+        .step-number { display:inline-flex; align-items:center; justify-content:center; width:28px; height:28px; background:var(--accent); color:var(--bg); border-radius:50%; font-weight:700; font-size:0.85rem; margin-right:0.5rem; }
+
+        footer { margin-top:4rem; padding:2rem 0; border-top:1px solid var(--border); color:var(--text-muted); font-size:0.85rem; text-align:center; }
+
+        @media (max-width:900px) { nav { display:none; } main { margin-left:0; padding:2rem 1.5rem; } .comparison { grid-template-columns:1fr; } }
+    </style>
+</head>
+<body>
+
+<nav>
+    <div class="logo">
+        <h2>SonarQube Lab</h2>
+        <span>Programmation Securisee</span>
+    </div>
+    <a href="#intro">Introduction</a>
+    <a href="#architecture">Architecture</a>
+    <a href="#prerequis">Prerequis</a>
+    <a href="#installation">Installation</a>
+    <a href="#config">Configuration initiale</a>
+    <a href="#analyse-dotnet">Analyse .NET</a>
+    <a href="#regles-securite">Regles de securite</a>
+    <a href="#piege-regles">Piege : regles manquantes</a>
+    <a href="#quality-gates">Quality Gates</a>
+    <a href="#cicd">Integration CI/CD</a>
+    <a href="#troubleshooting">Resolution des problemes</a>
+    <a href="#exercices">Exercices pratiques</a>
+</nav>
+
+<main>
+    <!-- ========================== INTRODUCTION ========================== -->
+    <section id="intro">
+        <h1>SonarQube</h1>
+        <p class="subtitle">Analyse statique de code et detection de vulnerabilites de securite</p>
+
+        <div class="alert alert-info">
+            <strong>Objectifs du labo</strong>
+            Installer SonarQube avec Docker, analyser un projet .NET, identifier et corriger
+            les vulnerabilites de securite detectees par l'analyse statique.
+        </div>
+
+        <p>
+            <strong>SonarQube</strong> est une plateforme open-source d'analyse statique de code (SAST &mdash;
+            <em>Static Application Security Testing</em>). Elle inspecte le code source <strong>sans l'executer</strong>
+            pour detecter des bugs, des vulnerabilites de securite, du code duplique et des mauvaises pratiques.
+        </p>
+
+        <h3>Pourquoi l'analyse statique ?</h3>
+        <p>
+            L'analyse statique est un pilier fondamental de la securite applicative. Elle permet de detecter
+            des failles <strong>avant meme que le code ne soit deploye</strong>, ce qui est infiniment moins couteux
+            que de corriger une faille en production.
+        </p>
+
+        <table>
+            <thead><tr><th>Avantage</th><th>Description</th></tr></thead>
+            <tbody>
+                <tr>
+                    <td><strong>Detection precoce</strong></td>
+                    <td>Les failles sont trouvees des la phase de developpement, avant les tests manuels</td>
+                </tr>
+                <tr>
+                    <td><strong>Couverture exhaustive</strong></td>
+                    <td>Chaque ligne de code est analysee, meme les chemins rarement executes</td>
+                </tr>
+                <tr>
+                    <td><strong>Automatisation</strong></td>
+                    <td>Integrable dans le pipeline CI/CD pour un controle continu et systematique</td>
+                </tr>
+                <tr>
+                    <td><strong>Education</strong></td>
+                    <td>Les developpeurs apprennent les bonnes pratiques grace aux explications des regles</td>
+                </tr>
+                <tr>
+                    <td><strong>Conformite</strong></td>
+                    <td>Aide a respecter les normes OWASP, SANS Top 25, CWE</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="alert alert-warning">
+            <strong>Limites de l'analyse statique</strong>
+            L'analyse statique ne detecte pas tout. Elle ne peut pas trouver les failles liees a la configuration
+            du serveur, aux erreurs de logique metier complexes, ou aux vulnerabilites dans les dependances
+            (pour cela, on utilise des outils SCA comme <code>dotnet list package --vulnerable</code>).
+            Elle doit etre combinee avec d'autres approches : DAST, tests de penetration, revue de code.
+        </div>
+    </section>
+
+    <!-- ========================== ARCHITECTURE ========================== -->
+    <section id="architecture">
+        <h2>Architecture</h2>
+
+        <p>SonarQube est compose de trois elements principaux qui interagissent ensemble :</p>
+
+        <div class="diagram">
+            <div class="box primary">SonarQube Scanner</div>
+            <span class="arrow">&rarr;</span>
+            <div class="box secondary">SonarQube Server</div>
+            <span class="arrow">&rarr;</span>
+            <div class="box db">PostgreSQL</div>
+            <br><br>
+            <div style="color:var(--text-muted); font-size:0.85rem;">
+                Le scanner analyse le code &rarr; envoie les resultats au serveur &rarr; qui les stocke en base de donnees
+            </div>
+        </div>
+
+        <table>
+            <thead><tr><th>Composant</th><th>Role</th><th>Technologie</th></tr></thead>
+            <tbody>
+                <tr>
+                    <td><strong>SonarQube Server</strong></td>
+                    <td>Interface web, moteur de regles, API REST, calcul des metriques et Quality Gates</td>
+                    <td>Java (Elasticsearch integre pour la recherche)</td>
+                </tr>
+                <tr>
+                    <td><strong>PostgreSQL</strong></td>
+                    <td>Stockage persistant des projets, resultats d'analyse, configurations, historique</td>
+                    <td>PostgreSQL 16</td>
+                </tr>
+                <tr>
+                    <td><strong>SonarScanner</strong></td>
+                    <td>Analyse le code source localement et envoie les resultats au serveur via l'API</td>
+                    <td>dotnet-sonarscanner pour les projets .NET</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h3>Flux d'une analyse</h3>
+        <ol>
+            <li>Le developpeur lance <code>dotnet sonarscanner begin</code> pour initialiser l'analyse</li>
+            <li>Le projet est compile avec <code>dotnet build</code> (necessaire pour l'analyse du code .NET)</li>
+            <li><code>dotnet sonarscanner end</code> collecte les resultats et les envoie au serveur SonarQube</li>
+            <li>Le serveur traite les resultats, applique les regles et calcule les metriques</li>
+            <li>Les resultats sont visibles dans l'interface web avec des recommandations de correction</li>
+        </ol>
+    </section>
+
+    <!-- ========================== PREREQUIS ========================== -->
+    <section id="prerequis">
+        <h2>Prerequis</h2>
+
+        <h3>Logiciels requis</h3>
+        <table>
+            <thead><tr><th>Logiciel</th><th>Version minimum</th><th>Verification</th></tr></thead>
+            <tbody>
+                <tr>
+                    <td><strong>Docker Desktop</strong></td>
+                    <td>4.x</td>
+                    <td><code>docker --version</code></td>
+                </tr>
+                <tr>
+                    <td><strong>Docker Compose</strong></td>
+                    <td>2.x (integre a Docker Desktop)</td>
+                    <td><code>docker compose version</code></td>
+                </tr>
+                <tr>
+                    <td><strong>.NET SDK</strong></td>
+                    <td>8.0+</td>
+                    <td><code>dotnet --version</code></td>
+                </tr>
+                <tr>
+                    <td><strong>Java JRE</strong></td>
+                    <td>17+ (requis par le scanner)</td>
+                    <td><code>java -version</code></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h3>Ressources systeme</h3>
+        <ul>
+            <li><strong>RAM :</strong> minimum 4 Go alloues a Docker (SonarQube + Elasticsearch consomment ~2-3 Go)</li>
+            <li><strong>Disque :</strong> ~2 Go pour les images Docker + espace pour les donnees d'analyse</li>
+            <li><strong>CPU :</strong> 2 coeurs minimum recommandes</li>
+        </ul>
+
+        <div class="alert alert-danger">
+            <strong>Configuration Linux/WSL2 obligatoire</strong>
+            SonarQube utilise Elasticsearch qui requiert un parametre noyau specifique.
+            Sans cette configuration, SonarQube ne demarrera pas :
+        </div>
+
+        <h3>Linux natif</h3>
+<pre><code><span class="cmt"># Verifier la valeur actuelle</span>
+sysctl vm.max_map_count
+
+<span class="cmt"># Configurer (temporaire, perdu au reboot)</span>
+<span class="kw">sudo</span> sysctl -w vm.max_map_count=<span class="val">262144</span>
+
+<span class="cmt"># Configurer (permanent)</span>
+<span class="kw">echo</span> <span class="str">"vm.max_map_count=262144"</span> | <span class="kw">sudo</span> tee -a /etc/sysctl.conf</code></pre>
+
+        <h3>Windows (Docker Desktop avec WSL2)</h3>
+<pre><code><span class="cmt"># Dans PowerShell (administrateur)</span>
+wsl -d docker-desktop sh -c <span class="str">"sysctl -w vm.max_map_count=262144"</span>
+
+<span class="cmt"># Pour rendre permanent, creer le fichier .wslconfig dans %USERPROFILE%</span>
+<span class="cmt"># Contenu du fichier C:\Users\VotreNom\.wslconfig :</span>
+[wsl2]
+kernelCommandLine = sysctl.vm.max_map_count=262144</code></pre>
+
+        <div class="alert alert-info">
+            <strong>Docker Desktop sur Windows</strong>
+            Sur Windows avec Docker Desktop recent, cette configuration est souvent geree
+            automatiquement. Si SonarQube ne demarre pas, verifiez les logs avec
+            <code>docker compose logs sonarqube</code> et recherchez l'erreur
+            <code>max virtual memory areas vm.max_map_count is too low</code>.
+        </div>
+    </section>
+
+    <!-- ========================== INSTALLATION ========================== -->
+    <section id="installation">
+        <h2>Installation avec Docker Compose</h2>
+
+        <h3><span class="step-number">1</span> Cloner le projet</h3>
+<pre><code><span class="kw">cd</span> D:/condorcet-2026/programmation-securisee
+<span class="kw">ls</span> SonarQubeLabApp/</code></pre>
+
+        <p>Le dossier <code>SonarQubeLabApp/</code> contient :</p>
+        <ul>
+            <li><code>docker-compose.yml</code> &mdash; Definition des services SonarQube et PostgreSQL</li>
+            <li><code>.env</code> &mdash; Variables de configuration</li>
+            <li><code>sonar-project.properties</code> &mdash; Configuration de l'analyse</li>
+            <li><code>scripts/</code> &mdash; Scripts d'installation et d'analyse (bash + PowerShell)</li>
+        </ul>
+
+        <h3><span class="step-number">2</span> Le fichier docker-compose.yml</h3>
+<pre><code><span class="kw">version</span>: <span class="str">"3.8"</span>
+
+<span class="kw">services</span>:
+  <span class="fn">sonarqube</span>:
+    <span class="kw">image</span>: <span class="str">sonarqube:10-community</span>
+    <span class="kw">container_name</span>: sonarqube
+    <span class="kw">depends_on</span>:
+      db:
+        <span class="kw">condition</span>: service_healthy
+    <span class="kw">environment</span>:
+      <span class="val">SONAR_JDBC_URL</span>: jdbc:postgresql://db:5432/sonarqube
+      <span class="val">SONAR_JDBC_USERNAME</span>: sonar
+      <span class="val">SONAR_JDBC_PASSWORD</span>: sonar_password_change_me
+    <span class="kw">volumes</span>:
+      - sonarqube_data:/opt/sonarqube/data
+      - sonarqube_extensions:/opt/sonarqube/extensions
+      - sonarqube_logs:/opt/sonarqube/logs
+    <span class="kw">ports</span>:
+      - <span class="str">"9000:9000"</span>
+    <span class="kw">ulimits</span>:                   <span class="cmt"># Requis par Elasticsearch</span>
+      <span class="kw">memlock</span>:
+        soft: <span class="val">-1</span>
+        hard: <span class="val">-1</span>
+      <span class="kw">nofile</span>:
+        soft: <span class="val">65536</span>
+        hard: <span class="val">65536</span>
+    <span class="kw">healthcheck</span>:
+      <span class="kw">test</span>: [<span class="str">"CMD-SHELL"</span>, <span class="str">"curl -f http://localhost:9000/api/system/status || exit 1"</span>]
+      <span class="kw">interval</span>: <span class="val">30s</span>
+      <span class="kw">timeout</span>: <span class="val">10s</span>
+      <span class="kw">retries</span>: <span class="val">10</span>
+      <span class="kw">start_period</span>: <span class="val">120s</span>
+    <span class="kw">restart</span>: unless-stopped
+
+  <span class="fn">db</span>:
+    <span class="kw">image</span>: <span class="str">postgres:16-alpine</span>
+    <span class="kw">container_name</span>: sonarqube-db
+    <span class="kw">environment</span>:
+      <span class="val">POSTGRES_USER</span>: sonar
+      <span class="val">POSTGRES_PASSWORD</span>: sonar_password_change_me
+      <span class="val">POSTGRES_DB</span>: sonarqube
+    <span class="kw">volumes</span>:
+      - postgresql_data:/var/lib/postgresql/data
+    <span class="kw">healthcheck</span>:
+      <span class="kw">test</span>: [<span class="str">"CMD-SHELL"</span>, <span class="str">"pg_isready -U sonar -d sonarqube"</span>]
+      <span class="kw">interval</span>: <span class="val">10s</span>
+      <span class="kw">retries</span>: <span class="val">5</span>
+    <span class="kw">restart</span>: unless-stopped</code></pre>
+
+        <div class="alert alert-info">
+            <strong>Points importants</strong>
+            <ul style="margin-top:0.5rem;">
+                <li><code>depends_on</code> avec <code>condition: service_healthy</code> &mdash; SonarQube ne demarre que quand PostgreSQL est pret</li>
+                <li><code>ulimits</code> &mdash; Configuration memoire requise par Elasticsearch (moteur de recherche integre)</li>
+                <li><code>healthcheck</code> &mdash; Verification automatique de l'etat de chaque service</li>
+                <li><code>volumes</code> &mdash; Donnees persistantes, survivent au redemarrage des conteneurs</li>
+            </ul>
+        </div>
+
+        <h3><span class="step-number">3</span> Demarrer SonarQube</h3>
+
+        <p><strong>Methode rapide (scripts fournis) :</strong></p>
+
+        <div class="comparison">
+            <div class="card">
+                <h4>Windows (PowerShell)</h4>
+<pre><code><span class="kw">cd</span> SonarQubeLabApp
+.\scripts\<span class="fn">setup.ps1</span></code></pre>
+            </div>
+            <div class="card">
+                <h4>Linux / macOS / Git Bash</h4>
+<pre><code><span class="kw">cd</span> SonarQubeLabApp
+<span class="kw">chmod</span> +x scripts/setup.sh
+./scripts/<span class="fn">setup.sh</span></code></pre>
+            </div>
+        </div>
+
+        <p><strong>Methode manuelle :</strong></p>
+<pre><code><span class="kw">cd</span> SonarQubeLabApp
+
+<span class="cmt"># Demarrer les conteneurs en arriere-plan</span>
+docker compose up -d
+
+<span class="cmt"># Suivre les logs en temps reel</span>
+docker compose logs -f sonarqube
+
+<span class="cmt"># Verifier l'etat des conteneurs</span>
+docker compose ps</code></pre>
+
+        <div class="alert alert-success">
+            <strong>Premier demarrage</strong>
+            Le premier demarrage prend 1 a 3 minutes. SonarQube doit initialiser Elasticsearch
+            et la base de donnees. Attendez de voir <code>"SonarQube is operational"</code> dans les logs.
+        </div>
+
+        <h3><span class="step-number">4</span> Verifier l'installation</h3>
+<pre><code><span class="cmt"># Verifier que les conteneurs tournent</span>
+docker compose ps
+
+<span class="cmt"># Verifier l'API</span>
+curl <span class="str">http://localhost:9000/api/system/status</span>
+<span class="cmt"># Reponse attendue : {"id":"...","version":"10.x","status":"UP"}</span></code></pre>
+
+        <h3>Commandes utiles</h3>
+        <table>
+            <thead><tr><th>Commande</th><th>Description</th></tr></thead>
+            <tbody>
+                <tr><td><code>docker compose up -d</code></td><td>Demarrer les services en arriere-plan</td></tr>
+                <tr><td><code>docker compose stop</code></td><td>Arreter les services (donnees conservees)</td></tr>
+                <tr><td><code>docker compose down</code></td><td>Arreter et supprimer les conteneurs</td></tr>
+                <tr><td><code>docker compose down -v</code></td><td>Tout supprimer, y compris les donnees (reset complet)</td></tr>
+                <tr><td><code>docker compose logs -f sonarqube</code></td><td>Suivre les logs de SonarQube</td></tr>
+            </tbody>
+        </table>
+    </section>
+
+    <!-- ========================== CONFIGURATION ========================== -->
+    <section id="config">
+        <h2>Configuration initiale</h2>
+
+        <h3><span class="step-number">1</span> Premier login</h3>
+        <p>Ouvrez votre navigateur a l'adresse <code>http://localhost:9000</code></p>
+        <ul>
+            <li><strong>Login :</strong> <code>admin</code></li>
+            <li><strong>Mot de passe :</strong> <code>admin</code></li>
+        </ul>
+
+        <div class="alert alert-danger">
+            <strong>Changement de mot de passe obligatoire</strong>
+            SonarQube vous forcera a changer le mot de passe par defaut au premier login.
+            Choisissez un mot de passe fort. Pour le labo, vous pouvez utiliser <code>Admin123!</code>
+        </div>
+
+        <h3><span class="step-number">2</span> Creer un projet</h3>
+        <ol>
+            <li>Cliquez sur <strong>"Create Project"</strong> &rarr; <strong>"Manually"</strong></li>
+            <li><strong>Project display name :</strong> <code>Mon Projet .NET</code></li>
+            <li><strong>Project key :</strong> <code>my-dotnet-project</code></li>
+            <li><strong>Main branch name :</strong> <code>main</code></li>
+            <li>Cliquez sur <strong>"Set Up"</strong></li>
+        </ol>
+
+        <h3><span class="step-number">3</span> Generer un token d'authentification</h3>
+        <ol>
+            <li>Choisissez <strong>"Locally"</strong> comme methode d'analyse</li>
+            <li>Generez un token : donnez-lui un nom (ex: <code>labo-token</code>)</li>
+            <li><strong>Copiez le token</strong> (il ne sera plus visible apres)</li>
+            <li>Selectionnez <strong>".NET"</strong> comme technologie de projet</li>
+        </ol>
+
+        <div class="alert alert-warning">
+            <strong>Conservation du token</strong>
+            Le token ressemble a <code>sqp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</code>.
+            Conservez-le dans un endroit sur. Il servira a authentifier le scanner aupres du serveur SonarQube.
+            Ne le committez <strong>jamais</strong> dans votre code source !
+        </div>
+
+        <h3><span class="step-number">4</span> Configurer le fichier .env</h3>
+<pre><code><span class="cmt"># Editez le fichier SonarQubeLabApp/.env</span>
+<span class="val">SONAR_TOKEN</span>=<span class="str">sqp_votre_token_ici</span>
+<span class="val">SONAR_PROJECT_KEY</span>=<span class="str">my-dotnet-project</span>
+<span class="val">SONAR_HOST_URL</span>=<span class="str">http://localhost:9000</span></code></pre>
+    </section>
+
+    <!-- ========================== ANALYSE .NET ========================== -->
+    <section id="analyse-dotnet">
+        <h2>Analyse d'un projet .NET</h2>
+
+        <h3>Installer le scanner .NET</h3>
+        <p>
+            Pour les projets .NET, on utilise <code>dotnet-sonarscanner</code>, un outil global .NET
+            qui s'integre au processus de build :
+        </p>
+<pre><code><span class="cmt"># Installer le scanner globalement</span>
+dotnet tool install --global <span class="str">dotnet-sonarscanner</span>
+
+<span class="cmt"># Verifier l'installation</span>
+dotnet sonarscanner --version</code></pre>
+
+        <h3>Lancer une analyse</h3>
+        <p>L'analyse d'un projet .NET se fait en <strong>3 etapes</strong> :</p>
+
+<pre><code><span class="cmt"># Etape 1 : Initialiser l'analyse</span>
+dotnet sonarscanner <span class="fn">begin</span> \
+    /k:<span class="str">"my-dotnet-project"</span> \
+    /d:sonar.host.url=<span class="str">"http://localhost:9000"</span> \
+    /d:sonar.token=<span class="str">"sqp_votre_token"</span>
+
+<span class="cmt"># Etape 2 : Compiler le projet</span>
+dotnet <span class="fn">build</span> --no-incremental
+
+<span class="cmt"># Etape 3 : Finaliser et envoyer les resultats</span>
+dotnet sonarscanner <span class="fn">end</span> \
+    /d:sonar.token=<span class="str">"sqp_votre_token"</span></code></pre>
+
+        <div class="alert alert-info">
+            <strong>Pourquoi 3 etapes ?</strong>
+            Contrairement a d'autres langages, le scanner .NET doit s'integrer au processus de compilation.
+            L'etape <code>begin</code> configure les hooks MSBuild, <code>build</code> compile et collecte les donnees,
+            et <code>end</code> envoie tout au serveur SonarQube.
+        </div>
+
+        <h3>Utiliser les scripts fournis</h3>
+        <div class="comparison">
+            <div class="card">
+                <h4>Windows (PowerShell)</h4>
+<pre><code><span class="cmt"># Definir le token</span>
+<span class="val">$env:SONAR_TOKEN</span> = <span class="str">"sqp_xxx"</span>
+
+<span class="cmt"># Lancer l'analyse</span>
+.\scripts\<span class="fn">scan.ps1</span> -ProjectPath <span class="str">"..\SqlInjectionLabApp"</span></code></pre>
+            </div>
+            <div class="card">
+                <h4>Linux / macOS / Git Bash</h4>
+<pre><code><span class="cmt"># Definir le token</span>
+<span class="kw">export</span> <span class="val">SONAR_TOKEN</span>=<span class="str">"sqp_xxx"</span>
+
+<span class="cmt"># Lancer l'analyse</span>
+./scripts/<span class="fn">scan.sh</span> ../SqlInjectionLabApp</code></pre>
+            </div>
+        </div>
+
+        <h3>Fichier sonar-project.properties</h3>
+        <p>Ce fichier configure les parametres de l'analyse. Il est place a la racine du projet a analyser :</p>
+<pre><code><span class="cmt"># Cle unique du projet</span>
+<span class="val">sonar.projectKey</span>=<span class="str">my-dotnet-project</span>
+
+<span class="cmt"># Nom affiche dans l'interface</span>
+<span class="val">sonar.projectName</span>=<span class="str">Mon Projet .NET</span>
+
+<span class="cmt"># URL du serveur SonarQube</span>
+<span class="val">sonar.host.url</span>=<span class="str">http://localhost:9000</span>
+
+<span class="cmt"># Exclusions (fichiers a ignorer)</span>
+<span class="val">sonar.exclusions</span>=<span class="str">**/bin/**,**/obj/**,**/Migrations/**</span>
+
+<span class="cmt"># Encodage</span>
+<span class="val">sonar.sourceEncoding</span>=<span class="str">UTF-8</span></code></pre>
+
+        <h3>Consulter les resultats</h3>
+        <p>
+            Apres l'analyse, ouvrez <code>http://localhost:9000/dashboard?id=my-dotnet-project</code>.
+            Vous verrez :
+        </p>
+        <ul>
+            <li><strong>Bugs</strong> &mdash; Problemes de fiabilite (code qui ne fonctionne pas comme prevu)</li>
+            <li><strong>Vulnerabilities</strong> &mdash; Failles de securite (injection, XSS, etc.)</li>
+            <li><strong>Security Hotspots</strong> &mdash; Code qui necessite une revue manuelle de securite</li>
+            <li><strong>Code Smells</strong> &mdash; Problemes de maintenabilite (code complexe, duplique, etc.)</li>
+            <li><strong>Coverage</strong> &mdash; Pourcentage de code couvert par les tests unitaires</li>
+        </ul>
+    </section>
+
+    <!-- ========================== REGLES DE SECURITE ========================== -->
+    <section id="regles-securite">
+        <h2>Regles de securite</h2>
+
+        <p>
+            SonarQube integre des centaines de regles de securite basees sur les standards
+            <strong>OWASP Top 10</strong>, <strong>CWE</strong> et <strong>SANS Top 25</strong>.
+            Voici les plus importantes pour le developpement .NET :
+        </p>
+
+        <h3>1. Injection SQL (CWE-89)</h3>
+        <div class="comparison">
+            <div class="card bad">
+                <h4>Vulnerable</h4>
+<pre><code><span class="cmt">// Concatenation directe = injection SQL</span>
+<span class="kw">var</span> sql = <span class="danger-hl">$"SELECT * FROM Users WHERE Name = '{input}'"</span>;
+<span class="kw">var</span> cmd = <span class="kw">new</span> <span class="fn">SqlCommand</span>(sql, connection);
+<span class="kw">var</span> reader = cmd.<span class="fn">ExecuteReader</span>();</code></pre>
+            </div>
+            <div class="card good">
+                <h4>Securise</h4>
+<pre><code><span class="cmt">// Requete parametree = pas d'injection</span>
+<span class="kw">var</span> sql = <span class="safe-hl">"SELECT * FROM Users WHERE Name = @name"</span>;
+<span class="kw">var</span> cmd = <span class="kw">new</span> <span class="fn">SqlCommand</span>(sql, connection);
+cmd.Parameters.<span class="fn">AddWithValue</span>(<span class="str">"@name"</span>, input);
+<span class="kw">var</span> reader = cmd.<span class="fn">ExecuteReader</span>();</code></pre>
+            </div>
+        </div>
+
+        <h3>2. Cross-Site Scripting - XSS (CWE-79)</h3>
+        <div class="comparison">
+            <div class="card bad">
+                <h4>Vulnerable</h4>
+<pre><code><span class="cmt">// Injection de HTML brut dans la page</span>
+@<span class="fn">Html.Raw</span>(<span class="danger-hl">Model.UserComment</span>)
+
+<span class="cmt">// Ou via JavaScript</span>
+&lt;script&gt;
+  document.getElementById(<span class="str">"name"</span>).innerHTML =
+    <span class="danger-hl">"@Model.UserName"</span>;
+&lt;/script&gt;</code></pre>
+            </div>
+            <div class="card good">
+                <h4>Securise</h4>
+<pre><code><span class="cmt">// Razor encode automatiquement</span>
+@<span class="safe-hl">Model.UserComment</span>
+
+<span class="cmt">// Encodage explicite si necessaire</span>
+@<span class="fn">Html.Encode</span>(Model.UserComment)
+
+<span class="cmt">// En JavaScript, utiliser textContent</span>
+&lt;script&gt;
+  document.getElementById(<span class="str">"name"</span>).<span class="safe-hl">textContent</span> =
+    <span class="str">"@Html.JavaScriptStringEncode(Model.UserName)"</span>;
+&lt;/script&gt;</code></pre>
+            </div>
+        </div>
+
+        <h3>3. Credentials codees en dur (CWE-798)</h3>
+        <div class="comparison">
+            <div class="card bad">
+                <h4>Vulnerable</h4>
+<pre><code><span class="cmt">// Mot de passe dans le code source !</span>
+<span class="kw">var</span> password = <span class="danger-hl">"SuperSecret123!"</span>;
+<span class="kw">var</span> connectionString =
+  <span class="danger-hl">$"Server=db;Password={password}"</span>;
+
+<span class="cmt">// Cle API dans le code</span>
+<span class="kw">var</span> apiKey = <span class="danger-hl">"sk-abc123xyz789"</span>;</code></pre>
+            </div>
+            <div class="card good">
+                <h4>Securise</h4>
+<pre><code><span class="cmt">// Variables d'environnement</span>
+<span class="kw">var</span> password = <span class="fn">Environment</span>
+  .<span class="fn">GetEnvironmentVariable</span>(<span class="str">"DB_PASSWORD"</span>);
+
+<span class="cmt">// Ou appsettings.json + User Secrets</span>
+<span class="kw">var</span> connStr = <span class="safe-hl">configuration
+  .GetConnectionString("Default")</span>;
+
+<span class="cmt">// Azure Key Vault, AWS Secrets, etc.</span>
+<span class="kw">var</span> apiKey = <span class="safe-hl">vault.GetSecret("api-key")</span>;</code></pre>
+            </div>
+        </div>
+
+        <h3>4. Cryptographie faible (CWE-327)</h3>
+        <div class="comparison">
+            <div class="card bad">
+                <h4>Vulnerable</h4>
+<pre><code><span class="cmt">// Algorithmes obsoletes et casses</span>
+<span class="kw">var</span> md5 = <span class="danger-hl">MD5.Create()</span>;
+<span class="kw">var</span> sha1 = <span class="danger-hl">SHA1.Create()</span>;
+<span class="kw">var</span> des = <span class="danger-hl">DES.Create()</span>;
+
+<span class="cmt">// Hash de mot de passe sans sel</span>
+<span class="kw">var</span> hash = <span class="danger-hl">SHA256.HashData</span>(
+  Encoding.UTF8.GetBytes(password));</code></pre>
+            </div>
+            <div class="card good">
+                <h4>Securise</h4>
+<pre><code><span class="cmt">// Algorithmes modernes et surs</span>
+<span class="kw">var</span> sha256 = <span class="safe-hl">SHA256.Create()</span>;
+<span class="kw">var</span> aes = <span class="safe-hl">Aes.Create()</span>;
+
+<span class="cmt">// Pour les mots de passe : bcrypt/PBKDF2</span>
+<span class="kw">var</span> hasher = <span class="kw">new</span> <span class="fn">PasswordHasher</span>&lt;User&gt;();
+<span class="kw">var</span> hash = hasher.<span class="safe-hl">HashPassword</span>(
+  user, password);
+<span class="cmt">// Utilise PBKDF2 avec sel automatique</span></code></pre>
+            </div>
+        </div>
+
+        <h3>5. CSRF - Cross-Site Request Forgery (CWE-352)</h3>
+        <div class="comparison">
+            <div class="card bad">
+                <h4>Vulnerable</h4>
+<pre><code><span class="cmt">// Pas de validation anti-CSRF</span>
+[<span class="fn">HttpPost</span>]
+<span class="danger-hl">[IgnoreAntiforgeryToken]</span>
+<span class="kw">public</span> IActionResult <span class="fn">TransferMoney</span>(
+    <span class="kw">decimal</span> amount, <span class="kw">string</span> to)
+{
+    <span class="cmt">// Un attaquant peut forger cette requete</span>
+    _bank.<span class="fn">Transfer</span>(amount, to);
+    <span class="kw">return</span> <span class="fn">Ok</span>();
+}</code></pre>
+            </div>
+            <div class="card good">
+                <h4>Securise</h4>
+<pre><code><span class="cmt">// Token anti-CSRF valide automatiquement</span>
+[<span class="fn">HttpPost</span>]
+<span class="safe-hl">[ValidateAntiForgeryToken]</span>
+<span class="kw">public</span> IActionResult <span class="fn">TransferMoney</span>(
+    <span class="kw">decimal</span> amount, <span class="kw">string</span> to)
+{
+    _bank.<span class="fn">Transfer</span>(amount, to);
+    <span class="kw">return</span> <span class="fn">Ok</span>();
+}
+<span class="cmt">// Dans le formulaire Razor :</span>
+<span class="cmt">// @Html.AntiForgeryToken()</span></code></pre>
+            </div>
+        </div>
+
+        <h3>6. Path Traversal (CWE-22)</h3>
+        <div class="comparison">
+            <div class="card bad">
+                <h4>Vulnerable</h4>
+<pre><code><span class="cmt">// L'utilisateur controle le chemin</span>
+[<span class="fn">HttpGet</span>]
+<span class="kw">public</span> IActionResult <span class="fn">Download</span>(<span class="kw">string</span> file)
+{
+    <span class="kw">var</span> path = <span class="danger-hl">Path.Combine(
+      "uploads", file)</span>;
+    <span class="cmt">// file = "../../etc/passwd" !</span>
+    <span class="kw">return</span> <span class="fn">PhysicalFile</span>(path, <span class="str">"application/octet-stream"</span>);
+}</code></pre>
+            </div>
+            <div class="card good">
+                <h4>Securise</h4>
+<pre><code><span class="cmt">// Valider et normaliser le chemin</span>
+[<span class="fn">HttpGet</span>]
+<span class="kw">public</span> IActionResult <span class="fn">Download</span>(<span class="kw">string</span> file)
+{
+    <span class="kw">var</span> basePath = Path.<span class="fn">GetFullPath</span>(<span class="str">"uploads"</span>);
+    <span class="kw">var</span> fullPath = Path.<span class="fn">GetFullPath</span>(
+      Path.<span class="fn">Combine</span>(<span class="str">"uploads"</span>, file));
+    <span class="kw">if</span> (!fullPath.<span class="safe-hl">StartsWith</span>(basePath))
+        <span class="kw">return</span> <span class="fn">Forbid</span>();
+    <span class="kw">return</span> <span class="fn">PhysicalFile</span>(fullPath, <span class="str">"application/octet-stream"</span>);
+}</code></pre>
+            </div>
+        </div>
+
+        <h3>Tableau recapitulatif des regles cles</h3>
+        <table>
+            <thead><tr><th>Vulnerabilite</th><th>CWE</th><th>OWASP</th><th>Severite</th></tr></thead>
+            <tbody>
+                <tr>
+                    <td>Injection SQL</td>
+                    <td>CWE-89</td>
+                    <td>A03:2021</td>
+                    <td><span class="badge badge-danger">CRITIQUE</span></td>
+                </tr>
+                <tr>
+                    <td>Cross-Site Scripting (XSS)</td>
+                    <td>CWE-79</td>
+                    <td>A03:2021</td>
+                    <td><span class="badge badge-danger">CRITIQUE</span></td>
+                </tr>
+                <tr>
+                    <td>Credentials codees en dur</td>
+                    <td>CWE-798</td>
+                    <td>A07:2021</td>
+                    <td><span class="badge badge-danger">CRITIQUE</span></td>
+                </tr>
+                <tr>
+                    <td>Cryptographie faible</td>
+                    <td>CWE-327</td>
+                    <td>A02:2021</td>
+                    <td><span class="badge badge-warning">MAJEURE</span></td>
+                </tr>
+                <tr>
+                    <td>CSRF</td>
+                    <td>CWE-352</td>
+                    <td>A01:2021</td>
+                    <td><span class="badge badge-warning">MAJEURE</span></td>
+                </tr>
+                <tr>
+                    <td>Path Traversal</td>
+                    <td>CWE-22</td>
+                    <td>A01:2021</td>
+                    <td><span class="badge badge-danger">CRITIQUE</span></td>
+                </tr>
+                <tr>
+                    <td>Deserialization non sure</td>
+                    <td>CWE-502</td>
+                    <td>A08:2021</td>
+                    <td><span class="badge badge-danger">CRITIQUE</span></td>
+                </tr>
+                <tr>
+                    <td>LDAP Injection</td>
+                    <td>CWE-90</td>
+                    <td>A03:2021</td>
+                    <td><span class="badge badge-danger">CRITIQUE</span></td>
+                </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <!-- ========================== PIEGE REGLES MANQUANTES ========================== -->
+    <section id="piege-regles">
+        <h2>Piege : quand SonarQube ne detecte pas une injection SQL</h2>
+
+        <div class="alert alert-danger">
+            <strong>Cas reel observe sur le projet SqlInjectionLabApp</strong>
+            L'analyse SonarQube du projet n'a <strong>pas</strong> remonte les injections SQL comme vulnerabilites,
+            alors que le code contient des concatenations directes de chaines dans des requetes SQL.
+            Cette section explique pourquoi et comment eviter ce piege.
+        </div>
+
+        <h3>Le probleme</h3>
+
+        <p>Le projet <code>SqlInjectionLabApp</code> contient du code clairement vulnerable :</p>
+
+<pre><code><span class="cmt">// Services/DatabaseService.cs — Recherche vulnerable</span>
+<span class="kw">var</span> sql = <span class="danger-hl">$"SELECT * FROM Persons WHERE LastName LIKE '%{searchTerm}%'"</span>;
+<span class="kw">using var</span> cmd = _connection.<span class="fn">CreateCommand</span>();
+cmd.CommandText = sql;
+<span class="kw">var</span> reader = cmd.<span class="fn">ExecuteReader</span>();
+
+<span class="cmt">// Services/DatabaseService.cs — Login vulnerable</span>
+<span class="kw">var</span> sql = <span class="danger-hl">$"SELECT * FROM Users WHERE Username = '{username}' AND Password = '{password}'"</span>;
+
+<span class="cmt">// Controllers/EfDemoController.cs — FromSqlRaw vulnerable</span>
+<span class="kw">var</span> sql = <span class="danger-hl">$"SELECT * FROM EfPersons WHERE LastName LIKE '%{q}%'"</span>;
+model.Results = _context.Persons.<span class="fn">FromSqlRaw</span>(sql).<span class="fn">ToList</span>();</code></pre>
+
+        <p>Pourtant, SonarQube n'a signale aucune <strong>vulnerabilite</strong> d'injection SQL.
+        Il a uniquement emis 3 <strong>Security Hotspots</strong> de type Warning.</p>
+
+        <h3>Deux regles, deux comportements</h3>
+
+        <p>SonarQube dispose de deux regles distinctes pour les requetes SQL dynamiques.
+        Comprendre leur difference est essentiel :</p>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Regle</th>
+                    <th>Type</th>
+                    <th>Comportement</th>
+                    <th>Statut dans notre analyse</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>S2077</strong></td>
+                    <td><span class="badge badge-warning">Hotspot</span></td>
+                    <td>Signale les requetes SQL formattees dynamiquement et demande une revue manuelle :
+                        <em>"Make sure using a dynamically formatted SQL query is safe here."</em></td>
+                    <td><span class="safe-hl">Active</span> — 3 occurrences detectees</td>
+                </tr>
+                <tr>
+                    <td><strong>S3649</strong></td>
+                    <td><span class="badge badge-danger">Vulnerabilite</span></td>
+                    <td>Effectue une <strong>analyse de flux de donnees</strong> (taint analysis) :
+                        trace le chemin d'une entree utilisateur jusqu'a l'execution SQL
+                        et confirme la vulnerabilite</td>
+                    <td><span class="danger-hl">Absente du ruleset</span></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="comparison">
+            <div class="card bad">
+                <h4>S2077 — Hotspot (ce qui etait active)</h4>
+                <ul>
+                    <li>Detecte les string interpolations dans du SQL</li>
+                    <li>Classe le resultat comme <strong>Security Hotspot</strong></li>
+                    <li>Demande une revue manuelle</li>
+                    <li>Ne fait <strong>pas</strong> echouer le Quality Gate</li>
+                    <li>Pas d'analyse de flux de donnees</li>
+                </ul>
+            </div>
+            <div class="card good">
+                <h4>S3649 — Vulnerabilite (ce qui manquait)</h4>
+                <ul>
+                    <li>Analyse le flux : entree utilisateur &rarr; variable &rarr; requete SQL</li>
+                    <li>Classe le resultat comme <strong>Vulnerability</strong> confirmee</li>
+                    <li>Severite <strong>Blocker</strong> ou <strong>Critical</strong></li>
+                    <li><strong>Fait echouer</strong> le Quality Gate</li>
+                    <li>Analyse de type <em>taint analysis</em></li>
+                </ul>
+            </div>
+        </div>
+
+        <h3>Pourquoi la regle S3649 etait absente</h3>
+
+        <p>L'analyse a utilise un <strong>Quality Profile</strong> personnalise qui contenait 467 regles C#,
+        mais la regle S3649 n'en faisait pas partie. Cela peut arriver dans plusieurs cas :</p>
+
+        <ul>
+            <li><strong>Quality Profile personnalise</strong> — Cree a partir d'un sous-ensemble de regles, sans inclure les regles de taint analysis</li>
+            <li><strong>Edition Community</strong> — Certaines regles de taint analysis (dont S3649) ne sont disponibles
+                que dans les editions <strong>Developer</strong>, <strong>Enterprise</strong> ou <strong>Data Center</strong> de SonarQube</li>
+            <li><strong>Profil non mis a jour</strong> — Un profil copie puis jamais resynchronise avec les nouvelles regles</li>
+        </ul>
+
+        <div class="alert alert-warning">
+            <strong>Point d'attention</strong>
+            Dans l'edition <strong>Community</strong> (gratuite) de SonarQube, la regle S3649 peut ne pas etre
+            disponible car les analyses de type <em>taint analysis</em> sont une fonctionnalite des editions
+            payantes. La regle S2077 (hotspot) reste disponible mais ne remonte qu'un avertissement
+            necessitant une revue manuelle.
+        </div>
+
+        <h3>Ce que SonarQube a reellement detecte</h3>
+
+        <p>Sur les 27 problemes remontes lors de l'analyse du <code>SqlInjectionLabApp</code>, voici
+        les resultats lies a la securite SQL :</p>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Fichier</th>
+                    <th>Ligne</th>
+                    <th>Regle</th>
+                    <th>Type</th>
+                    <th>Message</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>DatabaseService.cs</code></td>
+                    <td>163</td>
+                    <td>S2077</td>
+                    <td><span class="badge badge-warning">Hotspot</span></td>
+                    <td>Make sure using a dynamically formatted SQL query is safe here.</td>
+                </tr>
+                <tr>
+                    <td><code>DatabaseService.cs</code></td>
+                    <td>217</td>
+                    <td>S2077</td>
+                    <td><span class="badge badge-warning">Hotspot</span></td>
+                    <td>Make sure using a dynamically formatted SQL query is safe here.</td>
+                </tr>
+                <tr>
+                    <td><code>EfDemoController.cs</code></td>
+                    <td>46</td>
+                    <td>S2077</td>
+                    <td><span class="badge badge-warning">Hotspot</span></td>
+                    <td>Make sure using a dynamically formatted SQL query is safe here.</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <p>Les autres problemes detectes concernaient les credentials codees en dur (S2068),
+        l'absence de validation <code>ModelState.IsValid</code> (S6967) et des problemes
+        d'<code>IDisposable</code> (S3881) — mais <strong>aucune vulnerabilite SQL confirmee</strong>.</p>
+
+        <h3>Comment corriger la configuration</h3>
+
+        <h4><span class="step-number">1</span> Verifier l'edition SonarQube</h4>
+
+<pre><code><span class="cmt"># Verifier la version et l'edition</span>
+<span class="kw">curl</span> http://localhost:9000/api/system/status
+<span class="cmt"># Reponse : { "status": "UP", "version": "10.x", "edition": "community" }</span></code></pre>
+
+        <p>Si vous etes sur l'edition <strong>Community</strong>, les regles de taint analysis
+        (S3649, S5131, S5144, S5145, S5146, S5167) ne sont pas disponibles.
+        Vous devrez vous appuyer sur les <strong>Security Hotspots</strong> (S2077) et les
+        traiter comme des vulnerabilites dans votre processus de revue.</p>
+
+        <h4><span class="step-number">2</span> Activer S3649 (editions Developer+)</h4>
+
+        <p>Si vous disposez d'une edition Developer, Enterprise ou Data Center :</p>
+
+        <ol>
+            <li>Aller dans <strong>Quality Profiles</strong> &rarr; profil C# actif</li>
+            <li>Cliquer sur <strong>Activate More Rules</strong></li>
+            <li>Chercher <code>S3649</code> ou <code>"SQL Injection"</code></li>
+            <li>Activer la regle avec la severite <strong>Blocker</strong></li>
+            <li>Relancer l'analyse du projet</li>
+        </ol>
+
+<pre><code><span class="cmt"># Ou via l'API SonarQube :</span>
+<span class="kw">curl</span> -u admin:votreMotDePasse -X POST \
+  <span class="str">"http://localhost:9000/api/qualityprofiles/activate_rule"</span> \
+  -d <span class="str">"key=votre-profil-csharp"</span> \
+  -d <span class="str">"rule=csharpsquid:S3649"</span> \
+  -d <span class="str">"severity=BLOCKER"</span></code></pre>
+
+        <h4><span class="step-number">3</span> Utiliser le profil Sonar way</h4>
+
+        <p>Le profil <strong>Sonar way</strong> (profil par defaut) inclut toutes les regles de securite
+        disponibles dans votre edition. Si vous utilisez un profil personnalise, verifiez qu'il
+        herite de Sonar way ou qu'il inclut les regles de securite critiques :</p>
+
+<pre><code><span class="cmt"># Lister les regles de securite actives dans votre profil</span>
+<span class="kw">curl</span> -u admin:votreMotDePasse \
+  <span class="str">"http://localhost:9000/api/rules/search?qprofile=votre-profil&types=VULNERABILITY&languages=cs"</span>
+
+<span class="cmt"># Verifier si S3649 est presente</span>
+<span class="kw">curl</span> -u admin:votreMotDePasse \
+  <span class="str">"http://localhost:9000/api/rules/show?key=csharpsquid:S3649"</span></code></pre>
+
+        <h4><span class="step-number">4</span> Adapter le Quality Gate (edition Community)</h4>
+
+        <p>Si S3649 n'est pas disponible, renforcez votre Quality Gate pour inclure les Security Hotspots :</p>
+
+        <ul>
+            <li>Ajouter la condition : <strong>Security Hotspots Reviewed</strong> &ge; 100%</li>
+            <li>Cela force la revue manuelle de chaque hotspot S2077 avant de valider l'analyse</li>
+            <li>Traiter tout hotspot SQL non justifie comme un echec</li>
+        </ul>
+
+        <h3>Lecon a retenir</h3>
+
+        <div class="alert alert-info">
+            <strong>Un outil d'analyse statique n'est pas une garantie de securite</strong>
+            SonarQube ne detecte que ce que ses regles actives couvrent. Un code peut passer
+            une analyse SonarQube avec 0 vulnerabilite et contenir malgre tout des failles critiques.
+            C'est pourquoi il est essentiel de :
+            <ul style="margin-top:0.5rem;">
+                <li><strong>Verifier le Quality Profile</strong> — S'assurer que les regles de securite critiques sont activees</li>
+                <li><strong>Revoir les Security Hotspots</strong> — Ne pas les ignorer sous pretexte que ce ne sont "que" des hotspots</li>
+                <li><strong>Combiner les approches</strong> — Analyse statique (SAST) + tests de penetration (DAST) + revue de code manuelle</li>
+                <li><strong>Connaitre les limites de son edition</strong> — L'edition Community ne dispose pas de taint analysis</li>
+            </ul>
+        </div>
+
+    </section>
+
+    <!-- ========================== QUALITY GATES ========================== -->
+    <section id="quality-gates">
+        <h2>Quality Gates</h2>
+
+        <p>
+            Un <strong>Quality Gate</strong> est un ensemble de conditions que le code doit respecter pour etre
+            considere comme acceptable. C'est un <strong>gardien automatique</strong> qui bloque le code de
+            mauvaise qualite avant qu'il n'atteigne la production.
+        </p>
+
+        <h3>Quality Gate par defaut ("Sonar way")</h3>
+        <p>SonarQube fournit un Quality Gate preconfigure avec ces conditions :</p>
+
+        <table>
+            <thead><tr><th>Condition</th><th>Seuil</th><th>Mesure</th></tr></thead>
+            <tbody>
+                <tr>
+                    <td>Nouvelles vulnerabilites</td>
+                    <td><strong>0</strong></td>
+                    <td>Aucune nouvelle faille de securite toleree</td>
+                </tr>
+                <tr>
+                    <td>Nouveaux bugs</td>
+                    <td><strong>0</strong></td>
+                    <td>Aucun nouveau bug tolere</td>
+                </tr>
+                <tr>
+                    <td>Nouveaux Security Hotspots revus</td>
+                    <td><strong>100%</strong></td>
+                    <td>Tous les hotspots doivent etre revus</td>
+                </tr>
+                <tr>
+                    <td>Couverture sur le nouveau code</td>
+                    <td><strong>&ge; 80%</strong></td>
+                    <td>Le nouveau code doit etre teste</td>
+                </tr>
+                <tr>
+                    <td>Duplication sur le nouveau code</td>
+                    <td><strong>&le; 3%</strong></td>
+                    <td>Peu de code duplique dans les ajouts</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h3>Creer un Quality Gate personnalise</h3>
+        <ol>
+            <li>Allez dans <strong>Quality Gates</strong> (menu du haut)</li>
+            <li>Cliquez sur <strong>"Create"</strong></li>
+            <li>Nommez-le (ex: <code>Security-First</code>)</li>
+            <li>Ajoutez des conditions axees securite :</li>
+        </ol>
+
+<pre><code><span class="cmt">Conditions recommandees pour un gate axe securite :</span>
+
+<span class="val">Security Rating</span>        is worse than  <span class="safe-hl">A</span>
+<span class="val">New Vulnerabilities</span>    is greater than  <span class="safe-hl">0</span>
+<span class="val">New Security Hotspots</span>  reviewed is less than  <span class="safe-hl">100%</span>
+<span class="val">New Bugs</span>               is greater than  <span class="safe-hl">0</span>
+<span class="val">New Code Smells</span>        is greater than  <span class="safe-hl">10</span>
+<span class="val">Coverage</span>               is less than  <span class="safe-hl">70%</span></code></pre>
+
+        <div class="alert alert-success">
+            <strong>Bonne pratique</strong>
+            Appliquez le principe du <strong>"Clean as You Code"</strong> : concentrez-vous sur la qualite
+            du <em>nouveau code</em> uniquement. C'est plus realiste que de vouloir corriger tout le code
+            existant d'un coup. SonarQube appelle cela la <strong>"New Code Period"</strong>.
+        </div>
+
+        <h3>Resultat du Quality Gate</h3>
+        <p>Apres chaque analyse, le Quality Gate retourne un statut :</p>
+        <ul>
+            <li><span class="badge badge-success">PASSED</span> &mdash; Toutes les conditions sont respectees</li>
+            <li><span class="badge badge-danger">FAILED</span> &mdash; Au moins une condition n'est pas respectee</li>
+        </ul>
+        <p>
+            Ce statut peut etre utilise dans un pipeline CI/CD pour <strong>bloquer un merge</strong>
+            ou <strong>empecher un deploiement</strong> si le code ne respecte pas les criteres de qualite.
+        </p>
+    </section>
+
+    <!-- ========================== CI/CD ========================== -->
+    <section id="cicd">
+        <h2>Integration CI/CD</h2>
+
+        <p>
+            L'integration de SonarQube dans un pipeline CI/CD permet d'analyser automatiquement
+            chaque commit ou pull request. Voici un exemple avec <strong>GitHub Actions</strong> :
+        </p>
+
+        <h3>GitHub Actions - Workflow complet</h3>
+<pre><code><span class="cmt"># .github/workflows/sonarqube.yml</span>
+<span class="kw">name</span>: SonarQube Analysis
+
+<span class="kw">on</span>:
+  <span class="fn">push</span>:
+    <span class="kw">branches</span>: [ main ]
+  <span class="fn">pull_request</span>:
+    <span class="kw">branches</span>: [ main ]
+
+<span class="kw">jobs</span>:
+  <span class="fn">sonarqube</span>:
+    <span class="kw">runs-on</span>: <span class="str">ubuntu-latest</span>
+
+    <span class="kw">steps</span>:
+    - <span class="kw">name</span>: Checkout code
+      <span class="kw">uses</span>: <span class="str">actions/checkout@v4</span>
+      <span class="kw">with</span>:
+        <span class="val">fetch-depth</span>: <span class="val">0</span>  <span class="cmt"># Historique complet pour l'analyse</span>
+
+    - <span class="kw">name</span>: Setup .NET
+      <span class="kw">uses</span>: <span class="str">actions/setup-dotnet@v4</span>
+      <span class="kw">with</span>:
+        <span class="val">dotnet-version</span>: <span class="str">'8.0.x'</span>
+
+    - <span class="kw">name</span>: Setup Java (requis par le scanner)
+      <span class="kw">uses</span>: <span class="str">actions/setup-java@v4</span>
+      <span class="kw">with</span>:
+        <span class="val">distribution</span>: <span class="str">'temurin'</span>
+        <span class="val">java-version</span>: <span class="str">'17'</span>
+
+    - <span class="kw">name</span>: Install SonarScanner
+      <span class="kw">run</span>: dotnet tool install --global dotnet-sonarscanner
+
+    - <span class="kw">name</span>: Begin SonarQube Analysis
+      <span class="kw">run</span>: |
+        dotnet sonarscanner begin \
+          /k:<span class="str">"${{ secrets.SONAR_PROJECT_KEY }}"</span> \
+          /d:sonar.host.url=<span class="str">"${{ secrets.SONAR_HOST_URL }}"</span> \
+          /d:sonar.token=<span class="str">"${{ secrets.SONAR_TOKEN }}"</span>
+
+    - <span class="kw">name</span>: Build
+      <span class="kw">run</span>: dotnet build --no-incremental
+
+    - <span class="kw">name</span>: End SonarQube Analysis
+      <span class="kw">run</span>: |
+        dotnet sonarscanner end \
+          /d:sonar.token=<span class="str">"${{ secrets.SONAR_TOKEN }}"</span></code></pre>
+
+        <h3>Secrets GitHub a configurer</h3>
+        <table>
+            <thead><tr><th>Secret</th><th>Valeur</th></tr></thead>
+            <tbody>
+                <tr>
+                    <td><code>SONAR_TOKEN</code></td>
+                    <td>Token genere dans SonarQube</td>
+                </tr>
+                <tr>
+                    <td><code>SONAR_HOST_URL</code></td>
+                    <td>URL du serveur SonarQube (ex: <code>https://sonar.mondomaine.com</code>)</td>
+                </tr>
+                <tr>
+                    <td><code>SONAR_PROJECT_KEY</code></td>
+                    <td>Cle du projet (ex: <code>my-dotnet-project</code>)</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="alert alert-warning">
+            <strong>SonarQube en CI/CD</strong>
+            Pour un usage en CI/CD, le serveur SonarQube doit etre accessible depuis le runner GitHub Actions.
+            Cela signifie soit un SonarQube heberge sur un serveur public, soit l'utilisation de
+            <strong>SonarCloud</strong> (version SaaS gratuite pour les projets open-source).
+        </div>
+
+        <h3>Bloquer un merge si le Quality Gate echoue</h3>
+        <p>Ajoutez une etape supplementaire au workflow pour verifier le Quality Gate :</p>
+<pre><code>    - <span class="kw">name</span>: Check Quality Gate
+      <span class="kw">run</span>: |
+        <span class="val">STATUS</span>=$(curl -s -u <span class="str">"${{ secrets.SONAR_TOKEN }}:"</span> \
+          <span class="str">"${{ secrets.SONAR_HOST_URL }}/api/qualitygates/project_status?projectKey=${{ secrets.SONAR_PROJECT_KEY }}"</span> \
+          | jq -r <span class="str">'.projectStatus.status'</span>)
+        <span class="kw">echo</span> <span class="str">"Quality Gate: $STATUS"</span>
+        <span class="kw">if</span> [ <span class="str">"$STATUS"</span> != <span class="str">"OK"</span> ]; <span class="kw">then</span>
+          <span class="kw">echo</span> <span class="str">"<span class="danger-hl">Quality Gate FAILED!</span>"</span>
+          <span class="kw">exit</span> <span class="val">1</span>
+        <span class="kw">fi</span></code></pre>
+    </section>
+
+    <!-- ========================== TROUBLESHOOTING ========================== -->
+    <section id="troubleshooting">
+        <h2>Resolution des problemes</h2>
+
+        <h3>Problemes courants</h3>
+
+        <table>
+            <thead><tr><th>Probleme</th><th>Cause</th><th>Solution</th></tr></thead>
+            <tbody>
+                <tr>
+                    <td><code>max virtual memory areas vm.max_map_count is too low</code></td>
+                    <td>Elasticsearch requiert au minimum 262144</td>
+                    <td>
+                        Linux : <code>sudo sysctl -w vm.max_map_count=262144</code><br>
+                        Windows : <code>wsl -d docker-desktop sh -c "sysctl -w vm.max_map_count=262144"</code>
+                    </td>
+                </tr>
+                <tr>
+                    <td>SonarQube ne demarre pas (restart en boucle)</td>
+                    <td>Memoire insuffisante</td>
+                    <td>Augmentez la RAM de Docker Desktop a minimum 4 Go (Settings &rarr; Resources)</td>
+                </tr>
+                <tr>
+                    <td><code>Port 9000 already in use</code></td>
+                    <td>Un autre service utilise le port 9000</td>
+                    <td>Changez le port dans <code>.env</code> : <code>SONAR_WEB_PORT=9001</code></td>
+                </tr>
+                <tr>
+                    <td><code>Cannot connect to database</code></td>
+                    <td>PostgreSQL non pret ou credentials incorrectes</td>
+                    <td>Verifiez que les credentials dans <code>.env</code> sont coherentes entre les deux services</td>
+                </tr>
+                <tr>
+                    <td>Le scanner ne trouve pas <code>dotnet sonarscanner</code></td>
+                    <td>Outil global non installe ou PATH non configure</td>
+                    <td><code>dotnet tool install --global dotnet-sonarscanner</code> puis redemarrer le terminal</td>
+                </tr>
+                <tr>
+                    <td><code>Not authorized. Please check the token</code></td>
+                    <td>Token invalide ou expire</td>
+                    <td>Generez un nouveau token dans SonarQube (Mon Compte &rarr; Securite)</td>
+                </tr>
+                <tr>
+                    <td>L'analyse ne detecte rien</td>
+                    <td>Le projet n'a pas ete compile avant <code>end</code></td>
+                    <td>Assurez-vous d'executer <code>dotnet build</code> entre <code>begin</code> et <code>end</code></td>
+                </tr>
+                <tr>
+                    <td><code>java.lang.OutOfMemoryError</code></td>
+                    <td>Elasticsearch manque de memoire</td>
+                    <td>Augmentez les limites Docker ou ajoutez <code>SONAR_SEARCH_JAVAOPTS=-Xmx512m</code></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h3>Commandes de diagnostic</h3>
+<pre><code><span class="cmt"># Verifier l'etat des conteneurs</span>
+docker compose ps
+
+<span class="cmt"># Voir les logs de SonarQube</span>
+docker compose logs sonarqube
+
+<span class="cmt"># Voir les logs PostgreSQL</span>
+docker compose logs db
+
+<span class="cmt"># Verifier l'utilisation memoire</span>
+docker stats --no-stream
+
+<span class="cmt"># Verifier l'API de sante</span>
+curl <span class="str">http://localhost:9000/api/system/status</span>
+curl <span class="str">http://localhost:9000/api/system/health</span>
+
+<span class="cmt"># Reset complet (supprime toutes les donnees)</span>
+docker compose down -v
+docker compose up -d</code></pre>
+
+        <h3>Logs importants a verifier</h3>
+        <p>Les logs de SonarQube se trouvent dans le volume Docker. Les fichiers cles :</p>
+        <ul>
+            <li><code>sonar.log</code> &mdash; Log principal du serveur</li>
+            <li><code>web.log</code> &mdash; Log du serveur web (interface et API)</li>
+            <li><code>ce.log</code> &mdash; Log du Compute Engine (traitement des analyses)</li>
+            <li><code>es.log</code> &mdash; Log d'Elasticsearch (recherche et indexation)</li>
+        </ul>
+
+<pre><code><span class="cmt"># Acceder aux logs dans le conteneur</span>
+docker exec sonarqube ls /opt/sonarqube/logs/
+docker exec sonarqube cat /opt/sonarqube/logs/sonar.log | tail -<span class="val">50</span></code></pre>
+    </section>
+
+    <!-- ========================== EXERCICES ========================== -->
+    <section id="exercices">
+        <h2>Exercices pratiques</h2>
+
+        <!-- Exercice 1 -->
+        <div class="card" style="margin:2rem 0; border-top:3px solid var(--accent);">
+            <h4 style="color:var(--accent);">Exercice 1 : Installation et premiere analyse</h4>
+            <p><strong>Objectif :</strong> Installer SonarQube et analyser un projet existant du cours.</p>
+            <ol>
+                <li>Demarrez SonarQube avec <code>docker compose up -d</code> depuis <code>SonarQubeLabApp/</code></li>
+                <li>Connectez-vous a <code>http://localhost:9000</code> et changez le mot de passe admin</li>
+                <li>Creez un projet avec la cle <code>sql-injection-lab</code></li>
+                <li>Generez un token d'authentification</li>
+                <li>Analysez le projet <code>SqlInjectionLabApp</code> avec <code>dotnet-sonarscanner</code></li>
+                <li>Consultez les resultats dans l'interface web</li>
+            </ol>
+            <p><strong>Questions :</strong></p>
+            <ul>
+                <li>Combien de vulnerabilites de securite SonarQube a-t-il detectees ?</li>
+                <li>Quel est le Security Rating du projet (A, B, C, D ou E) ?</li>
+                <li>Quelles sont les 3 vulnerabilites les plus critiques ?</li>
+            </ul>
+        </div>
+
+        <!-- Exercice 2 -->
+        <div class="card" style="margin:2rem 0; border-top:3px solid var(--accent);">
+            <h4 style="color:var(--accent);">Exercice 2 : Corriger les vulnerabilites</h4>
+            <p><strong>Objectif :</strong> Corriger les failles detectees et relancer l'analyse pour voir l'amelioration.</p>
+            <ol>
+                <li>Dans les resultats de l'exercice 1, selectionnez 3 vulnerabilites detectees</li>
+                <li>Pour chaque vulnerabilite, lisez l'explication et la regle SonarQube associee</li>
+                <li>Corrigez le code en suivant les recommendations de SonarQube</li>
+                <li>Relancez l'analyse avec <code>dotnet-sonarscanner</code></li>
+                <li>Verifiez que les vulnerabilites corrigees ont disparu</li>
+            </ol>
+            <p><strong>Livrable :</strong> Un rapport (capture d'ecran avant/apres) montrant les vulnerabilites corrigees.</p>
+        </div>
+
+        <!-- Exercice 3 -->
+        <div class="card" style="margin:2rem 0; border-top:3px solid var(--accent);">
+            <h4 style="color:var(--accent);">Exercice 3 : Quality Gate personnalise</h4>
+            <p><strong>Objectif :</strong> Creer et appliquer un Quality Gate axe securite.</p>
+            <ol>
+                <li>Allez dans <strong>Quality Gates</strong> dans SonarQube</li>
+                <li>Creez un nouveau Quality Gate nomme <code>Security-First</code></li>
+                <li>Ajoutez les conditions suivantes :
+                    <ul>
+                        <li>Security Rating meilleur que A</li>
+                        <li>0 nouvelle vulnerabilite</li>
+                        <li>100% des Security Hotspots revus</li>
+                        <li>Couverture &ge; 50% sur le nouveau code</li>
+                    </ul>
+                </li>
+                <li>Appliquez ce Quality Gate au projet <code>sql-injection-lab</code></li>
+                <li>Relancez l'analyse et observez le resultat du Quality Gate</li>
+            </ol>
+            <p><strong>Questions :</strong></p>
+            <ul>
+                <li>Le Quality Gate passe-t-il ou echoue-t-il ? Pourquoi ?</li>
+                <li>Quelles conditions ne sont pas respectees ?</li>
+            </ul>
+        </div>
+
+        <!-- Exercice 4 -->
+        <div class="card" style="margin:2rem 0; border-top:3px solid var(--accent);">
+            <h4 style="color:var(--accent);">Exercice 4 : Analyse multi-projets</h4>
+            <p><strong>Objectif :</strong> Analyser plusieurs projets du cours et comparer les resultats.</p>
+            <ol>
+                <li>Analysez les projets suivants avec SonarQube :
+                    <ul>
+                        <li><code>SqlInjectionLabApp</code></li>
+                        <li><code>XssLabApp</code></li>
+                        <li><code>CspDemoApp</code></li>
+                    </ul>
+                </li>
+                <li>Comparez les metriques de securite entre les projets</li>
+                <li>Identifiez quel projet a le plus de vulnerabilites</li>
+                <li>Creez un tableau comparatif avec :
+                    <ul>
+                        <li>Nombre de vulnerabilites par projet</li>
+                        <li>Security Rating par projet</li>
+                        <li>Types de vulnerabilites les plus frequents</li>
+                    </ul>
+                </li>
+            </ol>
+            <p><strong>Livrable :</strong> Un tableau comparatif et une analyse ecrite (5-10 lignes) des resultats.</p>
+        </div>
+
+        <div class="alert alert-success">
+            <strong>Conseil</strong>
+            Pour chaque exercice, prenez des captures d'ecran des resultats dans SonarQube.
+            Cela vous servira pour le rapport final. Portez une attention particuliere aux
+            <strong>Security Hotspots</strong> : contrairement aux vulnerabilites, ils necessitent
+            une revue manuelle pour determiner s'il s'agit d'un vrai probleme ou d'un faux positif.
+        </div>
+    </section>
+
+    <footer>
+        Condorcet 2026 - BAC Cyber Securite - Programmation Securisee - Labo SonarQube : Analyse Statique de Code
+    </footer>
+</main>
+
+</body>
+</html>

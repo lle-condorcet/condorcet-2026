@@ -1,0 +1,1562 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Guide du Logging .NET 10 - Serilog &amp; ELK</title>
+    <style>
+        :root {
+            --bg: #0f1117;
+            --surface: #1a1d27;
+            --surface-2: #242736;
+            --accent: #ffa502;
+            --accent-light: #ffbe33;
+            --danger: #ff4757;
+            --success: #2ed573;
+            --warning: #ffa502;
+            --info: #1e90ff;
+            --text: #e4e6eb;
+            --text-muted: #8b8fa3;
+            --border: #2e3142;
+            --code-bg: #12131a;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+        }
+
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 260px;
+            height: 100vh;
+            background: var(--surface);
+            border-right: 1px solid var(--border);
+            padding: 2rem 1.5rem;
+            overflow-y: auto;
+            z-index: 100;
+        }
+
+        nav .logo { font-size: 1.4rem; font-weight: 800; margin-bottom: 2rem; }
+        nav .logo span { color: var(--accent); }
+        nav .section-title {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--text-muted);
+            margin: 1.5rem 0 0.5rem;
+        }
+        nav a {
+            display: block;
+            color: var(--text-muted);
+            text-decoration: none;
+            padding: 0.3rem 0;
+            font-size: 0.9rem;
+            transition: color 0.2s;
+        }
+        nav a:hover { color: var(--accent); }
+
+        main {
+            margin-left: 260px;
+            max-width: 900px;
+            padding: 3rem 4rem;
+        }
+
+        h1 { font-size: 2.2rem; font-weight: 800; margin-bottom: 0.5rem; }
+        h1 span { color: var(--accent); }
+
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            margin-bottom: 3rem;
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin: 3rem 0 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--accent);
+        }
+
+        h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            margin: 2rem 0 0.8rem;
+            color: var(--accent-light);
+        }
+
+        h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            margin: 1.5rem 0 0.6rem;
+            color: var(--text);
+        }
+
+        p { margin-bottom: 1rem; }
+
+        code {
+            background: var(--code-bg);
+            padding: 0.15rem 0.4rem;
+            border-radius: 4px;
+            font-size: 0.88em;
+            color: var(--accent-light);
+        }
+
+        pre {
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.2rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-size: 0.88rem;
+            line-height: 1.6;
+        }
+
+        pre code { background: none; padding: 0; color: var(--text); }
+
+        .kw { color: #c678dd; }
+        .str { color: #98c379; }
+        .cmt { color: #5c6370; }
+        .fn { color: #61afef; }
+        .val { color: #d19a66; }
+        .danger-hl { color: #ff4757; }
+        .success-hl { color: #2ed573; }
+
+        .alert {
+            padding: 1rem 1.2rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            border-left: 4px solid;
+        }
+
+        .alert-danger { background: rgba(255, 71, 87, 0.1); border-color: var(--danger); }
+        .alert-success { background: rgba(46, 213, 115, 0.1); border-color: var(--success); }
+        .alert-warning { background: rgba(255, 165, 2, 0.1); border-color: var(--warning); }
+        .alert-info { background: rgba(30, 144, 255, 0.1); border-color: var(--info); }
+
+        .comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.5rem;
+        }
+
+        .card.bad { border-color: var(--danger); }
+        .card.good { border-color: var(--success); }
+
+        .card h4 { font-size: 1rem; margin-bottom: 1rem; }
+        .card.bad h4 { color: var(--danger); }
+        .card.good h4 { color: var(--success); }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+
+        th, td {
+            padding: 0.6rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th {
+            background: var(--surface-2);
+            font-weight: 600;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        ul, ol { margin: 0.5rem 0 1rem 1.5rem; }
+        li { margin-bottom: 0.3rem; }
+        strong { color: var(--text); }
+
+        .ascii-diagram {
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.82rem;
+            line-height: 1.4;
+            overflow-x: auto;
+            white-space: pre;
+            color: var(--text-muted);
+        }
+
+        .flow-step {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin: 0.8rem 0;
+        }
+
+        .flow-step .step-num {
+            background: var(--accent);
+            color: var(--bg);
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.85rem;
+            flex-shrink: 0;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+
+        .stat-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.2rem;
+            text-align: center;
+        }
+
+        .stat-card .stat-value {
+            font-size: 2rem;
+            font-weight: 800;
+            margin-bottom: 0.3rem;
+        }
+
+        .stat-card .stat-label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        footer {
+            margin-left: 260px;
+            padding: 2rem 4rem;
+            border-top: 1px solid var(--border);
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        @media (max-width: 768px) {
+            nav { display: none; }
+            main, footer { margin-left: 0; padding: 1.5rem; }
+            .stats-grid { grid-template-columns: 1fr; }
+            .comparison { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ============================== NAV ============================== -->
+<nav>
+    <div class="logo"><span>Logging</span> .NET 10</div>
+
+    <div class="section-title">Fondamentaux</div>
+    <a href="#introduction">Pourquoi le logging structure ?</a>
+    <a href="#niveaux">Niveaux de log</a>
+
+    <div class="section-title">Methodes de logging</div>
+    <a href="#ilogger">ILogger (built-in)</a>
+    <a href="#serilog">Serilog</a>
+    <a href="#structured">Logging structure</a>
+    <a href="#source-generators">LoggerMessage generators</a>
+    <a href="#scopes">Scopes et contexte</a>
+    <a href="#enrichers">Enrichisseurs Serilog</a>
+
+    <div class="section-title">Sinks et destinations</div>
+    <a href="#sinks-overview">Vue d'ensemble des sinks</a>
+    <a href="#sink-console">Console &amp; fichier</a>
+    <a href="#sink-elasticsearch">Elasticsearch direct</a>
+    <a href="#sink-logstash">Via Logstash</a>
+
+    <div class="section-title">Architecture</div>
+    <a href="#es-vs-logstash">Elasticsearch vs Logstash</a>
+    <a href="#arbre-decision">Arbre de decision</a>
+    <a href="#architectures">Architectures types</a>
+
+    <div class="section-title">Bonnes pratiques</div>
+    <a href="#performance">Performance</a>
+    <a href="#securite">Securite</a>
+    <a href="#production">Configuration production</a>
+
+    <div class="section-title">Pratique</div>
+    <a href="#lab">Exemples du lab ELK</a>
+</nav>
+
+<!-- ============================== MAIN ============================== -->
+<main>
+
+<h1>Guide du <span>Logging</span> en .NET 10</h1>
+<p class="subtitle">Toutes les methodes de logging avec Serilog, et quand envoyer directement a Elasticsearch ou passer par Logstash</p>
+
+<!-- ==================== INTRODUCTION ==================== -->
+<h2 id="introduction">Pourquoi le logging structure ?</h2>
+
+<p>Le logging est la premiere source d'information pour diagnostiquer des problemes en production,
+detecter des incidents de securite et comprendre le comportement d'une application. En .NET 10,
+le logging structure permet de generer des <strong>evenements JSON</strong> exploitables par des outils
+comme Elasticsearch, au lieu de simples chaines de texte.</p>
+
+<div class="comparison">
+    <div class="card bad">
+        <h4>Logging non structure</h4>
+<pre><code>Console.WriteLine(
+  $"User {userId} ordered {qty} items");
+
+<span class="cmt">// Resultat : texte brut, impossible
+// a filtrer ou agreger</span></code></pre>
+    </div>
+    <div class="card good">
+        <h4>Logging structure</h4>
+<pre><code>logger.LogInformation(
+  "User {UserId} ordered {Quantity} items",
+  userId, qty);
+
+<span class="cmt">// Resultat : JSON avec champs UserId
+// et Quantity indexables</span></code></pre>
+    </div>
+</div>
+
+<div class="alert alert-info">
+    <strong>Principe cle :</strong> En logging structure, le message est un <strong>template</strong> avec des
+    placeholders nommes (<code>{UserId}</code>), pas une string interpolee. Les valeurs sont transmises
+    separement, ce qui permet l'indexation, le filtrage et l'agregation dans Elasticsearch.
+</div>
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-value" style="color: var(--accent);">6</div>
+        <div class="stat-label">Niveaux de log en .NET</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value" style="color: var(--info);">5+</div>
+        <div class="stat-label">Methodes de logging disponibles</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value" style="color: var(--success);">50+</div>
+        <div class="stat-label">Sinks Serilog disponibles</div>
+    </div>
+</div>
+
+<!-- ==================== NIVEAUX ==================== -->
+<h2 id="niveaux">Niveaux de log</h2>
+
+<p>.NET definit 6 niveaux de log, du plus verbeux au plus critique. Chaque niveau a un usage precis.
+Il est essentiel de choisir le bon niveau pour eviter le bruit en production tout en capturant
+les informations essentielles.</p>
+
+<table>
+    <thead>
+        <tr>
+            <th>Niveau</th>
+            <th>.NET / Serilog</th>
+            <th>Quand l'utiliser</th>
+            <th>Exemple concret</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><code>Trace</code></td>
+            <td>Trace / Verbose</td>
+            <td>Details ultra-fins, jamais active en production</td>
+            <td><code>Entering method GetProductById with id=42</code></td>
+        </tr>
+        <tr>
+            <td><code>Debug</code></td>
+            <td>Debug / Debug</td>
+            <td>Informations utiles au developpement et au diagnostic</td>
+            <td><code>Cache miss for key "products:42", querying DB</code></td>
+        </tr>
+        <tr>
+            <td><code>Information</code></td>
+            <td>Information / Information</td>
+            <td>Flux normal de l'application, jalons importants</td>
+            <td><code>Order ORD-123 created for customer user@test.com</code></td>
+        </tr>
+        <tr>
+            <td><code>Warning</code></td>
+            <td>Warning / Warning</td>
+            <td>Situation anormale, non bloquante mais a surveiller</td>
+            <td><code>Request to /api/products took 850ms (threshold: 500ms)</code></td>
+        </tr>
+        <tr>
+            <td><code>Error</code></td>
+            <td>Error / Error</td>
+            <td>Echec d'une operation, intervention peut-etre requise</td>
+            <td><code>Failed to process order: product out of stock</code></td>
+        </tr>
+        <tr>
+            <td><code>Critical</code></td>
+            <td>Critical / Fatal</td>
+            <td>Panne systeme, l'application ne peut plus fonctionner</td>
+            <td><code>Database connection lost, shutting down</code></td>
+        </tr>
+    </tbody>
+</table>
+
+<div class="alert alert-warning">
+    <strong>Attention :</strong> Les noms different entre <code>Microsoft.Extensions.Logging</code> et Serilog.
+    Le niveau <code>Critical</code> de .NET correspond a <code>Fatal</code> chez Serilog, et <code>Trace</code>
+    correspond a <code>Verbose</code>.
+</div>
+
+<!-- ==================== ILogger ==================== -->
+<h2 id="ilogger">Methode 1 : ILogger (logging built-in .NET)</h2>
+
+<p><code>ILogger&lt;T&gt;</code> est l'abstraction de logging fournie par le framework .NET. Elle est
+injectee automatiquement par le conteneur de dependances et constitue le point d'entree standard
+pour tout logging en .NET.</p>
+
+<h3>Injection et utilisation de base</h3>
+
+<pre><code><span class="kw">public class</span> <span class="fn">ProductService</span>
+{
+    <span class="kw">private readonly</span> ILogger&lt;ProductService&gt; _logger;
+
+    <span class="kw">public</span> <span class="fn">ProductService</span>(ILogger&lt;ProductService&gt; logger)
+    {
+        _logger = logger;
+    }
+
+    <span class="kw">public async</span> Task&lt;Product?&gt; <span class="fn">GetByIdAsync</span>(<span class="kw">int</span> id)
+    {
+        <span class="cmt">// Logging structure : {ProductId} est un placeholder nomme</span>
+        _logger.<span class="fn">LogInformation</span>(<span class="str">"Fetching product {ProductId}"</span>, id);
+
+        <span class="kw">var</span> product = <span class="kw">await</span> _db.Products.<span class="fn">FindAsync</span>(id);
+
+        <span class="kw">if</span> (product <span class="kw">is null</span>)
+        {
+            _logger.<span class="fn">LogWarning</span>(<span class="str">"Product {ProductId} not found"</span>, id);
+            <span class="kw">return null</span>;
+        }
+
+        <span class="kw">return</span> product;
+    }
+}</code></pre>
+
+<h3>Toutes les methodes de ILogger</h3>
+
+<table>
+    <thead>
+        <tr>
+            <th>Methode</th>
+            <th>Niveau</th>
+            <th>Usage type</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><code>LogTrace(message, args)</code></td>
+            <td>Trace</td>
+            <td>Details de flux internes</td>
+        </tr>
+        <tr>
+            <td><code>LogDebug(message, args)</code></td>
+            <td>Debug</td>
+            <td>Valeurs de variables, chemins logiques</td>
+        </tr>
+        <tr>
+            <td><code>LogInformation(message, args)</code></td>
+            <td>Information</td>
+            <td>Operations reussies, jalons</td>
+        </tr>
+        <tr>
+            <td><code>LogWarning(message, args)</code></td>
+            <td>Warning</td>
+            <td>Situations anormales non bloquantes</td>
+        </tr>
+        <tr>
+            <td><code>LogError(exception, message, args)</code></td>
+            <td>Error</td>
+            <td>Echecs avec stack trace</td>
+        </tr>
+        <tr>
+            <td><code>LogCritical(exception, message, args)</code></td>
+            <td>Critical</td>
+            <td>Pannes systeme</td>
+        </tr>
+        <tr>
+            <td><code>Log(level, message, args)</code></td>
+            <td>Variable</td>
+            <td>Niveau dynamique (determine au runtime)</td>
+        </tr>
+    </tbody>
+</table>
+
+<h3>Logger avec une exception</h3>
+
+<pre><code><span class="kw">try</span>
+{
+    <span class="kw">await</span> _orderService.<span class="fn">CreateAsync</span>(order);
+}
+<span class="kw">catch</span> (InvalidOperationException ex)
+{
+    <span class="cmt">// L'exception est passee en PREMIER parametre</span>
+    <span class="cmt">// Serilog capture automatiquement le stack trace</span>
+    _logger.<span class="fn">LogError</span>(ex,
+        <span class="str">"Failed to create order for product {ProductId}, quantity {Quantity}"</span>,
+        order.ProductId, order.Quantity);
+    <span class="kw">throw</span>;
+}</code></pre>
+
+<div class="alert alert-danger">
+    <strong>Erreur courante :</strong> Ne jamais utiliser l'interpolation de string (<code>$"..."</code>) dans les messages de log.
+    Cela detruit le logging structure car les valeurs sont integrees dans le texte au lieu d'etre des champs distincts.
+</div>
+
+<div class="comparison">
+    <div class="card bad">
+        <h4>Mauvais (string interpolation)</h4>
+<pre><code><span class="cmt">// Les valeurs sont perdues dans le texte</span>
+_logger.<span class="fn">LogInformation</span>(
+    <span class="danger-hl">$"Order {orderId} created"</span>);
+
+<span class="cmt">// Pas de champ OrderId dans le JSON
+// Impossible a filtrer dans Kibana</span></code></pre>
+    </div>
+    <div class="card good">
+        <h4>Correct (message template)</h4>
+<pre><code><span class="cmt">// Le placeholder est un champ indexable</span>
+_logger.<span class="fn">LogInformation</span>(
+    <span class="str">"Order {OrderId} created"</span>,
+    orderId);
+
+<span class="cmt">// Champ OrderId exploitable dans
+// Elasticsearch et Kibana</span></code></pre>
+    </div>
+</div>
+
+<!-- ==================== SERILOG ==================== -->
+<h2 id="serilog">Methode 2 : Serilog</h2>
+
+<p><strong>Serilog</strong> est la bibliotheque de logging structuree la plus utilisee en .NET.
+Elle remplace le provider de logging par defaut et offre un ecosysteme riche de sinks (destinations),
+d'enrichisseurs (contexte automatique) et de filtres. Dans le projet ElkLoggingLabApp, Serilog est
+configure comme provider principal.</p>
+
+<h3>Installation</h3>
+
+<pre><code><span class="cmt"># Package principal pour ASP.NET Core</span>
+<span class="kw">dotnet add package</span> Serilog.AspNetCore
+
+<span class="cmt"># Sink vers Elasticsearch</span>
+<span class="kw">dotnet add package</span> Serilog.Sinks.Elasticsearch
+
+<span class="cmt"># Enrichisseurs de contexte</span>
+<span class="kw">dotnet add package</span> Serilog.Enrichers.Environment
+<span class="kw">dotnet add package</span> Serilog.Enrichers.Process
+<span class="kw">dotnet add package</span> Serilog.Enrichers.Thread</code></pre>
+
+<h3>Configuration dans Program.cs</h3>
+
+<pre><code><span class="kw">using</span> Serilog;
+<span class="kw">using</span> Serilog.Events;
+<span class="kw">using</span> Serilog.Sinks.Elasticsearch;
+
+Log.Logger = <span class="kw">new</span> <span class="fn">LoggerConfiguration</span>()
+    <span class="cmt">// Niveau minimum global</span>
+    .<span class="fn">MinimumLevel</span>.<span class="fn">Debug</span>()
+
+    <span class="cmt">// Surcharges par namespace (reduire le bruit des frameworks)</span>
+    .<span class="fn">MinimumLevel</span>.<span class="fn">Override</span>(<span class="str">"Microsoft"</span>, LogEventLevel.Information)
+    .<span class="fn">MinimumLevel</span>.<span class="fn">Override</span>(<span class="str">"Microsoft.AspNetCore"</span>, LogEventLevel.Warning)
+    .<span class="fn">MinimumLevel</span>.<span class="fn">Override</span>(<span class="str">"System"</span>, LogEventLevel.Warning)
+
+    <span class="cmt">// Enrichisseurs : contexte ajoute automatiquement</span>
+    .<span class="fn">Enrich</span>.<span class="fn">FromLogContext</span>()
+    .<span class="fn">Enrich</span>.<span class="fn">WithMachineName</span>()
+    .<span class="fn">Enrich</span>.<span class="fn">WithProcessId</span>()
+    .<span class="fn">Enrich</span>.<span class="fn">WithThreadId</span>()
+    .<span class="fn">Enrich</span>.<span class="fn">WithEnvironmentName</span>()
+    .<span class="fn">Enrich</span>.<span class="fn">WithProperty</span>(<span class="str">"Application"</span>, <span class="str">"MonApp"</span>)
+
+    <span class="cmt">// Sinks : ou envoyer les logs</span>
+    .<span class="fn">WriteTo</span>.<span class="fn">Console</span>()
+    .<span class="fn">WriteTo</span>.<span class="fn">Elasticsearch</span>(<span class="kw">new</span> <span class="fn">ElasticsearchSinkOptions</span>(
+        <span class="kw">new</span> Uri(<span class="str">"http://localhost:9200"</span>))
+    {
+        IndexFormat = <span class="str">"myapp-logs-{0:yyyy.MM.dd}"</span>,
+        AutoRegisterTemplate = <span class="val">true</span>,
+        NumberOfShards = <span class="val">1</span>,
+        NumberOfReplicas = <span class="val">0</span>
+    })
+    .<span class="fn">CreateLogger</span>();
+
+<span class="kw">var</span> builder = WebApplication.<span class="fn">CreateBuilder</span>(args);
+builder.Host.<span class="fn">UseSerilog</span>(); <span class="cmt">// Remplace le logging .NET par Serilog</span></code></pre>
+
+<h3>API de logging Serilog (statique)</h3>
+
+<p>En plus de l'injection de <code>ILogger&lt;T&gt;</code>, Serilog offre une API statique via <code>Log</code> :</p>
+
+<pre><code><span class="cmt">// API statique - utile dans Program.cs ou des classes non-DI</span>
+Log.<span class="fn">Information</span>(<span class="str">"Application starting up"</span>);
+Log.<span class="fn">Warning</span>(<span class="str">"Configuration {Key} is missing, using default"</span>, key);
+Log.<span class="fn">Error</span>(exception, <span class="str">"Unhandled error in {Component}"</span>, component);
+Log.<span class="fn">Fatal</span>(<span class="str">"Application crashed"</span>);
+
+<span class="cmt">// Fermer proprement (flush les buffers)</span>
+Log.<span class="fn">CloseAndFlush</span>();</code></pre>
+
+<div class="alert alert-info">
+    <strong>Bonne pratique :</strong> Preferez l'injection de <code>ILogger&lt;T&gt;</code> dans vos classes.
+    Reservez <code>Log.Information()</code> (API statique) pour le code de demarrage dans <code>Program.cs</code>
+    et les situations ou l'injection de dependances n'est pas disponible.
+</div>
+
+<!-- ==================== STRUCTURED LOGGING ==================== -->
+<h2 id="structured">Methode 3 : Logging structure avance</h2>
+
+<p>Le logging structure va au-dela des simples messages textuels. Chaque log est un
+<strong>evenement</strong> avec des proprietes typees et exploitables.</p>
+
+<h3>Destructuration d'objets</h3>
+
+<p>L'operateur <code>@</code> devant un placeholder indique a Serilog de serialiser l'objet complet
+au lieu d'appeler <code>ToString()</code> :</p>
+
+<pre><code><span class="kw">var</span> product = <span class="kw">new</span> Product { Id = <span class="val">1</span>, Name = <span class="str">"Laptop"</span>, Price = <span class="val">999.99m</span> };
+
+<span class="cmt">// ToString() : affiche le type</span>
+_logger.<span class="fn">LogInformation</span>(<span class="str">"Created product {Product}"</span>, product);
+<span class="cmt">// Resultat : "Created product MyApp.Models.Product"</span>
+
+<span class="cmt">// Destructuration : serialise l'objet complet en JSON</span>
+_logger.<span class="fn">LogInformation</span>(<span class="str">"Created product {@Product}"</span>, product);
+<span class="cmt">// Resultat : { "Product": { "Id": 1, "Name": "Laptop", "Price": 999.99 } }</span></code></pre>
+
+<div class="alert alert-danger">
+    <strong>Attention :</strong> Ne destructurez pas d'objets contenant des donnees sensibles (mots de passe,
+    tokens). Utilisez des classes DTO specifiques pour le logging si necessaire.
+</div>
+
+<h3>Contexte avec PushProperty</h3>
+
+<p><code>LogContext.PushProperty</code> ajoute une propriete a <strong>tous les logs</strong> dans le scope courant.
+Ideal pour ajouter un contexte transversal (ID utilisateur, Correlation ID, etc.) :</p>
+
+<pre><code><span class="kw">using</span> (LogContext.<span class="fn">PushProperty</span>(<span class="str">"OrderId"</span>, orderId))
+<span class="kw">using</span> (LogContext.<span class="fn">PushProperty</span>(<span class="str">"CustomerId"</span>, customerId))
+{
+    <span class="cmt">// Tous les logs dans ce bloc auront OrderId et CustomerId</span>
+    _logger.<span class="fn">LogInformation</span>(<span class="str">"Processing order"</span>);
+    <span class="kw">await</span> _paymentService.<span class="fn">ChargeAsync</span>(amount);
+    _logger.<span class="fn">LogInformation</span>(<span class="str">"Payment completed"</span>);
+}
+<span class="cmt">// Ici, OrderId et CustomerId ne sont plus dans le contexte</span></code></pre>
+
+<h3>ForContext : logger avec un sous-contexte</h3>
+
+<pre><code><span class="cmt">// Creer un logger enrichi pour une operation specifique</span>
+<span class="kw">var</span> orderLogger = Log.<span class="fn">ForContext</span>(<span class="str">"OrderId"</span>, orderId)
+                     .<span class="fn">ForContext</span>(<span class="str">"Operation"</span>, <span class="str">"Fulfillment"</span>);
+
+orderLogger.<span class="fn">Information</span>(<span class="str">"Starting fulfillment"</span>);
+orderLogger.<span class="fn">Warning</span>(<span class="str">"Inventory low for {ProductId}"</span>, productId);
+<span class="cmt">// Les deux logs contiennent OrderId et Operation</span></code></pre>
+
+<!-- ==================== SOURCE GENERATORS ==================== -->
+<h2 id="source-generators">Methode 4 : LoggerMessage source generators</h2>
+
+<p>Depuis .NET 6, les <strong>source generators</strong> permettent de generer du code de logging a la compilation.
+C'est la methode la plus performante car elle evite le boxing, l'allocation de tableaux et le parsing
+des templates a chaque appel.</p>
+
+<h3>Syntaxe avec l'attribut [LoggerMessage]</h3>
+
+<pre><code><span class="kw">public partial class</span> <span class="fn">OrderService</span>
+{
+    <span class="kw">private readonly</span> ILogger&lt;OrderService&gt; _logger;
+
+    <span class="cmt">// Le source generator cree le corps de la methode a la compilation</span>
+    [<span class="fn">LoggerMessage</span>(
+        EventId = <span class="val">1001</span>,
+        Level = LogLevel.Information,
+        Message = <span class="str">"Order {OrderId} created for customer {CustomerEmail}"</span>)]
+    <span class="kw">partial void</span> <span class="fn">LogOrderCreated</span>(<span class="kw">string</span> orderId, <span class="kw">string</span> customerEmail);
+
+    [<span class="fn">LoggerMessage</span>(
+        EventId = <span class="val">1002</span>,
+        Level = LogLevel.Warning,
+        Message = <span class="str">"High-value order {OrderId}: {Total:C} exceeds threshold"</span>)]
+    <span class="kw">partial void</span> <span class="fn">LogHighValueOrder</span>(<span class="kw">string</span> orderId, <span class="kw">decimal</span> total);
+
+    [<span class="fn">LoggerMessage</span>(
+        EventId = <span class="val">1003</span>,
+        Level = LogLevel.Error,
+        Message = <span class="str">"Failed to process order {OrderId}"</span>)]
+    <span class="kw">partial void</span> <span class="fn">LogOrderFailed</span>(Exception exception, <span class="kw">string</span> orderId);
+
+    <span class="kw">public async</span> Task <span class="fn">CreateAsync</span>(Order order)
+    {
+        <span class="cmt">// Appel simple, zero allocation si le niveau est desactive</span>
+        <span class="fn">LogOrderCreated</span>(order.Id, order.CustomerEmail);
+
+        <span class="kw">if</span> (order.TotalPrice > <span class="val">1000</span>)
+            <span class="fn">LogHighValueOrder</span>(order.Id, order.TotalPrice);
+    }
+}</code></pre>
+
+<h3>Avantages des source generators</h3>
+
+<table>
+    <thead>
+        <tr>
+            <th>Critere</th>
+            <th>LoggerMessage generator</th>
+            <th>ILogger classique</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>Allocations memoire</td>
+            <td><span class="success-hl">Zero (si niveau desactive)</span></td>
+            <td><span class="danger-hl">Tableau params[] a chaque appel</span></td>
+        </tr>
+        <tr>
+            <td>Boxing des value types</td>
+            <td><span class="success-hl">Aucun</span></td>
+            <td><span class="danger-hl">Boxing de int, decimal, etc.</span></td>
+        </tr>
+        <tr>
+            <td>Parsing du template</td>
+            <td><span class="success-hl">A la compilation</span></td>
+            <td><span class="danger-hl">A chaque appel</span></td>
+        </tr>
+        <tr>
+            <td>Verification du template</td>
+            <td><span class="success-hl">Erreur de compilation</span></td>
+            <td><span class="danger-hl">Erreur au runtime</span></td>
+        </tr>
+        <tr>
+            <td>Event IDs</td>
+            <td><span class="success-hl">Obligatoire, bien organise</span></td>
+            <td>Optionnel</td>
+        </tr>
+    </tbody>
+</table>
+
+<div class="alert alert-success">
+    <strong>Recommandation :</strong> Utilisez les source generators dans le code a forte frequence d'appel
+    (middleware, boucles de traitement, services critiques). Pour du code occasionnel (demarrage, configuration),
+    <code>ILogger.LogInformation()</code> reste parfaitement acceptable.
+</div>
+
+<!-- ==================== SCOPES ==================== -->
+<h2 id="scopes">Methode 5 : Scopes et contexte</h2>
+
+<p>Les <strong>logging scopes</strong> de .NET permettent de regrouper des proprietes contextuelles
+qui seront ajoutees a tous les logs emis dans le scope. Serilog les supporte nativement.</p>
+
+<h3>BeginScope avec ILogger</h3>
+
+<pre><code><span class="kw">public async</span> Task <span class="fn">ProcessOrderAsync</span>(Order order)
+{
+    <span class="cmt">// Toutes les proprietes du dictionnaire sont ajoutees a chaque log</span>
+    <span class="kw">using</span> (_logger.<span class="fn">BeginScope</span>(<span class="kw">new</span> Dictionary&lt;<span class="kw">string</span>, <span class="kw">object</span>&gt;
+    {
+        [<span class="str">"OrderId"</span>] = order.Id,
+        [<span class="str">"CustomerId"</span>] = order.CustomerId,
+        [<span class="str">"CorrelationId"</span>] = Activity.Current?.Id ?? Guid.<span class="fn">NewGuid</span>().<span class="fn">ToString</span>()
+    }))
+    {
+        _logger.<span class="fn">LogInformation</span>(<span class="str">"Starting order processing"</span>);
+
+        <span class="kw">await</span> <span class="fn">ValidateStock</span>(order);
+        _logger.<span class="fn">LogDebug</span>(<span class="str">"Stock validated"</span>);
+
+        <span class="kw">await</span> <span class="fn">ChargePayment</span>(order);
+        _logger.<span class="fn">LogInformation</span>(<span class="str">"Payment charged: {Amount}"</span>, order.TotalPrice);
+
+        <span class="cmt">// Chaque log ci-dessus contient OrderId, CustomerId et CorrelationId</span>
+    }
+}</code></pre>
+
+<h3>Scopes imbriques</h3>
+
+<pre><code><span class="kw">using</span> (_logger.<span class="fn">BeginScope</span>(<span class="str">"RequestId={RequestId}"</span>, requestId))
+{
+    _logger.<span class="fn">LogInformation</span>(<span class="str">"Handling request"</span>);
+    <span class="cmt">// Log contient RequestId</span>
+
+    <span class="kw">using</span> (_logger.<span class="fn">BeginScope</span>(<span class="str">"UserId={UserId}"</span>, userId))
+    {
+        _logger.<span class="fn">LogInformation</span>(<span class="str">"Authenticated user"</span>);
+        <span class="cmt">// Log contient RequestId ET UserId</span>
+    }
+}</code></pre>
+
+<!-- ==================== ENRICHERS ==================== -->
+<h2 id="enrichers">Enrichisseurs Serilog</h2>
+
+<p>Les enrichisseurs ajoutent automatiquement des proprietes a <strong>chaque evenement de log</strong>.
+Contrairement aux scopes qui sont temporaires, les enrichisseurs sont globaux et permanents.</p>
+
+<h3>Enrichisseurs utilises dans le lab ELK</h3>
+
+<table>
+    <thead>
+        <tr>
+            <th>Package</th>
+            <th>Enrichisseur</th>
+            <th>Propriete ajoutee</th>
+            <th>Usage</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><code>Serilog.Enrichers.Environment</code></td>
+            <td><code>WithMachineName()</code></td>
+            <td><code>MachineName</code></td>
+            <td>Identifier le serveur dans un cluster</td>
+        </tr>
+        <tr>
+            <td><code>Serilog.Enrichers.Environment</code></td>
+            <td><code>WithEnvironmentName()</code></td>
+            <td><code>EnvironmentName</code></td>
+            <td>Distinguer Dev / Staging / Production</td>
+        </tr>
+        <tr>
+            <td><code>Serilog.Enrichers.Process</code></td>
+            <td><code>WithProcessId()</code></td>
+            <td><code>ProcessId</code></td>
+            <td>Identifier l'instance du processus</td>
+        </tr>
+        <tr>
+            <td><code>Serilog.Enrichers.Thread</code></td>
+            <td><code>WithThreadId()</code></td>
+            <td><code>ThreadId</code></td>
+            <td>Diagnostiquer les problemes de concurrence</td>
+        </tr>
+        <tr>
+            <td><code>Serilog.Enrichers.ClientInfo</code></td>
+            <td><code>WithClientIp()</code></td>
+            <td><code>ClientIp</code></td>
+            <td>Tracer l'origine des requetes</td>
+        </tr>
+        <tr>
+            <td>(built-in Serilog)</td>
+            <td><code>FromLogContext()</code></td>
+            <td>(dynamique)</td>
+            <td>Inclure les proprietes poussees via LogContext</td>
+        </tr>
+        <tr>
+            <td>(built-in Serilog)</td>
+            <td><code>WithProperty("Key", value)</code></td>
+            <td>(personnalise)</td>
+            <td>Ajouter une propriete fixe (nom d'app, version...)</td>
+        </tr>
+    </tbody>
+</table>
+
+<h3>Enrichisseurs supplementaires utiles</h3>
+
+<pre><code><span class="cmt">// Correlation ID (tracage distribue)</span>
+.<span class="fn">Enrich</span>.<span class="fn">WithCorrelationId</span>()         <span class="cmt">// Serilog.Enrichers.CorrelationId</span>
+
+<span class="cmt">// Informations sur l'assembly</span>
+.<span class="fn">Enrich</span>.<span class="fn">WithAssemblyName</span>()           <span class="cmt">// Serilog.Enrichers.AssemblyName</span>
+.<span class="fn">Enrich</span>.<span class="fn">WithAssemblyVersion</span>()        <span class="cmt">// Version de l'application</span>
+
+<span class="cmt">// Informations de la requete HTTP</span>
+.<span class="fn">Enrich</span>.<span class="fn">WithRequestHeader</span>(<span class="str">"User-Agent"</span>)  <span class="cmt">// Serilog.Enrichers.HttpContextInfo</span></code></pre>
+
+<!-- ==================== SINKS ==================== -->
+<h2 id="sinks-overview">Sinks : ou envoyer les logs ?</h2>
+
+<p>Un <strong>sink</strong> est une destination de log. Serilog permet de configurer plusieurs sinks
+simultanement. Les logs sont envoyes en parallele a chacun d'eux.</p>
+
+<div class="ascii-diagram">
+                               ┌──────────────────┐
+                           ┌──>│  Console (dev)    │
+                           │   └──────────────────┘
+                           │   ┌──────────────────┐
+┌──────────────┐           ├──>│  Fichier (.log)   │
+│  Application │──Serilog──┤   └──────────────────┘
+│   .NET 10    │           │   ┌──────────────────┐
+└──────────────┘           ├──>│  Elasticsearch    │  (direct)
+                           │   └──────────────────┘
+                           │   ┌──────────────────┐
+                           └──>│  Logstash (TCP)   │──> Elasticsearch
+                               └──────────────────┘
+</div>
+
+<!-- ==================== SINK CONSOLE & FILE ==================== -->
+<h2 id="sink-console">Sink Console &amp; Fichier</h2>
+
+<h3>Console</h3>
+
+<pre><code><span class="cmt">// Template personnalise avec couleurs</span>
+.<span class="fn">WriteTo</span>.<span class="fn">Console</span>(outputTemplate:
+    <span class="str">"[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj} {Properties:j}{NewLine}{Exception}"</span>)
+
+<span class="cmt">// Sortie JSON (utile pour Docker / containers)</span>
+.<span class="fn">WriteTo</span>.<span class="fn">Console</span>(<span class="kw">new</span> <span class="fn">RenderedCompactJsonFormatter</span>())</code></pre>
+
+<h3>Fichier avec rotation</h3>
+
+<pre><code><span class="cmt">// Package: Serilog.Sinks.File</span>
+.<span class="fn">WriteTo</span>.<span class="fn">File</span>(
+    path: <span class="str">"logs/app-.log"</span>,
+    rollingInterval: RollingInterval.Day,     <span class="cmt">// Nouveau fichier chaque jour</span>
+    retainedFileCountLimit: <span class="val">30</span>,               <span class="cmt">// Garder 30 jours</span>
+    fileSizeLimitBytes: <span class="val">100_000_000</span>,          <span class="cmt">// Max 100 Mo par fichier</span>
+    rollOnFileSizeLimit: <span class="val">true</span>,                <span class="cmt">// Nouveau fichier si depasse</span>
+    outputTemplate: <span class="str">"[{Timestamp:yyyy-MM-dd HH:mm:ss.fff}] [{Level:u3}] {Message:lj}{NewLine}{Exception}"</span>
+)
+
+<span class="cmt">// Fichier JSON (pour ingestion par Filebeat, Fluentd...)</span>
+.<span class="fn">WriteTo</span>.<span class="fn">File</span>(
+    <span class="kw">new</span> <span class="fn">CompactJsonFormatter</span>(),
+    path: <span class="str">"logs/app-.json"</span>,
+    rollingInterval: RollingInterval.Day
+)</code></pre>
+
+<!-- ==================== SINK ELASTICSEARCH ==================== -->
+<h2 id="sink-elasticsearch">Sink Elasticsearch (envoi direct)</h2>
+
+<p>Le sink <code>Serilog.Sinks.Elasticsearch</code> envoie les logs directement a Elasticsearch
+via HTTP, sans intermediaire. C'est l'approche utilisee dans le lab ELK.</p>
+
+<h3>Configuration complete</h3>
+
+<pre><code><span class="kw">var</span> elasticUrl = Environment.<span class="fn">GetEnvironmentVariable</span>(<span class="str">"ELASTICSEARCH_URL"</span>)
+    ?? <span class="str">"http://localhost:9200"</span>;
+
+.<span class="fn">WriteTo</span>.<span class="fn">Elasticsearch</span>(<span class="kw">new</span> <span class="fn">ElasticsearchSinkOptions</span>(<span class="kw">new</span> Uri(elasticUrl))
+{
+    <span class="cmt">// Index journalier pour faciliter la rotation</span>
+    IndexFormat = <span class="str">"myapp-logs-{0:yyyy.MM.dd}"</span>,
+
+    <span class="cmt">// Creer automatiquement le template d'index</span>
+    AutoRegisterTemplate = <span class="val">true</span>,
+    AutoRegisterTemplateVersion = AutoRegisterTemplateVersion.ESv7,
+
+    <span class="cmt">// Configuration de l'index (lab = 1 shard, 0 replica)</span>
+    NumberOfShards = <span class="val">1</span>,
+    NumberOfReplicas = <span class="val">0</span>,
+
+    <span class="cmt">// Niveau minimum pour ce sink specifiquement</span>
+    MinimumLogEventLevel = LogEventLevel.Debug,
+
+    <span class="cmt">// Buffer en memoire (lot d'envoi)</span>
+    BatchPostingLimit = <span class="val">50</span>,          <span class="cmt">// Envoyer par lots de 50</span>
+    Period = TimeSpan.<span class="fn">FromSeconds</span>(<span class="val">2</span>), <span class="cmt">// Ou toutes les 2 secondes</span>
+
+    <span class="cmt">// Gestion des erreurs</span>
+    EmitEventFailure = EmitEventFailureHandling.WriteToSelfLog |
+                       EmitEventFailureHandling.RaiseCallback,
+    FailureCallback = e =>
+        Console.Error.<span class="fn">WriteLine</span>(<span class="str">$"Unable to submit event: {e.MessageTemplate}"</span>)
+})</code></pre>
+
+<h3>Configuration avec authentification (production)</h3>
+
+<pre><code>.<span class="fn">WriteTo</span>.<span class="fn">Elasticsearch</span>(<span class="kw">new</span> <span class="fn">ElasticsearchSinkOptions</span>(<span class="kw">new</span> Uri(elasticUrl))
+{
+    IndexFormat = <span class="str">"myapp-logs-{0:yyyy.MM.dd}"</span>,
+    AutoRegisterTemplate = <span class="val">true</span>,
+
+    <span class="cmt">// Authentification basique</span>
+    ModifyConnectionSettings = conn =>
+        conn.<span class="fn">BasicAuthentication</span>(<span class="str">"elastic"</span>, <span class="str">"my-secret-password"</span>)
+            .<span class="fn">ServerCertificateValidationCallback</span>((o, cert, chain, errors) => <span class="val">true</span>),
+
+    <span class="cmt">// Ou avec une API key</span>
+    <span class="cmt">// ModifyConnectionSettings = conn =></span>
+    <span class="cmt">//     conn.ApiKeyAuthentication("id", "api_key")</span>
+})</code></pre>
+
+<!-- ==================== SINK LOGSTASH ==================== -->
+<h2 id="sink-logstash">Sink Logstash (envoi via pipeline)</h2>
+
+<p>Au lieu d'envoyer directement a Elasticsearch, on peut envoyer les logs a <strong>Logstash</strong>
+qui les transforme, enrichit et route vers Elasticsearch.</p>
+
+<h3>Option A : Sink TCP vers Logstash</h3>
+
+<pre><code><span class="cmt">// Package: Serilog.Sinks.Network</span>
+.<span class="fn">WriteTo</span>.<span class="fn">TCPSink</span>(
+    <span class="str">"tcp://localhost:5000"</span>,
+    <span class="kw">new</span> <span class="fn">CompactJsonFormatter</span>()
+)</code></pre>
+
+<h3>Option B : Sink HTTP vers Logstash</h3>
+
+<pre><code><span class="cmt">// Package: Serilog.Sinks.Http</span>
+.<span class="fn">WriteTo</span>.<span class="fn">Http</span>(
+    requestUri: <span class="str">"http://localhost:5000"</span>,
+    queueLimitBytes: <span class="val">10_000_000</span>,   <span class="cmt">// 10 Mo de buffer</span>
+    textFormatter: <span class="kw">new</span> <span class="fn">CompactJsonFormatter</span>()
+)</code></pre>
+
+<h3>Option C : Fichier + Filebeat vers Logstash</h3>
+
+<pre><code><span class="cmt">// L'app ecrit en fichier JSON...</span>
+.<span class="fn">WriteTo</span>.<span class="fn">File</span>(
+    <span class="kw">new</span> <span class="fn">CompactJsonFormatter</span>(),
+    <span class="str">"logs/app-.json"</span>,
+    rollingInterval: RollingInterval.Day
+)
+
+<span class="cmt">// ...Filebeat lit le fichier et envoie a Logstash</span>
+<span class="cmt">// Configuration filebeat.yml :</span></code></pre>
+
+<pre><code><span class="cmt"># filebeat.yml</span>
+<span class="kw">filebeat.inputs</span>:
+  - <span class="kw">type</span>: log
+    <span class="kw">paths</span>:
+      - <span class="str">"/app/logs/app-*.json"</span>
+    <span class="kw">json.keys_under_root</span>: <span class="val">true</span>
+    <span class="kw">json.add_error_key</span>: <span class="val">true</span>
+
+<span class="kw">output.logstash</span>:
+  <span class="kw">hosts</span>: [<span class="str">"logstash:5044"</span>]</code></pre>
+
+<h3>Configuration Logstash correspondante</h3>
+
+<pre><code><span class="cmt"># logstash.conf - Pipeline qui recoit les logs</span>
+<span class="kw">input</span> {
+    <span class="cmt"># Depuis Serilog TCP sink</span>
+    <span class="fn">tcp</span> {
+        port => <span class="val">5000</span>
+        codec => <span class="str">json_lines</span>
+    }
+
+    <span class="cmt"># Depuis Filebeat</span>
+    <span class="fn">beats</span> {
+        port => <span class="val">5044</span>
+    }
+}
+
+<span class="kw">filter</span> {
+    <span class="cmt"># Enrichissement : ajouter des tags selon le contenu</span>
+    <span class="kw">if</span> <span class="str">"SECURITY"</span> <span class="kw">in</span> [messageTemplate] {
+        <span class="fn">mutate</span> { add_tag => [<span class="str">"security_event"</span>] }
+    }
+    <span class="kw">if</span> <span class="str">"SLOW"</span> <span class="kw">in</span> [messageTemplate] {
+        <span class="fn">mutate</span> { add_tag => [<span class="str">"slow_query"</span>] }
+    }
+
+    <span class="cmt"># GeoIP pour localiser les adresses IP</span>
+    <span class="kw">if</span> [fields][ClientIp] {
+        <span class="fn">geoip</span> { source => <span class="str">"[fields][ClientIp]"</span> }
+    }
+}
+
+<span class="kw">output</span> {
+    <span class="fn">elasticsearch</span> {
+        hosts => [<span class="str">"http://elasticsearch:9200"</span>]
+        index => <span class="str">"myapp-logs-%{+YYYY.MM.dd}"</span>
+    }
+}</code></pre>
+
+<!-- ==================== ES VS LOGSTASH ==================== -->
+<h2 id="es-vs-logstash">Elasticsearch direct vs Logstash : quel choix ?</h2>
+
+<p>C'est une question d'architecture fondamentale. Les deux approches ont des cas d'usage distincts.
+Voici une comparaison detaillee pour vous aider a choisir.</p>
+
+<h3>Comparaison rapide</h3>
+
+<table>
+    <thead>
+        <tr>
+            <th>Critere</th>
+            <th>Elasticsearch direct</th>
+            <th>Via Logstash</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><strong>Complexite</strong></td>
+            <td><span class="success-hl">Simple</span> : 1 composant en moins</td>
+            <td><span class="danger-hl">Plus complexe</span> : composant supplementaire</td>
+        </tr>
+        <tr>
+            <td><strong>Latence</strong></td>
+            <td><span class="success-hl">Plus faible</span> : envoi direct</td>
+            <td>Hop supplementaire (~10-50ms)</td>
+        </tr>
+        <tr>
+            <td><strong>Transformation</strong></td>
+            <td><span class="danger-hl">Limitee</span> : cote application uniquement</td>
+            <td><span class="success-hl">Riche</span> : grok, geoip, mutate, etc.</td>
+        </tr>
+        <tr>
+            <td><strong>Buffering</strong></td>
+            <td>En memoire (sink buffer)</td>
+            <td><span class="success-hl">Persistant</span> (file d'attente disque)</td>
+        </tr>
+        <tr>
+            <td><strong>Multi-sources</strong></td>
+            <td>Non (une app = un sink)</td>
+            <td><span class="success-hl">Oui</span> : agrege plusieurs sources</td>
+        </tr>
+        <tr>
+            <td><strong>RAM consommee</strong></td>
+            <td>Negligeable (~10-50 Mo)</td>
+            <td><span class="danger-hl">256-512 Mo</span> pour Logstash (JVM)</td>
+        </tr>
+        <tr>
+            <td><strong>Resilience</strong></td>
+            <td>Logs perdus si ES est down</td>
+            <td><span class="success-hl">Buffering</span> si ES est down temporairement</td>
+        </tr>
+        <tr>
+            <td><strong>Securite</strong></td>
+            <td>L'app connait l'URL d'ES</td>
+            <td><span class="success-hl">ES isole</span> du reseau applicatif</td>
+        </tr>
+    </tbody>
+</table>
+
+<!-- ==================== ARBRE DE DECISION ==================== -->
+<h2 id="arbre-decision">Arbre de decision</h2>
+
+<h3>Quand envoyer directement a Elasticsearch</h3>
+
+<div class="card good" style="margin-bottom: 1rem;">
+    <h4>Choisir l'envoi direct quand :</h4>
+    <ul>
+        <li><strong>Application unique ou peu nombreuses</strong> — Pas besoin d'agreger des sources multiples</li>
+        <li><strong>Logs deja structures</strong> — Serilog produit du JSON propre, pas besoin de transformation</li>
+        <li><strong>Latence minimale requise</strong> — Monitoring temps reel sans intermediaire</li>
+        <li><strong>Infrastructure simple</strong> — Lab, POC, petite equipe, pas d'ops dediee</li>
+        <li><strong>Ressources limitees</strong> — Logstash consomme 256-512 Mo de RAM (JVM)</li>
+        <li><strong>Developpement local</strong> — Docker Compose avec Elasticsearch + Kibana suffit</li>
+    </ul>
+</div>
+
+<h3>Quand passer par Logstash</h3>
+
+<div class="card" style="margin-bottom: 1rem; border-color: var(--info);">
+    <h4 style="color: var(--info);">Choisir Logstash quand :</h4>
+    <ul>
+        <li><strong>Sources multiples et heterogenes</strong> — Logs .NET + logs Nginx + logs systeme + metriques</li>
+        <li><strong>Transformation necessaire</strong> — Parsing de logs non structures, enrichissement GeoIP, anonymisation</li>
+        <li><strong>Routage complexe</strong> — Envoyer les logs de securite a un index dedie, les metriques a un autre</li>
+        <li><strong>Resilience critique</strong> — Le buffer persistant de Logstash protege contre les pannes d'ES</li>
+        <li><strong>Securite renforcee</strong> — Elasticsearch n'est pas expose aux applications (seul Logstash y accede)</li>
+        <li><strong>Multi-environnements</strong> — Pipeline centralisee qui normalise les logs de Dev, Staging et Prod</li>
+        <li><strong>Conformite</strong> — Besoin de filtrer ou masquer des donnees sensibles avant indexation</li>
+    </ul>
+</div>
+
+<h3>Schema de decision</h3>
+
+<div class="ascii-diagram">
+                     Application .NET avec Serilog
+                                │
+                    ┌───────────┴───────────┐
+                    │ Besoin de transformer  │
+                    │ ou enrichir les logs ? │
+                    └───────────┬───────────┘
+                       │                │
+                      NON              OUI
+                       │                │
+              ┌────────┴────────┐  ┌───┴────────────────┐
+              │ Une seule source│  │ Sources multiples ? │
+              │ de logs ?       │  └───┬────────────────┘
+              └────────┬────────┘     │            │
+                 │          │        OUI          NON
+                OUI        NON        │            │
+                 │          │    ┌────┴─────┐  ┌──┴──────────┐
+                 │          │    │ LOGSTASH │  │ LOGSTASH    │
+                 │          │    │ (agreger │  │ (transformer│
+                 │          │    │ + router)│  │ + enrichir) │
+                 │          │    └──────────┘  └─────────────┘
+                 │          │
+          ┌──────┴──────┐  │
+          │ ELASTICSEARCH│  │
+          │ DIRECT       │  │
+          │ (simple +    │  │
+          │  performant) │  │
+          └──────────────┘  │
+                      ┌─────┴──────────┐
+                      │ LOGSTASH       │
+                      │ (centraliser   │
+                      │  les sources)  │
+                      └────────────────┘
+</div>
+
+<!-- ==================== ARCHITECTURES ==================== -->
+<h2 id="architectures">Architectures types</h2>
+
+<h3>Architecture 1 : Simple (lab / petite app)</h3>
+
+<p>C'est l'architecture utilisee dans le projet <strong>ElkLoggingLabApp</strong>.</p>
+
+<div class="ascii-diagram">
+┌──────────────┐         ┌──────────────┐         ┌──────────────┐
+│  .NET App    │──HTTP──>│ Elasticsearch │<────────│   Kibana     │
+│  (Serilog    │         │              │         │              │
+│   ES sink)   │         │  :9200       │         │  :5601       │
+└──────────────┘         └──────────────┘         └──────────────┘
+</div>
+
+<p><strong>Avantages :</strong> Simple, peu de ressources, latence minimale.<br/>
+<strong>Inconvenients :</strong> Pas de transformation, pas de buffer persistant, l'app connait ES.</p>
+
+<h3>Architecture 2 : Standard (production)</h3>
+
+<div class="ascii-diagram">
+┌──────────────┐                    ┌──────────────┐
+│  .NET App 1  │──TCP──┐            │              │         ┌──────────┐
+└──────────────┘       │  ┌─────────┴──┐           │         │          │
+┌──────────────┐       ├─>│  Logstash   │──HTTP──> │   ES    │<────────>│  Kibana  │
+│  .NET App 2  │──TCP──┤  │  (pipeline) │          │ Cluster │         │          │
+└──────────────┘       │  └─────────┬──┘           │         │         └──────────┘
+┌──────────────┐       │            │              │         │
+│  Nginx logs  │──file─┘    filter: geoip          └─────────┘
+└──────────────┘            filter: security tags
+                            filter: anonymize PII
+</div>
+
+<p><strong>Avantages :</strong> Transformation, multi-sources, ES isole, buffer persistant.<br/>
+<strong>Inconvenients :</strong> Logstash consomme 256-512 Mo RAM, composant supplementaire a operer.</p>
+
+<h3>Architecture 3 : Hybride (le meilleur des deux)</h3>
+
+<div class="ascii-diagram">
+┌──────────────┐
+│  .NET App    │──Serilog──┬──> Elasticsearch (direct, pour les logs structures)
+│              │           │
+└──────────────┘           └──> Fichier JSON (pour archivage / retraitement)
+                                     │
+                                  Filebeat ──> Logstash ──> ES (index secondaire)
+</div>
+
+<p><strong>Usage :</strong> Les logs structures Serilog vont directement a ES pour le monitoring temps reel.
+Filebeat lit les fichiers pour le retraitement, l'enrichissement GeoIP et l'archivage long terme.</p>
+
+<!-- ==================== PERFORMANCE ==================== -->
+<h2 id="performance">Performance du logging</h2>
+
+<h3>Regles d'or</h3>
+
+<ol>
+    <li><strong>Verifier le niveau avant de construire le message</strong></li>
+</ol>
+
+<pre><code><span class="cmt">// Mauvais : le message est construit meme si Debug est desactive</span>
+_logger.<span class="fn">LogDebug</span>(<span class="str">"Processing items: {Items}"</span>,
+    string.<span class="fn">Join</span>(<span class="str">", "</span>, items.<span class="fn">Select</span>(i => i.Name)));
+
+<span class="cmt">// Correct : verifier d'abord</span>
+<span class="kw">if</span> (_logger.<span class="fn">IsEnabled</span>(LogLevel.Debug))
+{
+    _logger.<span class="fn">LogDebug</span>(<span class="str">"Processing items: {Items}"</span>,
+        string.<span class="fn">Join</span>(<span class="str">", "</span>, items.<span class="fn">Select</span>(i => i.Name)));
+}
+
+<span class="cmt">// Encore mieux : utiliser les source generators (verification gratuite)</span></code></pre>
+
+<ol start="2">
+    <li><strong>Ne pas loguer dans les boucles a haute frequence</strong></li>
+</ol>
+
+<pre><code><span class="cmt">// Mauvais : 10 000 logs pour 10 000 items</span>
+<span class="kw">foreach</span> (<span class="kw">var</span> item <span class="kw">in</span> items)
+{
+    _logger.<span class="fn">LogDebug</span>(<span class="str">"Processing item {ItemId}"</span>, item.Id);
+    <span class="fn">Process</span>(item);
+}
+
+<span class="cmt">// Correct : un seul log pour le lot</span>
+_logger.<span class="fn">LogInformation</span>(<span class="str">"Processing {Count} items"</span>, items.Count);
+<span class="kw">foreach</span> (<span class="kw">var</span> item <span class="kw">in</span> items)
+    <span class="fn">Process</span>(item);
+_logger.<span class="fn">LogInformation</span>(<span class="str">"Processed {Count} items in {Duration}ms"</span>, items.Count, sw.ElapsedMilliseconds);</code></pre>
+
+<ol start="3">
+    <li><strong>Configurer le batching du sink Elasticsearch</strong></li>
+</ol>
+
+<pre><code><span class="cmt">// Envoyer les logs par lots plutot qu'un par un</span>
+<span class="kw">new</span> <span class="fn">ElasticsearchSinkOptions</span>(uri)
+{
+    BatchPostingLimit = <span class="val">50</span>,                 <span class="cmt">// Lots de 50 evenements max</span>
+    Period = TimeSpan.<span class="fn">FromSeconds</span>(<span class="val">2</span>),        <span class="cmt">// Envoi toutes les 2 secondes</span>
+    QueueSizeLimit = <span class="val">100_000</span>,               <span class="cmt">// File d'attente max en memoire</span>
+}</code></pre>
+
+<!-- ==================== SECURITE ==================== -->
+<h2 id="securite">Securite du logging</h2>
+
+<div class="comparison">
+    <div class="card bad">
+        <h4>Ne JAMAIS loguer</h4>
+        <ul>
+            <li>Mots de passe (meme hashes)</li>
+            <li>Tokens JWT, API keys, session tokens</li>
+            <li>Numeros de carte bancaire, IBAN</li>
+            <li>Donnees de sante (RGPD/HIPAA)</li>
+            <li>Cles de chiffrement, secrets</li>
+            <li>Corps complet de requetes POST</li>
+        </ul>
+    </div>
+    <div class="card good">
+        <h4>A loguer systematiquement</h4>
+        <ul>
+            <li>Tentatives d'authentification (succes/echec)</li>
+            <li>Operations CRUD sur donnees sensibles</li>
+            <li>Changements de permissions/roles</li>
+            <li>Tentatives d'injection (SQL, XSS)</li>
+            <li>Rate limiting declenche</li>
+            <li>Erreurs d'autorisation (403)</li>
+        </ul>
+    </div>
+</div>
+
+<h3>Masquer les donnees sensibles</h3>
+
+<pre><code><span class="cmt">// Enrichisseur personnalise pour masquer les emails</span>
+<span class="kw">public class</span> <span class="fn">SensitiveDataMaskingEnricher</span> : ILogEventEnricher
+{
+    <span class="kw">public void</span> <span class="fn">Enrich</span>(LogEvent logEvent, ILogEventPropertyFactory factory)
+    {
+        <span class="kw">var</span> properties = logEvent.Properties.ToList();
+        <span class="kw">foreach</span> (<span class="kw">var</span> prop <span class="kw">in</span> properties)
+        {
+            <span class="kw">if</span> (prop.Key.<span class="fn">Contains</span>(<span class="str">"Email"</span>, StringComparison.OrdinalIgnoreCase))
+            {
+                <span class="kw">var</span> masked = <span class="fn">MaskEmail</span>(prop.Value.ToString().Trim(<span class="str">'"'</span>));
+                logEvent.<span class="fn">AddOrUpdateProperty</span>(
+                    factory.<span class="fn">CreateProperty</span>(prop.Key, masked));
+            }
+        }
+    }
+
+    <span class="kw">private static string</span> <span class="fn">MaskEmail</span>(<span class="kw">string</span> email)
+    {
+        <span class="kw">var</span> parts = email.<span class="fn">Split</span>(<span class="str">'@'</span>);
+        <span class="kw">if</span> (parts.Length != <span class="val">2</span>) <span class="kw">return</span> <span class="str">"***"</span>;
+        <span class="kw">return</span> <span class="str">$"{parts[0][0]}***@{parts[1]}"</span>;
+    }
+}
+
+<span class="cmt">// Utilisation</span>
+.<span class="fn">Enrich</span>.<span class="fn">With</span>&lt;<span class="fn">SensitiveDataMaskingEnricher</span>&gt;()</code></pre>
+
+<h3>Filtrer avec Logstash</h3>
+
+<p>Avantage de Logstash : on peut anonymiser les donnees <strong>apres</strong> l'envoi par l'application,
+sans modifier le code source :</p>
+
+<pre><code><span class="kw">filter</span> {
+    <span class="cmt"># Masquer les emails dans tous les champs</span>
+    <span class="fn">mutate</span> {
+        gsub => [
+            <span class="str">"[fields][CustomerEmail]"</span>, <span class="str">"[a-zA-Z0-9._%+-]+@"</span>, <span class="str">"***@"</span>
+        ]
+    }
+
+    <span class="cmt"># Supprimer les champs sensibles avant indexation</span>
+    <span class="fn">mutate</span> {
+        remove_field => [<span class="str">"[fields][Password]"</span>, <span class="str">"[fields][Token]"</span>]
+    }
+}</code></pre>
+
+<div class="alert alert-warning">
+    <strong>C'est un cas ou Logstash est indispensable :</strong> si vous ne pouvez pas garantir que
+    l'application ne logue jamais de donnees sensibles (code legacy, bibliotheques tierces),
+    Logstash agit comme filet de securite en filtrant avant l'indexation.
+</div>
+
+<!-- ==================== PRODUCTION ==================== -->
+<h2 id="production">Configuration production</h2>
+
+<h3>Niveaux de log par environnement</h3>
+
+<pre><code><span class="cmt">// Program.cs - Adapter le niveau selon l'environnement</span>
+<span class="kw">var</span> logConfig = <span class="kw">new</span> <span class="fn">LoggerConfiguration</span>()
+    .<span class="fn">MinimumLevel</span>.<span class="fn">Is</span>(builder.Environment.<span class="fn">IsDevelopment</span>()
+        ? LogEventLevel.Debug
+        : LogEventLevel.Information)
+    .<span class="fn">MinimumLevel</span>.<span class="fn">Override</span>(<span class="str">"Microsoft"</span>,
+        builder.Environment.<span class="fn">IsDevelopment</span>()
+            ? LogEventLevel.Information
+            : LogEventLevel.Warning)
+    .<span class="fn">MinimumLevel</span>.<span class="fn">Override</span>(<span class="str">"Microsoft.AspNetCore"</span>, LogEventLevel.Warning)
+    .<span class="fn">MinimumLevel</span>.<span class="fn">Override</span>(<span class="str">"System"</span>, LogEventLevel.Warning);</code></pre>
+
+<h3>Configuration via appsettings.json</h3>
+
+<p>Pour modifier les niveaux de log sans redeployer :</p>
+
+<pre><code>{
+  <span class="str">"Serilog"</span>: {
+    <span class="str">"MinimumLevel"</span>: {
+      <span class="str">"Default"</span>: <span class="str">"Information"</span>,
+      <span class="str">"Override"</span>: {
+        <span class="str">"Microsoft"</span>: <span class="str">"Warning"</span>,
+        <span class="str">"Microsoft.AspNetCore"</span>: <span class="str">"Warning"</span>,
+        <span class="str">"Microsoft.EntityFrameworkCore"</span>: <span class="str">"Warning"</span>,
+        <span class="str">"System"</span>: <span class="str">"Warning"</span>
+      }
+    },
+    <span class="str">"WriteTo"</span>: [
+      { <span class="str">"Name"</span>: <span class="str">"Console"</span> },
+      {
+        <span class="str">"Name"</span>: <span class="str">"Elasticsearch"</span>,
+        <span class="str">"Args"</span>: {
+          <span class="str">"nodeUris"</span>: <span class="str">"http://elasticsearch:9200"</span>,
+          <span class="str">"indexFormat"</span>: <span class="str">"myapp-logs-{0:yyyy.MM.dd}"</span>,
+          <span class="str">"autoRegisterTemplate"</span>: <span class="val">true</span>
+        }
+      }
+    ],
+    <span class="str">"Enrich"</span>: [<span class="str">"FromLogContext"</span>, <span class="str">"WithMachineName"</span>, <span class="str">"WithProcessId"</span>]
+  }
+}
+
+<span class="cmt">// Program.cs - Charger depuis la configuration</span>
+Log.Logger = <span class="kw">new</span> <span class="fn">LoggerConfiguration</span>()
+    .<span class="fn">ReadFrom</span>.<span class="fn">Configuration</span>(builder.Configuration)
+    .<span class="fn">CreateLogger</span>();</code></pre>
+
+<h3>Fermeture propre</h3>
+
+<pre><code><span class="kw">var</span> app = builder.<span class="fn">Build</span>();
+
+<span class="kw">try</span>
+{
+    Log.<span class="fn">Information</span>(<span class="str">"Application starting"</span>);
+    app.<span class="fn">Run</span>();
+}
+<span class="kw">catch</span> (Exception ex)
+{
+    Log.<span class="fn">Fatal</span>(ex, <span class="str">"Application terminated unexpectedly"</span>);
+}
+<span class="kw">finally</span>
+{
+    <span class="cmt">// CRUCIAL : garantir que tous les logs bufferises sont envoyes</span>
+    Log.<span class="fn">CloseAndFlush</span>();
+}</code></pre>
+
+<!-- ==================== LAB ==================== -->
+<h2 id="lab">Exemples concrets du lab ELK</h2>
+
+<p>Le projet <strong>ElkLoggingLabApp</strong> illustre toutes ces techniques. Voici comment les differentes
+methodes de logging sont utilisees dans le code.</p>
+
+<h3>Logging dans un middleware (RequestLoggingMiddleware)</h3>
+
+<pre><code><span class="cmt">// Contexte automatique via ILogger injection</span>
+_logger.<span class="fn">LogInformation</span>(
+    <span class="str">"HTTP {Method} {Path} started | IP: {ClientIp} | CorrelationId: {CorrelationId}"</span>,
+    method, path, clientIp, correlationId);
+
+<span class="cmt">// Niveau dynamique selon le code de statut</span>
+<span class="kw">var</span> logLevel = statusCode >= <span class="val">500</span> ? LogLevel.Error
+    : statusCode >= <span class="val">400</span> ? LogLevel.Warning
+    : LogLevel.Information;
+
+_logger.<span class="fn">Log</span>(logLevel,
+    <span class="str">"HTTP {Method} {Path} completed {StatusCode} in {Duration}ms"</span>,
+    method, path, statusCode, duration);</code></pre>
+
+<h3>Logging dans un service (OrderService)</h3>
+
+<pre><code><span class="cmt">// Log Information pour les operations normales</span>
+_logger.<span class="fn">LogInformation</span>(
+    <span class="str">"AUDIT: Order created | OrderId: {OrderId} | Product: {ProductId} | Total: {Total}"</span>,
+    order.Id, order.ProductId, order.TotalPrice);
+
+<span class="cmt">// Log Warning pour les situations anormales</span>
+<span class="kw">if</span> (order.TotalPrice > <span class="val">1000</span>)
+{
+    _logger.<span class="fn">LogWarning</span>(
+        <span class="str">"High-value order detected | OrderId: {OrderId} | Total: {Total:C}"</span>,
+        order.Id, order.TotalPrice);
+}</code></pre>
+
+<h3>Logging EF Core (requetes lentes)</h3>
+
+<pre><code><span class="cmt">// Detection des requetes SQL lentes dans Program.cs</span>
+options.<span class="fn">LogTo</span>(
+    (eventId, level) => eventId.Id == RelationalEventId.CommandExecuted.Id,
+    eventData =>
+    {
+        <span class="kw">if</span> (eventData <span class="kw">is</span> CommandExecutedEventData cmdData)
+        {
+            <span class="kw">var</span> ms = cmdData.Duration.TotalMilliseconds;
+
+            <span class="kw">if</span> (ms > <span class="val">500</span>)
+                Log.<span class="fn">Error</span>(<span class="str">"EF SLOW QUERY ({Duration}ms): {Command}"</span>,
+                    ms, cmdData.Command.CommandText);
+            <span class="kw">else if</span> (ms > <span class="val">100</span>)
+                Log.<span class="fn">Warning</span>(<span class="str">"EF MODERATE QUERY ({Duration}ms): {Command}"</span>,
+                    ms, cmdData.Command.CommandText);
+        }
+    });</code></pre>
+
+<h3>Logging de securite (SecurityAuditMiddleware)</h3>
+
+<pre><code><span class="cmt">// Niveau Fatal pour les attaques detectees (visibilite maximale dans Kibana)</span>
+_logger.<span class="fn">LogCritical</span>(
+    <span class="str">"SECURITY: SQL Injection attempt detected | IP: {ClientIp} | Path: {Path} | Input: {Input}"</span>,
+    clientIp, path, suspiciousInput);
+
+<span class="cmt">// Niveau Warning pour le rate limiting</span>
+_logger.<span class="fn">LogWarning</span>(
+    <span class="str">"SECURITY: Rate limit exceeded | IP: {ClientIp} | Requests: {Count}/min"</span>,
+    clientIp, requestCount);</code></pre>
+
+<h3>Tester les differents niveaux</h3>
+
+<pre><code><span class="cmt"># Endpoint de diagnostic : generer des logs a tous les niveaux</span>
+<span class="kw">curl</span> http://localhost:8080/api/diagnostics/log-burst?count=20
+
+<span class="cmt"># Declencher une requete lente (Warning/Error)</span>
+<span class="kw">curl</span> http://localhost:8080/api/diagnostics/slow-query
+
+<span class="cmt"># Declencher une exception (Error)</span>
+<span class="kw">curl</span> http://localhost:8080/api/diagnostics/exception
+
+<span class="cmt"># Tenter une injection SQL (Critical)</span>
+<span class="kw">curl</span> <span class="str">"http://localhost:8080/api/products/search?name=test'+OR+1=1--"</span>
+
+<span class="cmt"># Verifier dans Kibana avec le filtre KQL :</span>
+<span class="cmt"># level: "Error" OR level: "Fatal"</span></code></pre>
+
+<div class="alert alert-success">
+    <strong>Resume :</strong> Le lab ELK utilise l'architecture "Elasticsearch direct" (Architecture 1)
+    car c'est une application unique avec des logs deja structures par Serilog. Logstash est present
+    dans le docker-compose pour recevoir des sources supplementaires, mais les logs principaux
+    transitent directement de Serilog vers Elasticsearch.
+</div>
+
+</main>
+
+<!-- ============================== FOOTER ============================== -->
+<footer>
+    Condorcet 2026 — Programmation Securisee
+</footer>
+
+</body>
+</html>
