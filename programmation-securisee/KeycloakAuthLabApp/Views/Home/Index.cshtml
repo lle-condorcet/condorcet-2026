@@ -1,0 +1,87 @@
+@{
+    ViewData["Title"] = "Accueil";
+}
+
+<div class="hero">
+    <h1><span class="accent">Keycloak</span> Authentication Lab</h1>
+    <p class="subtitle">
+        Laboratoire pratique d'authentification et d'autorisation centralisee
+        avec Keycloak, OAuth 2.0 et OpenID Connect dans ASP.NET Core.
+    </p>
+
+    @if (User.Identity?.IsAuthenticated != true)
+    {
+        <a href="/Account/Login" class="btn btn-primary" style="font-size: 1.1rem; padding: 0.7rem 2rem;">
+            Se connecter avec Keycloak
+        </a>
+    }
+    else
+    {
+        <a href="/Home/Dashboard" class="btn btn-primary" style="font-size: 1.1rem; padding: 0.7rem 2rem;">
+            Acceder au tableau de bord
+        </a>
+    }
+
+    <div class="hero-features">
+        <div class="feature-card">
+            <div class="icon">🔑</div>
+            <h3>OAuth 2.0 / OIDC</h3>
+            <p>Authentification via le protocole OpenID Connect avec Authorization Code Flow + PKCE.</p>
+        </div>
+        <div class="feature-card">
+            <div class="icon">🛡️</div>
+            <h3>Roles et politiques</h3>
+            <p>Controle d'acces base sur les roles Keycloak (admin, manager, user, auditor).</p>
+        </div>
+        <div class="feature-card">
+            <div class="icon">📋</div>
+            <h3>Classification</h3>
+            <p>Documents classes par niveau de confidentialite : Public, Internal, Confidential, Secret.</p>
+        </div>
+        <div class="feature-card">
+            <div class="icon">🔍</div>
+            <h3>Audit complet</h3>
+            <p>Journalisation de tous les acces reussis et refuses pour la tracabilite.</p>
+        </div>
+    </div>
+</div>
+
+<div class="card" style="margin-top: 2rem;">
+    <h3>Utilisateurs de test</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Email</th>
+                <th>Mot de passe</th>
+                <th>Role</th>
+                <th>Acces documents</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>admin@lab.local</td>
+                <td><code>Admin123!</code></td>
+                <td><span class="role-badge role-admin">admin</span></td>
+                <td>Tous niveaux (Secret inclus)</td>
+            </tr>
+            <tr>
+                <td>manager@lab.local</td>
+                <td><code>Manager123!</code></td>
+                <td><span class="role-badge role-manager">manager</span></td>
+                <td>Jusqu'a Confidential</td>
+            </tr>
+            <tr>
+                <td>user@lab.local</td>
+                <td><code>User123!</code></td>
+                <td><span class="role-badge role-user">user</span></td>
+                <td>Jusqu'a Internal</td>
+            </tr>
+            <tr>
+                <td>auditor@lab.local</td>
+                <td><code>Auditor123!</code></td>
+                <td><span class="role-badge role-auditor">auditor</span></td>
+                <td>Jusqu'a Confidential (lecture seule)</td>
+            </tr>
+        </tbody>
+    </table>
+</div>

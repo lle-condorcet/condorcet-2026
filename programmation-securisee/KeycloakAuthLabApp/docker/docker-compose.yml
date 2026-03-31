@@ -1,0 +1,94 @@
+version: "3.9"
+
+services:
+  # ──────────────────────────────────────
+  # PostgreSQL pour Keycloak
+  # ──────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: keycloak-postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-keycloak}
+      POSTGRES_USER: ${POSTGRES_USER:-keycloak}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-keycloak_password}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - keycloak-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-keycloak}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # ──────────────────────────────────────
+  # Keycloak - Serveur d'identite
+  # ──────────────────────────────────────
+  keycloak:
+    image: quay.io/keycloak/keycloak:24.0
+    container_name: keycloak-server
+    command: start-dev --import-realm
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-keycloak}
+      KC_DB_USERNAME: ${POSTGRES_USER:-keycloak}
+      KC_DB_PASSWORD: ${POSTGRES_PASSWORD:-keycloak_password}
+      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN:-admin}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin}
+      KC_HOSTNAME_STRICT: "false"
+      KC_HTTP_ENABLED: "true"
+      KC_PROXY: edge
+    ports:
+      - "${KEYCLOAK_PORT:-8080}:8080"
+    volumes:
+      - ./keycloak/realm-export.json:/opt/keycloak/data/import/realm-export.json:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - keycloak-net
+    healthcheck:
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/localhost/8080 && echo -e 'GET /health/ready HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n' >&3 && cat <&3 | grep -q '200\\|UP'"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 60s
+    restart: unless-stopped
+
+  # ──────────────────────────────────────
+  # Application .NET
+  # ──────────────────────────────────────
+  webapp:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: keycloak-lab-app
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:5000
+      ConnectionStrings__DefaultConnection: "Data Source=/app/data/keycloaklab.db"
+      Keycloak__Authority: http://keycloak:8080/realms/securite-lab
+      Keycloak__ClientId: securite-lab-app
+      Keycloak__ClientSecret: ${APP_CLIENT_SECRET:-dev-secret-change-in-production}
+      Keycloak__Realm: securite-lab
+      Keycloak__AdminUsername: ${KEYCLOAK_ADMIN:-admin}
+      Keycloak__AdminPassword: ${KEYCLOAK_ADMIN_PASSWORD:-admin}
+    ports:
+      - "${APP_PORT:-5000}:5000"
+    volumes:
+      - app_data:/app/data
+    depends_on:
+      keycloak:
+        condition: service_healthy
+    networks:
+      - keycloak-net
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  app_data:
+
+networks:
+  keycloak-net:
+    driver: bridge

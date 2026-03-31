@@ -1,0 +1,54 @@
+@model List<SecureDocument>
+@{
+    ViewData["Title"] = "Documents";
+    var maxClassification = (Classification)ViewBag.MaxClassification;
+}
+
+<h1>Documents <span class="accent">securises</span></h1>
+<p class="subtitle">
+    Votre niveau d'acces maximum :
+    <span class="classification classification-@maxClassification">@maxClassification</span>
+</p>
+
+@if (User.IsInRole("admin") || User.IsInRole("manager"))
+{
+    <a href="/Documents/Create" class="btn btn-primary" style="margin-bottom: 1.5rem;">Nouveau document</a>
+}
+
+<div class="alert alert-info">
+    <strong>Filtrage automatique :</strong> Seuls les documents dont la classification est egale ou inferieure
+    a votre niveau d'acces sont affiches. Les documents a classification superieure sont invisibles.
+</div>
+
+@if (Model.Any())
+{
+    <table>
+        <thead>
+            <tr>
+                <th>Titre</th>
+                <th>Classification</th>
+                <th>Proprietaire</th>
+                <th>Mis a jour</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var doc in Model)
+            {
+                <tr>
+                    <td><strong>@doc.Title</strong></td>
+                    <td><span class="classification classification-@doc.Classification">@doc.Classification</span></td>
+                    <td>@doc.OwnerId</td>
+                    <td>@doc.UpdatedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                    <td><a href="/Documents/Details/@doc.Id" class="btn btn-primary" style="padding: 0.25rem 0.7rem; font-size: 0.85rem;">Voir</a></td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+else
+{
+    <div class="card" style="text-align: center; padding: 3rem;">
+        <p style="color: var(--text-muted);">Aucun document accessible avec votre niveau d'acces actuel.</p>
+    </div>
+}

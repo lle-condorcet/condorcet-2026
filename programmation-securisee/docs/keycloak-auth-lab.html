@@ -1,0 +1,1389 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Labo Keycloak Authentication - Guide</title>
+    <style>
+        :root {
+            --bg: #0f1117;
+            --surface: #1a1d27;
+            --surface-2: #242736;
+            --accent: #17a2b8;
+            --accent-light: #45b7ca;
+            --danger: #ff4757;
+            --success: #2ed573;
+            --warning: #ffa502;
+            --info: #1e90ff;
+            --text: #e4e6eb;
+            --text-muted: #8b8fa3;
+            --border: #2e3142;
+            --code-bg: #12131a;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+        }
+
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 260px;
+            height: 100vh;
+            background: var(--surface);
+            border-right: 1px solid var(--border);
+            padding: 2rem 1.5rem;
+            overflow-y: auto;
+            z-index: 100;
+        }
+
+        nav .logo {
+            font-size: 1.4rem;
+            font-weight: 800;
+            margin-bottom: 2rem;
+        }
+
+        nav .logo span { color: var(--accent); }
+
+        nav .section-title {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--text-muted);
+            margin: 1.5rem 0 0.5rem;
+        }
+
+        nav a {
+            display: block;
+            color: var(--text-muted);
+            text-decoration: none;
+            padding: 0.3rem 0;
+            font-size: 0.9rem;
+            transition: color 0.2s;
+        }
+
+        nav a:hover { color: var(--accent); }
+
+        main {
+            margin-left: 260px;
+            max-width: 900px;
+            padding: 3rem 4rem;
+        }
+
+        h1 {
+            font-size: 2.2rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+        }
+
+        h1 span { color: var(--accent); }
+
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            margin-bottom: 3rem;
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin: 3rem 0 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--accent);
+        }
+
+        h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            margin: 2rem 0 0.8rem;
+            color: var(--accent-light);
+        }
+
+        p { margin-bottom: 1rem; }
+
+        code {
+            background: var(--code-bg);
+            padding: 0.15rem 0.4rem;
+            border-radius: 4px;
+            font-size: 0.88em;
+            color: var(--accent-light);
+        }
+
+        pre {
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.2rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-size: 0.88rem;
+            line-height: 1.6;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            color: var(--text);
+        }
+
+        .kw { color: #c678dd; }
+        .str { color: #98c379; }
+        .cmt { color: #5c6370; }
+        .fn { color: #61afef; }
+        .val { color: #d19a66; }
+        .danger-hl { color: #ff4757; }
+        .success-hl { color: #2ed573; }
+
+        .alert {
+            padding: 1rem 1.2rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            border-left: 4px solid;
+        }
+
+        .alert-danger { background: rgba(255, 71, 87, 0.1); border-color: var(--danger); }
+        .alert-success { background: rgba(46, 213, 115, 0.1); border-color: var(--success); }
+        .alert-warning { background: rgba(255, 165, 2, 0.1); border-color: var(--warning); }
+        .alert-info { background: rgba(30, 144, 255, 0.1); border-color: var(--info); }
+
+        .comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.5rem;
+        }
+
+        .card.bad { border-color: var(--danger); }
+        .card.good { border-color: var(--success); }
+
+        .card h4 {
+            font-size: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .card.bad h4 { color: var(--danger); }
+        .card.good h4 { color: var(--success); }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+
+        th, td {
+            padding: 0.6rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th {
+            background: var(--surface-2);
+            font-weight: 600;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        ul, ol {
+            margin: 0.5rem 0 1rem 1.5rem;
+        }
+
+        li { margin-bottom: 0.3rem; }
+
+        strong { color: var(--text); }
+
+        footer {
+            margin-left: 260px;
+            padding: 2rem 4rem;
+            border-top: 1px solid var(--border);
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        @media (max-width: 768px) {
+            nav { display: none; }
+            main, footer { margin-left: 0; padding: 1.5rem; }
+        }
+    </style>
+</head>
+<body>
+
+<nav>
+    <div class="logo"><span>Keycloak</span> Auth Lab</div>
+    <div class="section-title">Introduction</div>
+    <a href="#introduction">Pourquoi Keycloak ?</a>
+    <a href="#concepts">Concepts cles</a>
+    <a href="#architecture">Architecture</a>
+    <div class="section-title">Installation</div>
+    <a href="#prerequis">Prerequis</a>
+    <a href="#installation">Installation Docker</a>
+    <a href="#config-keycloak">Configuration Keycloak</a>
+    <div class="section-title">Integration .NET</div>
+    <a href="#oidc-integration">OpenID Connect</a>
+    <a href="#jwt-bearer">JWT Bearer API</a>
+    <a href="#role-mapping">Mapping des roles</a>
+    <a href="#autorisation">Autorisation par roles</a>
+    <div class="section-title">Securisation</div>
+    <a href="#api-protection">Protection des API</a>
+    <a href="#sessions">Gestion des sessions</a>
+    <a href="#securisation-avancee">Securisation avancee</a>
+    <a href="#audit">Audit et tracabilite</a>
+    <div class="section-title">Reference</div>
+    <a href="#anatomie-jwt">Anatomie d'un JWT</a>
+    <a href="#problemes">Resolution de problemes</a>
+    <a href="#exercices">Exercices pratiques</a>
+    <a href="#ressources">Ressources</a>
+</nav>
+
+<main>
+    <h1><span>Keycloak</span> Authentication Lab</h1>
+    <p class="subtitle">Authentification et autorisation centralisee avec OAuth 2.0, OpenID Connect et ASP.NET Core</p>
+
+    <!-- ═══════════════════════════════════ -->
+    <!-- INTRODUCTION                        -->
+    <!-- ═══════════════════════════════════ -->
+
+    <h2 id="introduction">Introduction : pourquoi Keycloak ?</h2>
+    <p>
+        <strong>Keycloak</strong> est un serveur d'identite et de gestion des acces (IAM) open source, developpe par Red Hat.
+        Il permet de centraliser l'authentification et l'autorisation de toutes vos applications au sein d'un seul service.
+    </p>
+    <p>
+        Au lieu de reimplementer la gestion des mots de passe, des sessions, du MFA et des roles dans chaque application,
+        Keycloak fournit ces fonctionnalites <strong>en tant que service</strong>, via les protocoles standards
+        <strong>OAuth 2.0</strong> et <strong>OpenID Connect (OIDC)</strong>.
+    </p>
+
+    <div class="alert alert-info">
+        <strong>Avantage cle :</strong> Une seule source de verite pour les identites, les roles et les politiques d'acces.
+        L'utilisateur se connecte une seule fois (SSO) et accede a toutes les applications autorisees.
+    </div>
+
+    <h3>Problemes resolus par Keycloak</h3>
+    <ul>
+        <li><strong>Single Sign-On (SSO)</strong> : connexion unique pour toutes les applications</li>
+        <li><strong>Gestion centralisee des utilisateurs</strong> : creation, desactivation, roles au meme endroit</li>
+        <li><strong>Protocoles standards</strong> : OAuth 2.0, OIDC, SAML 2.0 — pas de solution proprietaire</li>
+        <li><strong>MFA integre</strong> : TOTP, WebAuthn, SMS configurables par realm</li>
+        <li><strong>Federation d'identites</strong> : integration avec LDAP, Active Directory, Google, GitHub</li>
+        <li><strong>Audit</strong> : journalisation de tous les evenements d'authentification</li>
+    </ul>
+
+    <!-- ═══════════════════════════════════ -->
+    <!-- CONCEPTS CLES                       -->
+    <!-- ═══════════════════════════════════ -->
+
+    <h2 id="concepts">Concepts cles</h2>
+
+    <h3>OAuth 2.0 — Les flux d'autorisation</h3>
+    <p>
+        OAuth 2.0 est un <strong>framework d'autorisation</strong> (pas d'authentification !). Il definit comment une
+        application peut obtenir un acces <em>delegue</em> aux ressources d'un utilisateur sans connaitre son mot de passe.
+    </p>
+
+    <table>
+        <thead>
+            <tr><th>Flux</th><th>Usage</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Authorization Code</strong></td>
+                <td>Applications web serveur</td>
+                <td>L'utilisateur est redirige vers Keycloak, s'authentifie, et un code temporaire est echange contre des tokens cote serveur</td>
+            </tr>
+            <tr>
+                <td><strong>Authorization Code + PKCE</strong></td>
+                <td>SPA, applications mobiles</td>
+                <td>Variante securisee pour les clients publics, avec un verifieur de code aleatoire</td>
+            </tr>
+            <tr>
+                <td><strong>Client Credentials</strong></td>
+                <td>Communication machine-a-machine</td>
+                <td>L'application s'authentifie elle-meme (pas d'utilisateur) avec son client_id et client_secret</td>
+            </tr>
+            <tr>
+                <td><strong>Resource Owner Password</strong></td>
+                <td><span style="color: var(--danger);">Deconseille</span></td>
+                <td>L'application collecte directement le mot de passe — a eviter sauf cas tres specifique</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h3>OpenID Connect (OIDC)</h3>
+    <p>
+        OIDC est une <strong>couche d'identite</strong> construite au-dessus d'OAuth 2.0. Elle ajoute :
+    </p>
+    <ul>
+        <li><strong>ID Token</strong> : un JWT contenant l'identite de l'utilisateur (qui il est)</li>
+        <li><strong>UserInfo Endpoint</strong> : un endpoint pour recuperer des informations supplementaires</li>
+        <li><strong>Discovery</strong> : un document <code>.well-known/openid-configuration</code> decrivant les endpoints disponibles</li>
+    </ul>
+
+    <h3>JWT — JSON Web Token</h3>
+    <p>
+        Un JWT est compose de trois parties separees par des points : <code>header.payload.signature</code>.
+        Chaque partie est encodee en Base64URL.
+    </p>
+    <pre><code><span class="cmt">// Structure d'un JWT</span>
+<span class="fn">eyJhbGciOiJSUzI1NiJ9</span>    <span class="cmt">// Header : algorithme de signature</span>
+.<span class="str">eyJzdWIiOiIxMjM0NTY3ODkwIiwiZW1haWwiOiJ1c2VyQGxhYi5sb2NhbCJ9</span>    <span class="cmt">// Payload : donnees (claims)</span>
+.<span class="val">SflKxwRJSMeKKF2QT4fwp...</span>    <span class="cmt">// Signature : verification d'integrite</span></code></pre>
+
+    <h3>Terminologie Keycloak</h3>
+    <table>
+        <thead>
+            <tr><th>Terme</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+            <tr><td><strong>Realm</strong></td><td>Un espace de noms isole contenant des utilisateurs, des roles et des clients. Chaque realm est independant.</td></tr>
+            <tr><td><strong>Client</strong></td><td>Une application enregistree aupres de Keycloak (notre app .NET, par exemple)</td></tr>
+            <tr><td><strong>Realm Roles</strong></td><td>Roles globaux dans le realm (admin, manager, user, auditor)</td></tr>
+            <tr><td><strong>Client Roles</strong></td><td>Roles specifiques a un client particulier</td></tr>
+            <tr><td><strong>User</strong></td><td>Un compte utilisateur avec ses credentials et ses roles attribues</td></tr>
+            <tr><td><strong>Client Scope</strong></td><td>Ensemble de claims et de mappers qui definissent ce qui est inclus dans les tokens</td></tr>
+        </tbody>
+    </table>
+
+    <!-- ═══════════════════════════════════ -->
+    <!-- ARCHITECTURE                        -->
+    <!-- ═══════════════════════════════════ -->
+
+    <h2 id="architecture">Architecture du laboratoire</h2>
+    <p>
+        Le laboratoire utilise une architecture a 4 composants, tous orchestres par Docker Compose :
+    </p>
+
+    <pre><code><span class="cmt">┌─────────────┐     ┌──────────────────────┐     ┌─────────────────┐</span>
+<span class="cmt">│             │     │                      │     │                 │</span>
+<span class="cmt">│  Navigateur │────&gt;│  Application .NET    │────&gt;│    Keycloak     │</span>
+<span class="cmt">│             │     │  (MVC + API)         │     │  (IdP / OIDC)   │</span>
+<span class="cmt">│             │&lt;────│  Port 5000           │&lt;────│  Port 8080      │</span>
+<span class="cmt">│             │     │                      │     │                 │</span>
+<span class="cmt">└─────────────┘     └──────────────────────┘     └────────┬────────┘</span>
+<span class="cmt">                            │                            │</span>
+<span class="cmt">                            │ SQLite                     │ PostgreSQL</span>
+<span class="cmt">                            ▼                            ▼</span>
+<span class="cmt">                    ┌──────────────┐             ┌──────────────┐</span>
+<span class="cmt">                    │ keycloaklab  │             │  keycloak DB │</span>
+<span class="cmt">                    │    .db       │             │  (PostgreSQL)│</span>
+<span class="cmt">                    └──────────────┘             └──────────────┘</span></code></pre>
+
+    <h3>Flux d'authentification (Authorization Code Flow)</h3>
+    <ol>
+        <li>L'utilisateur clique sur <strong>"Se connecter"</strong> dans l'application .NET</li>
+        <li>L'application redirige vers Keycloak (<code>/realms/securite-lab/protocol/openid-connect/auth</code>)</li>
+        <li>L'utilisateur saisit ses identifiants sur la page de login Keycloak</li>
+        <li>Keycloak redirige vers l'application avec un <strong>code d'autorisation</strong></li>
+        <li>L'application echange ce code contre un <strong>Access Token</strong>, un <strong>ID Token</strong> et un <strong>Refresh Token</strong></li>
+        <li>L'application cree une session cookie et stocke les tokens</li>
+        <li>Les requetes suivantes utilisent le cookie de session (MVC) ou le Bearer token (API)</li>
+    </ol>
+
+    <!-- ═══════════════════════════════════ -->
+    <!-- PREREQUIS                           -->
+    <!-- ═══════════════════════════════════ -->
+
+    <h2 id="prerequis">Prerequis</h2>
+    <ul>
+        <li><strong>Docker Desktop</strong> installe et en cours d'execution</li>
+        <li><strong>.NET 10 SDK</strong> (pour executer l'application en local sans Docker)</li>
+        <li><strong>8 Go de RAM</strong> minimum (Keycloak + PostgreSQL + App)</li>
+        <li>Un navigateur web moderne</li>
+        <li><code>curl</code> ou <strong>Postman</strong> pour tester les API</li>
+    </ul>
+
+    <!-- ═══════════════════════════════════ -->
+    <!-- INSTALLATION                        -->
+    <!-- ═══════════════════════════════════ -->
+
+    <h2 id="installation">Installation et demarrage</h2>
+
+    <h3>Etape 1 : Demarrer l'infrastructure avec Docker Compose</h3>
+    <pre><code><span class="cmt"># Naviguer vers le dossier Docker</span>
+<span class="kw">cd</span> KeycloakAuthLabApp/docker
+
+<span class="cmt"># Demarrer tous les services</span>
+<span class="kw">docker compose</span> up -d
+
+<span class="cmt"># Ou utiliser le script d'installation</span>
+<span class="cmt"># Linux/macOS :</span>
+<span class="kw">bash</span> scripts/setup.sh
+<span class="cmt"># Windows :</span>
+<span class="kw">powershell</span> -ExecutionPolicy Bypass -File scripts/setup.ps1</code></pre>
+
+    <h3>Etape 2 : Verifier le demarrage</h3>
+    <pre><code><span class="cmt"># Verifier l'etat des conteneurs</span>
+<span class="kw">docker compose</span> ps
+
+<span class="cmt"># Attendre que Keycloak soit pret (peut prendre 30-60 secondes)</span>
+<span class="kw">docker compose</span> logs -f keycloak</code></pre>
+
+    <h3>Etape 3 : Verifier l'acces</h3>
+    <table>
+        <thead>
+            <tr><th>Service</th><th>URL</th><th>Identifiants</th></tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Keycloak Admin Console</td>
+                <td><code>http://localhost:8080</code></td>
+                <td>admin / admin</td>
+            </tr>
+            <tr>
+                <td>Application .NET</td>
+                <td><code>http://localhost:5000</code></td>
+                <td>Voir utilisateurs de test ci-dessous</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h3>Utilisateurs de test pre-configures</h3>
+    <table>
+        <thead>
+            <tr><th>Email</th><th>Mot de passe</th><th>Role</th><th>Acces documents</th></tr>
+        </thead>
+        <tbody>
+            <tr><td><code>admin@lab.local</code></td><td><code>Admin123!</code></td><td>admin</td><td>Tous niveaux (Secret inclus)</td></tr>
+            <tr><td><code>manager@lab.local</code></td><td><code>Manager123!</code></td><td>manager</td><td>Jusqu'a Confidential</td></tr>
+            <tr><td><code>user@lab.local</code></td><td><code>User123!</code></td><td>user</td><td>Jusqu'a Internal</td></tr>
+            <tr><td><code>auditor@lab.local</code></td><td><code>Auditor123!</code></td><td>auditor</td><td>Jusqu'a Confidential (lecture seule)</td></tr>
+        </tbody>
+    </table>
+
+    <h3>Demarrer l'application en mode developpement (sans Docker)</h3>
+    <pre><code><span class="cmt"># Depuis le dossier racine du projet</span>
+<span class="kw">cd</span> KeycloakAuthLabApp
+
+<span class="cmt"># Restaurer les packages NuGet</span>
+<span class="kw">dotnet</span> restore
+
+<span class="cmt"># Demarrer l'application</span>
+<span class="kw">dotnet</span> run
+
+<span class="cmt"># L'application demarre sur http://localhost:5000</span>
+<span class="cmt"># Note : Keycloak doit etre accessible sur http://localhost:8080</span></code></pre>
+
+    <!-- ═══════════════════════════════════ -->
+    <!-- CONFIGURATION KEYCLOAK              -->
+    <!-- ═══════════════════════════════════ -->
+
+    <h2 id="config-keycloak">Configuration Keycloak</h2>
+    <p>
+        Le realm <code>securite-lab</code> est <strong>importe automatiquement</strong> au demarrage de Keycloak
+        grace au fichier <code>realm-export.json</code>. Voici comment reproduire cette configuration manuellement.
+    </p>
+
+    <h3>1. Creer un realm</h3>
+    <ol>
+        <li>Connectez-vous a la console d'administration : <code>http://localhost:8080</code></li>
+        <li>Cliquez sur le menu deroulant en haut a gauche (affichant "master")</li>
+        <li>Cliquez sur <strong>"Create Realm"</strong></li>
+        <li>Nom du realm : <code>securite-lab</code></li>
+        <li>Cliquez sur <strong>"Create"</strong></li>
+    </ol>
+
+    <h3>2. Creer un client</h3>
+    <ol>
+        <li>Dans le realm <code>securite-lab</code>, allez dans <strong>Clients > Create client</strong></li>
+        <li>Client ID : <code>securite-lab-app</code></li>
+        <li>Client type : <strong>OpenID Connect</strong></li>
+        <li>Activez <strong>Client authentication</strong> (client confidentiel)</li>
+        <li>Activez <strong>Standard flow</strong> (Authorization Code) et <strong>Direct access grants</strong></li>
+    </ol>
+
+    <pre><code><span class="cmt">// Parametres du client</span>
+Client ID:         <span class="str">securite-lab-app</span>
+Client Protocol:   <span class="str">openid-connect</span>
+Access Type:       <span class="str">confidential</span>
+
+<span class="cmt">// URIs de redirection</span>
+Valid Redirect URIs:
+  <span class="str">http://localhost:5000/*</span>
+  <span class="str">http://localhost:5001/*</span>
+
+Web Origins:
+  <span class="str">http://localhost:5000</span>
+  <span class="str">http://localhost:5001</span></code></pre>
+
+    <div class="alert alert-warning">
+        <strong>Important :</strong> Le <code>client_secret</code> se trouve dans l'onglet <strong>Credentials</strong>
+        du client. Copiez-le et configurez-le dans <code>appsettings.json</code> ou via variable d'environnement.
+    </div>
+
+    <h3>3. Creer les roles du realm</h3>
+    <ol>
+        <li>Allez dans <strong>Realm roles > Create role</strong></li>
+        <li>Creez 4 roles : <code>admin</code>, <code>manager</code>, <code>user</code>, <code>auditor</code></li>
+    </ol>
+
+    <h3>4. Creer les utilisateurs et assigner les roles</h3>
+    <ol>
+        <li>Allez dans <strong>Users > Add user</strong></li>
+        <li>Renseignez le username, l'email, prenom et nom</li>
+        <li>Dans l'onglet <strong>Credentials</strong>, definissez le mot de passe (decochez "Temporary")</li>
+        <li>Dans l'onglet <strong>Role mapping</strong>, assignez le role du realm</li>
+    </ol>
+
+    <h3>5. Configurer les mappers de roles dans les tokens</h3>
+    <p>
+        Par defaut, Keycloak inclut les roles dans des structures imbriquees du token JWT.
+        Pour que .NET puisse les lire, nous utilisons des <strong>protocol mappers</strong> :
+    </p>
+    <ul>
+        <li><strong>realm_access.roles</strong> : roles globaux du realm</li>
+        <li><strong>resource_access.securite-lab-app.roles</strong> : roles specifiques au client</li>
+    </ul>
+
+    <pre><code><span class="cmt">// Structure des roles dans le JWT Keycloak</span>
+{
+  <span class="str">"realm_access"</span>: {
+    <span class="str">"roles"</span>: [<span class="str">"admin"</span>, <span class="str">"default-roles-securite-lab"</span>]
+  },
+  <span class="str">"resource_access"</span>: {
+    <span class="str">"securite-lab-app"</span>: {
+      <span class="str">"roles"</span>: [<span class="str">"admin"</span>]
+    }
+  }
+}</code></pre>
+
+    <!-- ═══════════════════════════════════ -->
+    <!-- INTEGRATION OIDC                    -->
+    <!-- ═══════════════════════════════════ -->
+
+    <h2 id="oidc-integration">Integration OpenID Connect dans ASP.NET Core</h2>
+    <p>
+        L'integration se fait via le middleware <code>Microsoft.AspNetCore.Authentication.OpenIdConnect</code>.
+        La configuration est centralisee dans <code>Program.cs</code>.
+    </p>
+
+    <h3>Configuration de l'authentification</h3>
+    <pre><code><span class="cmt">// Program.cs - Configuration de l'authentification</span>
+<span class="kw">builder</span>.Services.<span class="fn">AddAuthentication</span>(options =>
+{
+    options.DefaultScheme = <span class="str">CookieAuthenticationDefaults.AuthenticationScheme</span>;
+    options.DefaultChallengeScheme = <span class="str">OpenIdConnectDefaults.AuthenticationScheme</span>;
+})
+.<span class="fn">AddCookie</span>(options =>
+{
+    options.Cookie.Name = <span class="str">"KeycloakLabAuth"</span>;
+    options.Cookie.HttpOnly = <span class="val">true</span>;           <span class="cmt">// Pas accessible via JavaScript</span>
+    options.Cookie.SecurePolicy = <span class="val">CookieSecurePolicy.SameAsRequest</span>;
+    options.Cookie.SameSite = <span class="val">SameSiteMode.Lax</span>;
+    options.ExpireTimeSpan = <span class="fn">TimeSpan</span>.<span class="fn">FromMinutes</span>(<span class="val">60</span>);
+    options.SlidingExpiration = <span class="val">true</span>;
+    options.AccessDeniedPath = <span class="str">"/Account/AccessDenied"</span>;
+})
+.<span class="fn">AddOpenIdConnect</span>(options =>
+{
+    <span class="cmt">// Serveur Keycloak</span>
+    options.Authority = <span class="str">"http://localhost:8080/realms/securite-lab"</span>;
+    options.ClientId = <span class="str">"securite-lab-app"</span>;
+    options.ClientSecret = <span class="str">"dev-secret-change-in-production"</span>;
+
+    <span class="cmt">// Utiliser Authorization Code Flow</span>
+    options.ResponseType = <span class="str">OpenIdConnectResponseType.Code</span>;
+    options.SaveTokens = <span class="val">true</span>;              <span class="cmt">// Stocker les tokens dans le cookie</span>
+    options.GetClaimsFromUserInfoEndpoint = <span class="val">true</span>;
+    options.RequireHttpsMetadata = <span class="val">false</span>;    <span class="cmt">// Dev uniquement !</span>
+
+    <span class="cmt">// Scopes demandes</span>
+    options.Scope.<span class="fn">Add</span>(<span class="str">"openid"</span>);
+    options.Scope.<span class="fn">Add</span>(<span class="str">"profile"</span>);
+    options.Scope.<span class="fn">Add</span>(<span class="str">"email"</span>);
+    options.Scope.<span class="fn">Add</span>(<span class="str">"roles"</span>);
+
+    <span class="cmt">// Mapper les claims Keycloak</span>
+    options.ClaimActions.<span class="fn">MapJsonKey</span>(<span class="str">"realm_access"</span>, <span class="str">"realm_access"</span>);
+    options.ClaimActions.<span class="fn">MapJsonKey</span>(<span class="str">"resource_access"</span>, <span class="str">"resource_access"</span>);
+});</code></pre>
+
+    <div class="alert alert-danger">
+        <strong>Attention production :</strong> <code>RequireHttpsMetadata = false</code> ne doit <strong>jamais</strong>
+        etre utilise en production. En production, Keycloak doit etre accessible via HTTPS.
+    </div>
+
+    <h3>Configuration dans appsettings.json</h3>
+    <pre><code>{
+  <span class="str">"Keycloak"</span>: {
+    <span class="str">"Authority"</span>: <span class="str">"http://localhost:8080/realms/securite-lab"</span>,
+    <span class="str">"ClientId"</span>: <span class="str">"securite-lab-app"</span>,
+    <span class="str">"ClientSecret"</span>: <span class="str">"<span class="danger-hl">CHANGEZ-MOI-EN-PRODUCTION</span>"</span>,
+    <span class="str">"Realm"</span>: <span class="str">"securite-lab"</span>
+  }
+}</code></pre>
+
+    <!-- ═══════════════════════════════════ -->
+    <!-- JWT BEARER                          -->
+    <!-- ═══════════════════════════════════ -->
+
+    <h2 id="jwt-bearer">JWT Bearer pour les API</h2>
+    <p>
+        En plus de l'authentification cookie pour le MVC, nous configurons un schema
+        <strong>JWT Bearer</strong> pour securiser les endpoints API REST. Cela permet aux clients
+        externes (SPA, applications mobiles, scripts) de s'authentifier avec un token Bearer.
+    </p>
+
+    <pre><code><span class="cmt">// Ajout du schema JWT Bearer dans Program.cs</span>
+.<span class="fn">AddJwtBearer</span>(options =>
+{
+    options.Authority = <span class="str">"http://localhost:8080/realms/securite-lab"</span>;
+    options.Audience = <span class="str">"securite-lab-app"</span>;
+    options.RequireHttpsMetadata = <span class="val">false</span>;
+
+    options.TokenValidationParameters = <span class="kw">new</span> <span class="fn">TokenValidationParameters</span>
+    {
+        ValidateIssuer = <span class="val">true</span>,
+        ValidIssuer = <span class="str">"http://localhost:8080/realms/securite-lab"</span>,
+        ValidateAudience = <span class="val">true</span>,
+        ValidAudiences = <span class="kw">new</span>[] { <span class="str">"securite-lab-app"</span>, <span class="str">"account"</span> },
+        ValidateLifetime = <span class="val">true</span>,
+        ClockSkew = <span class="fn">TimeSpan</span>.<span class="fn">FromSeconds</span>(<span class="val">30</span>)  <span class="cmt">// Tolerance d'horloge reduite</span>
+    };
+});</code></pre>
+
+    <h3>Utilisation dans les controleurs API</h3>
+    <pre><code>[<span class="fn">ApiController</span>]
+[<span class="fn">Route</span>(<span class="str">"api/[controller]"</span>)]
+[<span class="fn">Authorize</span>(AuthenticationSchemes = <span class="val">JwtBearerDefaults.AuthenticationScheme</span>)]
+<span class="kw">public class</span> <span class="fn">DocumentsApiController</span> : <span class="fn">ControllerBase</span>
+{
+    <span class="cmt">// Tous les endpoints ici requierent un Bearer token valide</span>
+
+    [<span class="fn">HttpGet</span>]
+    <span class="kw">public async</span> Task&lt;IActionResult&gt; <span class="fn">GetDocuments</span>()
+    {
+        <span class="kw">var</span> roles = User.Claims
+            .<span class="fn">Where</span>(c => c.Type == ClaimTypes.Role)
+            .<span class="fn">Select</span>(c => c.Value);
+
+        <span class="kw">var</span> documents = <span class="kw">await</span> _documentService
+            .<span class="fn">GetAccessibleDocumentsAsync</span>(GetUserId(), roles, GetIpAddress());
+
+        <span class="kw">return</span> <span class="fn">Ok</span>(documents);
+    }
+}</code></pre>
+
+    <!-- ═══════════════════════════════════ -->
+    <!-- ROLE MAPPING                        -->
+    <!-- ═══════════════════════════════════ -->
+
+    <h2 id="role-mapping">Mapping des roles Keycloak vers .NET</h2>
+    <p>
+        Keycloak stocke les roles dans une structure JSON imbriquee a l'interieur du JWT
+        (<code>realm_access.roles</code> et <code>resource_access.{client}.roles</code>).
+        .NET attend des claims de type <code>ClaimTypes.Role</code> a plat. Il faut donc un
+        <strong>ClaimsTransformation</strong> pour convertir.
+    </p>
+
+    <h3>Le probleme : structure des roles Keycloak</h3>
+    <div class="comparison">
+        <div class="card bad">
+            <h4>Format Keycloak (JWT brut)</h4>
+            <pre><code>{
+  <span class="str">"realm_access"</span>: {
+    <span class="str">"roles"</span>: [<span class="str">"admin"</span>]
+  },
+  <span class="str">"resource_access"</span>: {
+    <span class="str">"securite-lab-app"</span>: {
+      <span class="str">"roles"</span>: [<span class="str">"admin"</span>]
+    }
+  }
+}
+<span class="cmt">// .NET ne comprend pas
+// cette structure nativement</span></code></pre>
+        </div>
+        <div class="card good">
+            <h4>Format .NET attendu (claims)</h4>
+            <pre><code><span class="cmt">// Claims individuels de type Role</span>
+Type: <span class="str">ClaimTypes.Role</span>
+Value: <span class="str">"admin"</span>
+
+<span class="cmt">// Permet d'utiliser :</span>
+User.<span class="fn">IsInRole</span>(<span class="str">"admin"</span>)
+[<span class="fn">Authorize</span>(Roles = <span class="str">"admin"</span>)]
+
+
+</code></pre>
+        </div>
+    </div>
+
+    <h3>Solution : KeycloakRoleTransformer</h3>
+    <pre><code><span class="kw">public class</span> <span class="fn">KeycloakRoleTransformer</span> : <span class="fn">IClaimsTransformation</span>
+{
+    <span class="kw">public</span> Task&lt;ClaimsPrincipal&gt; <span class="fn">TransformAsync</span>(ClaimsPrincipal principal)
+    {
+        <span class="kw">var</span> identity = principal.Identity <span class="kw">as</span> ClaimsIdentity;
+        <span class="kw">if</span> (identity == <span class="val">null</span> || !identity.IsAuthenticated)
+            <span class="kw">return</span> Task.<span class="fn">FromResult</span>(principal);
+
+        <span class="cmt">// Extraire realm_access.roles</span>
+        <span class="kw">var</span> realmAccessClaim = principal.<span class="fn">FindFirst</span>(<span class="str">"realm_access"</span>);
+        <span class="kw">if</span> (realmAccessClaim != <span class="val">null</span>)
+        {
+            <span class="kw">var</span> realmAccess = JsonDocument.<span class="fn">Parse</span>(realmAccessClaim.Value);
+            <span class="kw">if</span> (realmAccess.RootElement.<span class="fn">TryGetProperty</span>(<span class="str">"roles"</span>, <span class="kw">out var</span> roles))
+            {
+                <span class="kw">foreach</span> (<span class="kw">var</span> role <span class="kw">in</span> roles.<span class="fn">EnumerateArray</span>())
+                {
+                    identity.<span class="fn">AddClaim</span>(<span class="kw">new</span> <span class="fn">Claim</span>(
+                        ClaimTypes.Role,
+                        role.<span class="fn">GetString</span>()!));
+                }
+            }
+        }
+
+        <span class="cmt">// Extraire resource_access.{clientId}.roles</span>
+        <span class="kw">var</span> resourceAccessClaim = principal.<span class="fn">FindFirst</span>(<span class="str">"resource_access"</span>);
+        <span class="cmt">// ... meme logique pour les roles du client</span>
+
+        <span class="kw">return</span> Task.<span class="fn">FromResult</span>(principal);
+    }
+}</code></pre>
+
+    <h3>Enregistrement du transformer</h3>
+    <pre><code><span class="cmt">// Dans Program.cs</span>
+builder.Services.<span class="fn">AddTransient</span>&lt;<span class="fn">IClaimsTransformation</span>, <span class="fn">KeycloakRoleTransformer</span>&gt;();</code></pre>
+
+    <!-- ═══════════════════════════════════ -->
+    <!-- AUTORISATION                        -->
+    <!-- ═══════════════════════════════════ -->
+
+    <h2 id="autorisation">Autorisation basee sur les roles</h2>
+    <p>
+        Une fois les roles mappes, nous pouvons utiliser le systeme d'autorisation standard d'ASP.NET Core :
+        attributs <code>[Authorize]</code>, politiques, et handlers personnalises.
+    </p>
+
+    <h3>Politiques d'autorisation</h3>
+    <pre><code><span class="cmt">// Definition des politiques dans Program.cs</span>
+builder.Services.<span class="fn">AddAuthorization</span>(options =>
+{
+    <span class="cmt">// Politique simple par role</span>
+    options.<span class="fn">AddPolicy</span>(<span class="str">"RequireAdmin"</span>, policy =>
+        policy.<span class="fn">RequireRole</span>(<span class="str">"admin"</span>));
+
+    <span class="cmt">// Politique acceptant plusieurs roles</span>
+    options.<span class="fn">AddPolicy</span>(<span class="str">"RequireManager"</span>, policy =>
+        policy.<span class="fn">RequireRole</span>(<span class="str">"admin"</span>, <span class="str">"manager"</span>));
+
+    <span class="cmt">// Politique basee sur la classification de documents</span>
+    options.<span class="fn">AddPolicy</span>(<span class="str">"ClassificationSecret"</span>, policy =>
+        policy.Requirements.<span class="fn">Add</span>(
+            <span class="kw">new</span> <span class="fn">ClassificationRequirement</span>(Classification.Secret)));
+});</code></pre>
+
+    <h3>Utilisation dans les controleurs</h3>
+    <pre><code><span class="cmt">// Acces restreint au role admin</span>
+[<span class="fn">Authorize</span>(Policy = <span class="str">"RequireAdmin"</span>)]
+<span class="kw">public class</span> <span class="fn">AdminController</span> : <span class="fn">Controller</span>
+{
+    <span class="cmt">// Toutes les actions de ce controleur</span>
+    <span class="cmt">// requierent le role "admin"</span>
+}
+
+<span class="cmt">// Acces restreint aux managers (et admins)</span>
+[<span class="fn">Authorize</span>(Policy = <span class="str">"RequireManager"</span>)]
+<span class="kw">public</span> IActionResult <span class="fn">Create</span>()
+{
+    <span class="kw">return</span> <span class="fn">View</span>();
+}</code></pre>
+
+    <h3>Handler d'autorisation personnalise : classification de documents</h3>
+    <p>
+        Le systeme de classification restreint l'acces aux documents en fonction du role de l'utilisateur :
+    </p>
+    <table>
+        <thead>
+            <tr><th>Role</th><th>Acces maximum</th><th>Documents visibles</th></tr>
+        </thead>
+        <tbody>
+            <tr><td><strong>admin</strong></td><td>Secret</td><td>Public, Internal, Confidential, Secret</td></tr>
+            <tr><td><strong>manager</strong></td><td>Confidential</td><td>Public, Internal, Confidential</td></tr>
+            <tr><td><strong>auditor</strong></td><td>Confidential</td><td>Public, Internal, Confidential</td></tr>
+            <tr><td><strong>user</strong></td><td>Internal</td><td>Public, Internal</td></tr>
+            <tr><td><em>(aucun role)</em></td><td>Public</td><td>Public uniquement</td></tr>
+        </tbody>
+    </table>
+
+    <pre><code><span class="kw">public class</span> <span class="fn">ClassificationHandler</span> : <span class="fn">AuthorizationHandler</span>&lt;<span class="fn">ClassificationRequirement</span>&gt;
+{
+    <span class="kw">protected override</span> Task <span class="fn">HandleRequirementAsync</span>(
+        AuthorizationHandlerContext context,
+        ClassificationRequirement requirement)
+    {
+        <span class="kw">var</span> roles = context.User.Claims
+            .<span class="fn">Where</span>(c => c.Type == ClaimTypes.Role)
+            .<span class="fn">Select</span>(c => c.Value);
+
+        <span class="kw">var</span> maxLevel = <span class="fn">DocumentService</span>.<span class="fn">GetMaxClassificationForRoles</span>(roles);
+
+        <span class="kw">if</span> (maxLevel >= requirement.RequiredClassification)
+        {
+            context.<span class="fn">Succeed</span>(requirement);
+        }
+        <span class="cmt">// Si le role est insuffisant, le requirement echoue silencieusement</span>
+        <span class="cmt">// et l'acces est refuse (403)</span>
+
+        <span class="kw">return</span> Task.CompletedTask;
+    }
+}</code></pre>
+
+    <!-- ═══════════════════════════════════ -->
+    <!-- PROTECTION DES API                  -->
+    <!-- ═══════════════════════════════════ -->
+
+    <h2 id="api-protection">Protection des API</h2>
+    <p>
+        Les endpoints API sont proteges par des tokens <strong>JWT Bearer</strong>. Pour les appeler,
+        un client doit d'abord obtenir un token aupres de Keycloak, puis l'inclure dans l'en-tete
+        <code>Authorization: Bearer &lt;token&gt;</code>.
+    </p>
+
+    <h3>Obtenir un token avec curl</h3>
+    <pre><code><span class="cmt"># Obtenir un access token via Resource Owner Password Grant</span>
+<span class="kw">curl</span> -X POST <span class="str">"http://localhost:8080/realms/securite-lab/protocol/openid-connect/token"</span> \
+  -H <span class="str">"Content-Type: application/x-www-form-urlencoded"</span> \
+  -d <span class="str">"grant_type=password"</span> \
+  -d <span class="str">"client_id=securite-lab-app"</span> \
+  -d <span class="str">"client_secret=dev-secret-change-in-production"</span> \
+  -d <span class="str">"username=admin@lab.local"</span> \
+  -d <span class="str">"password=Admin123!"</span></code></pre>
+
+    <h3>Reponse de Keycloak</h3>
+    <pre><code>{
+  <span class="str">"access_token"</span>: <span class="str">"eyJhbGciOiJSUzI1NiIsInR5cCI6..."</span>,
+  <span class="str">"expires_in"</span>: <span class="val">300</span>,
+  <span class="str">"refresh_expires_in"</span>: <span class="val">1800</span>,
+  <span class="str">"refresh_token"</span>: <span class="str">"eyJhbGciOiJIUzI1NiIsInR5cCI6..."</span>,
+  <span class="str">"token_type"</span>: <span class="str">"Bearer"</span>,
+  <span class="str">"not-before-policy"</span>: <span class="val">0</span>,
+  <span class="str">"session_state"</span>: <span class="str">"a1b2c3d4-..."</span>,
+  <span class="str">"scope"</span>: <span class="str">"openid email profile roles"</span>
+}</code></pre>
+
+    <h3>Appeler l'API avec le token</h3>
+    <pre><code><span class="cmt"># Stocker le token dans une variable</span>
+<span class="kw">TOKEN</span>=<span class="str">"eyJhbGciOiJSUzI1NiIsInR5cCI6..."</span>
+
+<span class="cmt"># Appeler l'API des documents</span>
+<span class="kw">curl</span> -H <span class="str">"Authorization: Bearer $TOKEN"</span> \
+  <span class="str">"http://localhost:5000/api/DocumentsApi"</span>
+
+<span class="cmt"># Appeler l'endpoint d'informations utilisateur</span>
+<span class="kw">curl</span> -H <span class="str">"Authorization: Bearer $TOKEN"</span> \
+  <span class="str">"http://localhost:5000/api/AuthApi/userinfo"</span>
+
+<span class="cmt"># Endpoint public (pas de token necessaire)</span>
+<span class="kw">curl</span> <span class="str">"http://localhost:5000/api/AuthApi/public"</span></code></pre>
+
+    <div class="alert alert-info">
+        <strong>Astuce Postman :</strong> Dans Postman, allez dans l'onglet <strong>Authorization</strong>,
+        selectionnez le type <strong>OAuth 2.0</strong>, et configurez les parametres Keycloak.
+        Postman gerera automatiquement l'obtention et le renouvellement des tokens.
+    </div>
+
+    <h3>Token invalide ou expire</h3>
+    <div class="comparison">
+        <div class="card bad">
+            <h4>Requete sans token</h4>
+            <pre><code><span class="kw">curl</span> <span class="str">"http://localhost:5000/api/DocumentsApi"</span>
+
+<span class="cmt"># Reponse : 401 Unauthorized</span>
+<span class="cmt"># WWW-Authenticate: Bearer</span></code></pre>
+        </div>
+        <div class="card good">
+            <h4>Requete avec token valide</h4>
+            <pre><code><span class="kw">curl</span> -H <span class="str">"Authorization: Bearer $TOKEN"</span> \
+  <span class="str">"http://localhost:5000/api/DocumentsApi"</span>
+
+<span class="cmt"># Reponse : 200 OK</span>
+<span class="cmt"># [{"id":1,"title":"..."}]</span></code></pre>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════ -->
+    <!-- SESSIONS                            -->
+    <!-- ═══════════════════════════════════ -->
+
+    <h2 id="sessions">Gestion des sessions</h2>
+
+    <h3>Cycle de vie des tokens</h3>
+    <table>
+        <thead>
+            <tr><th>Token</th><th>Duree par defaut</th><th>Usage</th></tr>
+        </thead>
+        <tbody>
+            <tr><td><strong>Access Token</strong></td><td>5 minutes</td><td>Acces aux ressources, inclut les roles et claims</td></tr>
+            <tr><td><strong>ID Token</strong></td><td>5 minutes</td><td>Identite de l'utilisateur, utilise a la connexion</td></tr>
+            <tr><td><strong>Refresh Token</strong></td><td>30 minutes</td><td>Obtenir un nouvel access token sans re-authentification</td></tr>
+            <tr><td><strong>Session SSO</strong></td><td>10 heures</td><td>Session Keycloak globale pour le SSO</td></tr>
+        </tbody>
+    </table>
+
+    <h3>Rafraichissement de token</h3>
+    <pre><code><span class="cmt"># Utiliser le refresh_token pour obtenir un nouveau access_token</span>
+<span class="kw">curl</span> -X POST <span class="str">"http://localhost:8080/realms/securite-lab/protocol/openid-connect/token"</span> \
+  -d <span class="str">"grant_type=refresh_token"</span> \
+  -d <span class="str">"client_id=securite-lab-app"</span> \
+  -d <span class="str">"client_secret=dev-secret-change-in-production"</span> \
+  -d <span class="str">"refresh_token=eyJhbGciOiJIUzI1NiIs..."</span></code></pre>
+
+    <h3>Deconnexion (Logout)</h3>
+    <p>La deconnexion doit etre effectuee a la fois cote application <strong>et</strong> cote Keycloak :</p>
+    <pre><code><span class="cmt">// AccountController.cs - Deconnexion complete</span>
+[<span class="fn">Authorize</span>]
+<span class="kw">public async</span> Task&lt;IActionResult&gt; <span class="fn">Logout</span>()
+{
+    <span class="cmt">// 1. Supprimer le cookie de session local</span>
+    <span class="kw">await</span> HttpContext.<span class="fn">SignOutAsync</span>(
+        CookieAuthenticationDefaults.AuthenticationScheme);
+
+    <span class="cmt">// 2. Rediriger vers le endpoint logout de Keycloak</span>
+    <span class="cmt">//    pour invalider la session SSO</span>
+    <span class="kw">await</span> HttpContext.<span class="fn">SignOutAsync</span>(
+        OpenIdConnectDefaults.AuthenticationScheme);
+
+    <span class="kw">return</span> <span class="fn">RedirectToAction</span>(<span class="str">"Index"</span>, <span class="str">"Home"</span>);
+}</code></pre>
+
+    <div class="alert alert-warning">
+        <strong>Important :</strong> Si vous ne faites que supprimer le cookie local sans appeler le logout Keycloak,
+        l'utilisateur sera automatiquement reconnecte lors de sa prochaine visite (car la session SSO est toujours active).
+    </div>
+
+    <h3>Configuration du timeout dans Keycloak</h3>
+    <p>
+        Dans la console d'administration Keycloak, allez dans <strong>Realm settings > Sessions</strong> pour configurer :
+    </p>
+    <ul>
+        <li><strong>SSO Session Idle</strong> : duree d'inactivite avant expiration de la session SSO (par defaut : 30 minutes)</li>
+        <li><strong>SSO Session Max</strong> : duree maximale d'une session SSO (par defaut : 10 heures)</li>
+        <li><strong>Client Session Idle</strong> : duree d'inactivite specifique a un client</li>
+        <li><strong>Access Token Lifespan</strong> : duree de vie de l'access token (dans <strong>Realm settings > Tokens</strong>)</li>
+    </ul>
+
+    <!-- ═══════════════════════════════════ -->
+    <!-- SECURISATION AVANCEE                -->
+    <!-- ═══════════════════════════════════ -->
+
+    <h2 id="securisation-avancee">Securisation avancee</h2>
+
+    <h3>PKCE (Proof Key for Code Exchange)</h3>
+    <p>
+        PKCE ajoute une couche de securite au flux Authorization Code pour prevenir les attaques
+        d'interception de code. Le client genere un <code>code_verifier</code> aleatoire et envoie
+        son hash (<code>code_challenge</code>) lors de la demande d'autorisation.
+    </p>
+    <div class="alert alert-success">
+        <strong>Bonne pratique :</strong> ASP.NET Core active PKCE automatiquement avec
+        <code>ResponseType = "code"</code> dans les versions recentes du middleware OIDC.
+    </div>
+
+    <h3>Configuration CORS securisee</h3>
+    <pre><code><span class="cmt">// Configurer CORS pour les appels API depuis un front-end</span>
+builder.Services.<span class="fn">AddCors</span>(options =>
+{
+    options.<span class="fn">AddPolicy</span>(<span class="str">"AllowFrontend"</span>, policy =>
+    {
+        policy.<span class="fn">WithOrigins</span>(
+                <span class="str">"http://localhost:3000"</span>,     <span class="cmt">// React dev</span>
+                <span class="str">"http://localhost:5173"</span>)     <span class="cmt">// Vite dev</span>
+            .<span class="fn">AllowAnyMethod</span>()
+            .<span class="fn">AllowAnyHeader</span>()
+            .<span class="fn">AllowCredentials</span>();          <span class="cmt">// Necessaire pour les cookies</span>
+    });
+});</code></pre>
+
+    <div class="comparison">
+        <div class="card bad">
+            <h4>CORS trop permissif</h4>
+            <pre><code>policy.<span class="fn">AllowAnyOrigin</span>()
+      .<span class="fn">AllowAnyMethod</span>()
+      .<span class="fn">AllowAnyHeader</span>();
+
+<span class="cmt">// N'importe quel site peut
+// appeler votre API !</span></code></pre>
+        </div>
+        <div class="card good">
+            <h4>CORS restreint</h4>
+            <pre><code>policy.<span class="fn">WithOrigins</span>(
+    <span class="str">"https://monapp.com"</span>)
+  .<span class="fn">WithMethods</span>(<span class="str">"GET"</span>, <span class="str">"POST"</span>)
+  .<span class="fn">WithHeaders</span>(<span class="str">"Authorization"</span>);
+
+<span class="cmt">// Seul votre front-end peut
+// appeler l'API</span></code></pre>
+        </div>
+    </div>
+
+    <h3>Protection CSRF</h3>
+    <p>
+        Les formulaires MVC utilisent <code>@Html.AntiForgeryToken()</code> et l'attribut
+        <code>[ValidateAntiForgeryToken]</code> pour prevenir les attaques Cross-Site Request Forgery.
+    </p>
+
+    <h3>Configuration securisee des cookies</h3>
+    <pre><code><span class="cmt">// Parametres de securite recommandes pour les cookies</span>
+options.Cookie.HttpOnly = <span class="val">true</span>;              <span class="cmt">// Pas d'acces JavaScript</span>
+options.Cookie.SecurePolicy = <span class="val">CookieSecurePolicy.Always</span>;  <span class="cmt">// HTTPS uniquement</span>
+options.Cookie.SameSite = <span class="val">SameSiteMode.Strict</span>;  <span class="cmt">// Pas d'envoi cross-site</span>
+options.ExpireTimeSpan = <span class="fn">TimeSpan</span>.<span class="fn">FromMinutes</span>(<span class="val">60</span>);
+options.SlidingExpiration = <span class="val">true</span>;             <span class="cmt">// Renouvelle si actif</span></code></pre>
+
+    <h3>HTTPS en production</h3>
+    <div class="alert alert-danger">
+        <strong>Obligatoire en production :</strong>
+        <ul>
+            <li>Keycloak doit etre accessible uniquement via HTTPS</li>
+            <li><code>RequireHttpsMetadata = true</code> dans la configuration OIDC</li>
+            <li><code>Cookie.SecurePolicy = CookieSecurePolicy.Always</code></li>
+            <li>Configurez <code>app.UseHsts()</code> pour forcer HTTPS</li>
+        </ul>
+    </div>
+
+    <!-- ═══════════════════════════════════ -->
+    <!-- AUDIT                               -->
+    <!-- ═══════════════════════════════════ -->
+
+    <h2 id="audit">Audit et tracabilite</h2>
+    <p>
+        La tracabilite est un pilier de la securite. Le laboratoire enregistre tous les acces
+        (reussis et refuses) dans une table <code>AccessLogs</code> en base de donnees.
+    </p>
+
+    <h3>Service de journalisation</h3>
+    <pre><code><span class="kw">public class</span> <span class="fn">AccessLogService</span>
+{
+    <span class="kw">public async</span> Task <span class="fn">LogAsync</span>(
+        <span class="kw">string</span> userId,
+        <span class="kw">string</span> action,
+        <span class="kw">string</span> resource,
+        <span class="kw">string</span> ipAddress,
+        <span class="kw">bool</span> success,
+        <span class="kw">string</span> details = <span class="str">""</span>)
+    {
+        <span class="kw">var</span> log = <span class="kw">new</span> <span class="fn">AccessLog</span>
+        {
+            UserId = userId,
+            Action = action,         <span class="cmt">// Ex: "VIEW_DOCUMENT", "LIST_DOCUMENTS"</span>
+            Resource = resource,     <span class="cmt">// Ex: "Document/3"</span>
+            IpAddress = ipAddress,
+            Timestamp = DateTime.UtcNow,
+            Success = success,       <span class="cmt">// true = autorise, false = refuse</span>
+            Details = details
+        };
+
+        _context.AccessLogs.<span class="fn">Add</span>(log);
+        <span class="kw">await</span> _context.<span class="fn">SaveChangesAsync</span>();
+
+        <span class="kw">if</span> (!success)
+            _logger.<span class="fn">LogWarning</span>(
+                <span class="str">"Access denied: User={UserId}, Resource={Resource}"</span>,
+                userId, resource);
+    }
+}</code></pre>
+
+    <h3>Exemple d'utilisation dans le service de documents</h3>
+    <pre><code><span class="cmt">// Quand un utilisateur tente d'acceder a un document protege</span>
+<span class="kw">if</span> (document.Classification > maxLevel)
+{
+    <span class="cmt">// Acces refuse — on enregistre la tentative</span>
+    <span class="kw">await</span> _accessLog.<span class="fn">LogAsync</span>(
+        userId,
+        <span class="str">"VIEW_DOCUMENT"</span>,
+        <span class="str">$"Document/{id}"</span>,
+        ipAddress,
+        success: <span class="danger-hl">false</span>,
+        <span class="str">$"Classification {document.Classification} depasse le niveau {maxLevel}"</span>);
+
+    <span class="kw">return null</span>;  <span class="cmt">// Le controleur redirige vers AccessDenied</span>
+}
+
+<span class="cmt">// Acces autorise — on enregistre egalement</span>
+<span class="kw">await</span> _accessLog.<span class="fn">LogAsync</span>(
+    userId, <span class="str">"VIEW_DOCUMENT"</span>, <span class="str">$"Document/{id}"</span>,
+    ipAddress, success: <span class="success-hl">true</span>,
+    <span class="str">$"Consulte: {document.Title}"</span>);</code></pre>
+
+    <h3>Journalisation Keycloak</h3>
+    <p>
+        Keycloak possede egalement son propre systeme d'evenements. Dans la console d'administration :
+    </p>
+    <ol>
+        <li>Allez dans <strong>Realm settings > Events</strong></li>
+        <li>Activez <strong>Save events</strong> pour les evenements de login</li>
+        <li>Activez <strong>Admin events</strong> pour les actions d'administration</li>
+        <li>Consultez les evenements dans <strong>Events > User events</strong> et <strong>Admin events</strong></li>
+    </ol>
+
+    <!-- ═══════════════════════════════════ -->
+    <!-- ANATOMIE JWT                        -->
+    <!-- ═══════════════════════════════════ -->
+
+    <h2 id="anatomie-jwt">Anatomie d'un token JWT Keycloak</h2>
+    <p>
+        Voici un exemple de token JWT emis par Keycloak, decode pour en comprendre chaque partie.
+    </p>
+
+    <h3>Header</h3>
+    <pre><code>{
+  <span class="str">"alg"</span>: <span class="str">"RS256"</span>,        <span class="cmt">// Algorithme de signature : RSA avec SHA-256</span>
+  <span class="str">"typ"</span>: <span class="str">"JWT"</span>,          <span class="cmt">// Type de token</span>
+  <span class="str">"kid"</span>: <span class="str">"abc123..."</span>     <span class="cmt">// ID de la cle publique (pour la verification)</span>
+}</code></pre>
+
+    <h3>Payload (claims)</h3>
+    <pre><code>{
+  <span class="str">"exp"</span>: <span class="val">1711382400</span>,            <span class="cmt">// Expiration (Unix timestamp)</span>
+  <span class="str">"iat"</span>: <span class="val">1711382100</span>,            <span class="cmt">// Emis le (Unix timestamp)</span>
+  <span class="str">"auth_time"</span>: <span class="val">1711382100</span>,      <span class="cmt">// Heure d'authentification</span>
+  <span class="str">"jti"</span>: <span class="str">"uuid-unique"</span>,        <span class="cmt">// Identifiant unique du token</span>
+  <span class="str">"iss"</span>: <span class="str">"http://localhost:8080/realms/securite-lab"</span>,  <span class="cmt">// Emetteur</span>
+  <span class="str">"aud"</span>: <span class="str">"account"</span>,             <span class="cmt">// Audience (destinataire)</span>
+  <span class="str">"sub"</span>: <span class="str">"user-uuid-..."</span>,       <span class="cmt">// Sujet (ID unique de l'utilisateur)</span>
+  <span class="str">"typ"</span>: <span class="str">"Bearer"</span>,              <span class="cmt">// Type de token</span>
+  <span class="str">"azp"</span>: <span class="str">"securite-lab-app"</span>,    <span class="cmt">// Client qui a demande le token</span>
+  <span class="str">"session_state"</span>: <span class="str">"..."</span>,      <span class="cmt">// ID de la session SSO</span>
+  <span class="str">"scope"</span>: <span class="str">"openid email profile roles"</span>,
+
+  <span class="cmt">// Informations utilisateur</span>
+  <span class="str">"preferred_username"</span>: <span class="str">"admin@lab.local"</span>,
+  <span class="str">"email"</span>: <span class="str">"admin@lab.local"</span>,
+  <span class="str">"email_verified"</span>: <span class="val">true</span>,
+  <span class="str">"name"</span>: <span class="str">"Admin Systeme"</span>,
+  <span class="str">"given_name"</span>: <span class="str">"Admin"</span>,
+  <span class="str">"family_name"</span>: <span class="str">"Systeme"</span>,
+
+  <span class="cmt">// Roles du realm (structure Keycloak specifique)</span>
+  <span class="str">"realm_access"</span>: {
+    <span class="str">"roles"</span>: [<span class="str">"admin"</span>, <span class="str">"default-roles-securite-lab"</span>]
+  },
+
+  <span class="cmt">// Roles specifiques au client</span>
+  <span class="str">"resource_access"</span>: {
+    <span class="str">"securite-lab-app"</span>: {
+      <span class="str">"roles"</span>: [<span class="str">"admin"</span>]
+    },
+    <span class="str">"account"</span>: {
+      <span class="str">"roles"</span>: [<span class="str">"manage-account"</span>]
+    }
+  }
+}</code></pre>
+
+    <h3>Signature</h3>
+    <p>
+        La signature est calculee avec la cle privee RSA de Keycloak. Pour la verifier,
+        l'application .NET telecharge la cle publique depuis le <strong>JWKS endpoint</strong>
+        (<code>/realms/securite-lab/protocol/openid-connect/certs</code>).
+    </p>
+
+    <div class="alert alert-danger">
+        <strong>Ne jamais faire confiance a un JWT sans verifier la signature !</strong>
+        N'importe qui peut creer un JWT avec des claims arbitraires.
+        Seule la verification cryptographique de la signature garantit que le token a ete emis par Keycloak.
+    </div>
+
+    <h3>Decoder un JWT manuellement</h3>
+    <pre><code><span class="cmt"># Decoder le header (premiere partie avant le premier point)</span>
+<span class="kw">echo</span> <span class="str">"eyJhbGciOiJSUzI1NiJ9"</span> | <span class="kw">base64</span> -d
+
+<span class="cmt"># Decoder le payload (deuxieme partie)</span>
+<span class="kw">echo</span> <span class="str">"eyJzdWIiOiIxMjM0..."</span> | <span class="kw">base64</span> -d | <span class="kw">python3</span> -m json.tool
+
+<span class="cmt"># Ou utiliser jwt.io pour une visualisation interactive</span>
+<span class="cmt"># https://jwt.io/</span></code></pre>
+
+    <!-- ═══════════════════════════════════ -->
+    <!-- RESOLUTION DE PROBLEMES             -->
+    <!-- ═══════════════════════════════════ -->
+
+    <h2 id="problemes">Resolution des problemes courants</h2>
+
+    <h3>1. Erreur "Redirect URI Mismatch"</h3>
+    <div class="alert alert-danger">
+        <strong>Symptome :</strong> Keycloak affiche "Invalid redirect_uri" lors de la connexion.
+    </div>
+    <p><strong>Cause :</strong> L'URL de redirection de l'application ne correspond pas aux URIs configurees dans le client Keycloak.</p>
+    <p><strong>Solution :</strong></p>
+    <ul>
+        <li>Verifiez les <strong>Valid Redirect URIs</strong> dans la configuration du client Keycloak</li>
+        <li>Ajoutez <code>http://localhost:5000/*</code> (avec le wildcard <code>/*</code>)</li>
+        <li>Verifiez que le port correspond exactement</li>
+    </ul>
+
+    <h3>2. Erreur CORS</h3>
+    <div class="alert alert-danger">
+        <strong>Symptome :</strong> Les appels API depuis un front-end echouent avec une erreur CORS.
+    </div>
+    <p><strong>Solution :</strong></p>
+    <ul>
+        <li>Ajoutez l'origine du front-end dans <strong>Web Origins</strong> du client Keycloak</li>
+        <li>Verifiez la configuration CORS dans <code>Program.cs</code></li>
+        <li>Assurez-vous que <code>AllowCredentials()</code> est active si vous envoyez des cookies</li>
+    </ul>
+
+    <h3>3. Roles non mappes</h3>
+    <div class="alert alert-danger">
+        <strong>Symptome :</strong> <code>User.IsInRole("admin")</code> retourne toujours <code>false</code>.
+    </div>
+    <p><strong>Solution :</strong></p>
+    <ul>
+        <li>Verifiez que le <code>KeycloakRoleTransformer</code> est enregistre dans <code>Program.cs</code></li>
+        <li>Verifiez que les roles sont bien inclus dans le token (page Profile > Claims)</li>
+        <li>Verifiez les <strong>Client Scopes</strong> et <strong>Protocol Mappers</strong> dans Keycloak</li>
+        <li>Assurez-vous que <code>realm_access</code> et <code>resource_access</code> sont mappes via <code>ClaimActions</code></li>
+    </ul>
+
+    <h3>4. Token expire</h3>
+    <div class="alert alert-warning">
+        <strong>Symptome :</strong> L'API retourne 401 apres quelques minutes d'inactivite.
+    </div>
+    <p><strong>Solution :</strong></p>
+    <ul>
+        <li>L'access token expire apres 5 minutes par defaut</li>
+        <li>Utilisez le refresh token pour obtenir un nouveau token</li>
+        <li>Augmentez la duree de vie du token dans <strong>Realm settings > Tokens > Access Token Lifespan</strong></li>
+        <li>Verifiez le <code>ClockSkew</code> dans <code>TokenValidationParameters</code></li>
+    </ul>
+
+    <h3>5. Keycloak non accessible</h3>
+    <div class="alert alert-danger">
+        <strong>Symptome :</strong> L'application .NET ne peut pas se connecter a Keycloak.
+    </div>
+    <p><strong>Solution :</strong></p>
+    <ul>
+        <li>Verifiez que Keycloak est bien demarre : <code>docker compose ps</code></li>
+        <li>Verifiez les logs : <code>docker compose logs keycloak</code></li>
+        <li>Si l'application est dans Docker, utilisez <code>http://keycloak:8080</code> (nom du service) au lieu de <code>http://localhost:8080</code></li>
+        <li>Si l'application est en local, utilisez <code>http://localhost:8080</code></li>
+    </ul>
+
+    <!-- ═══════════════════════════════════ -->
+    <!-- EXERCICES                           -->
+    <!-- ═══════════════════════════════════ -->
+
+    <h2 id="exercices">Exercices pratiques</h2>
+
+    <h3>Exercice 1 : Explorer les niveaux d'acces</h3>
+    <div class="card">
+        <p><strong>Objectif :</strong> Observer les differences d'acces entre les roles.</p>
+        <ol>
+            <li>Demarrez la stack Docker et accedez a <code>http://localhost:5000</code></li>
+            <li>Connectez-vous avec <code>user@lab.local</code> / <code>User123!</code></li>
+            <li>Allez dans <strong>Documents</strong> et notez combien de documents sont visibles</li>
+            <li>Deconnectez-vous, puis reconnectez-vous avec <code>admin@lab.local</code> / <code>Admin123!</code></li>
+            <li>Comparez le nombre de documents visibles</li>
+            <li>Visitez la page <strong>Profil</strong> pour comparer les claims et roles entre les deux comptes</li>
+        </ol>
+        <div class="alert alert-info">
+            <strong>Questions :</strong> Combien de documents voit l'utilisateur "user" ? Et l'admin ?
+            Quelle est la difference dans les claims du token ?
+        </div>
+    </div>
+
+    <h3>Exercice 2 : Ajouter un role "supervisor"</h3>
+    <div class="card">
+        <p><strong>Objectif :</strong> Creer un nouveau role et implementer son controle d'acces.</p>
+        <ol>
+            <li>Dans la console Keycloak, creez un role <code>supervisor</code> dans le realm <code>securite-lab</code></li>
+            <li>Creez un utilisateur <code>supervisor@lab.local</code> et assignez-lui le role</li>
+            <li>Modifiez <code>DocumentService.GetMaxClassificationForRole()</code> pour que le superviseur ait acces au niveau <code>Secret</code></li>
+            <li>Ajoutez une politique <code>"RequireSupervisor"</code> dans <code>Program.cs</code></li>
+            <li>Testez la connexion avec le nouveau compte</li>
+        </ol>
+        <div class="alert alert-warning">
+            <strong>Indice :</strong> N'oubliez pas d'ajouter le role dans le client Keycloak egalement
+            et de configurer les protocol mappers.
+        </div>
+    </div>
+
+    <h3>Exercice 3 : Appeler l'API avec curl/Postman</h3>
+    <div class="card">
+        <p><strong>Objectif :</strong> Obtenir un token et appeler les endpoints API securises.</p>
+        <ol>
+            <li>Utilisez la commande curl ci-dessous pour obtenir un token :</li>
+        </ol>
+        <pre><code><span class="kw">curl</span> -s -X POST \
+  <span class="str">"http://localhost:8080/realms/securite-lab/protocol/openid-connect/token"</span> \
+  -d <span class="str">"grant_type=password&amp;client_id=securite-lab-app&amp;client_secret=dev-secret-change-in-production&amp;username=manager@lab.local&amp;password=Manager123!"</span></code></pre>
+        <ol start="2">
+            <li>Copiez le <code>access_token</code> de la reponse</li>
+            <li>Appelez <code>GET /api/AuthApi/userinfo</code> avec le token</li>
+            <li>Appelez <code>GET /api/DocumentsApi</code> et observez les documents retournes</li>
+            <li>Essayez avec un token de l'utilisateur <code>user@lab.local</code> et comparez</li>
+            <li>Essayez d'appeler sans token — quel code HTTP recevez-vous ?</li>
+        </ol>
+    </div>
+
+    <h3>Exercice 4 : Observer le cycle de vie du token</h3>
+    <div class="card">
+        <p><strong>Objectif :</strong> Comprendre l'expiration et le rafraichissement des tokens.</p>
+        <ol>
+            <li>Obtenez un token avec curl (voir exercice 3)</li>
+            <li>Notez la valeur de <code>expires_in</code> (en secondes)</li>
+            <li>Attendez que le token expire (5 minutes par defaut)</li>
+            <li>Essayez d'appeler l'API avec le token expire — observez l'erreur 401</li>
+            <li>Utilisez le <code>refresh_token</code> pour obtenir un nouveau token :</li>
+        </ol>
+        <pre><code><span class="kw">curl</span> -s -X POST \
+  <span class="str">"http://localhost:8080/realms/securite-lab/protocol/openid-connect/token"</span> \
+  -d <span class="str">"grant_type=refresh_token&amp;client_id=securite-lab-app&amp;client_secret=dev-secret-change-in-production&amp;refresh_token=VOTRE_REFRESH_TOKEN"</span></code></pre>
+        <ol start="6">
+            <li>Verifiez que le nouveau token fonctionne</li>
+            <li><strong>Bonus :</strong> Modifiez la duree de vie du token dans Keycloak (Realm settings > Tokens) et observez l'impact</li>
+        </ol>
+    </div>
+
+    <h3>Exercice 5 : Decoder et modifier un JWT</h3>
+    <div class="card">
+        <p><strong>Objectif :</strong> Comprendre la verification de la signature JWT.</p>
+        <ol>
+            <li>Obtenez un token et copiez l'<code>access_token</code></li>
+            <li>Allez sur <a href="https://jwt.io" style="color: var(--accent);">jwt.io</a> et collez le token</li>
+            <li>Observez le header, le payload et la signature</li>
+            <li>Dans le payload, changez le role de <code>"user"</code> a <code>"admin"</code></li>
+            <li>Copiez le token modifie et essayez d'appeler l'API avec</li>
+            <li>Observez que l'API refuse le token modifie (signature invalide)</li>
+        </ol>
+        <div class="alert alert-danger">
+            <strong>Lecon :</strong> C'est exactement pour cela que la verification de la signature est essentielle.
+            Sans elle, n'importe qui pourrait forger un token avec des privileges eleves.
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════ -->
+    <!-- RESSOURCES                          -->
+    <!-- ═══════════════════════════════════ -->
+
+    <h2 id="ressources">Ressources</h2>
+    <ul>
+        <li><a href="https://www.keycloak.org/documentation" style="color: var(--accent);">Documentation officielle Keycloak</a></li>
+        <li><a href="https://learn.microsoft.com/aspnet/core/security/authentication" style="color: var(--accent);">ASP.NET Core Authentication — Documentation Microsoft</a></li>
+        <li><a href="https://learn.microsoft.com/aspnet/core/security/authorization/introduction" style="color: var(--accent);">ASP.NET Core Authorization — Documentation Microsoft</a></li>
+        <li><a href="https://oauth.net/2/" style="color: var(--accent);">OAuth 2.0 — Specification</a></li>
+        <li><a href="https://openid.net/connect/" style="color: var(--accent);">OpenID Connect — Specification</a></li>
+        <li><a href="https://jwt.io/" style="color: var(--accent);">JWT.io — Debugger et decodeur de tokens</a></li>
+        <li><a href="https://cheatsheetseries.owasp.org/cheatsheets/JSON_Web_Token_for_Java_Cheat_Sheet.html" style="color: var(--accent);">OWASP — JWT Cheat Sheet</a></li>
+        <li><a href="https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html" style="color: var(--accent);">OWASP — Authentication Cheat Sheet</a></li>
+    </ul>
+</main>
+
+<footer>
+    Condorcet 2026 - BAC Cyber Securite - Programmation Securisee - Labo : Keycloak Authentication
+</footer>
+
+</body>
+</html>

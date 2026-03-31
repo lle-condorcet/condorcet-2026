@@ -1,0 +1,58 @@
+@using System.Security.Claims
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Keycloak Auth Lab</title>
+    <link rel="stylesheet" href="~/css/site.css" />
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <a class="brand" href="/">
+                <span class="brand-icon">🔐</span> Keycloak Auth Lab
+            </a>
+            <div class="nav-links">
+                <a href="/">Accueil</a>
+                @if (User.Identity?.IsAuthenticated == true)
+                {
+                    <a href="/Home/Dashboard">Tableau de bord</a>
+                    <a href="/Documents">Documents</a>
+                    @if (User.IsInRole("admin"))
+                    {
+                        <a href="/Admin" class="admin-link">Admin</a>
+                    }
+                    <div class="user-info">
+                        <a href="/Account/Profile" class="user-link">
+                            <span class="user-icon">👤</span>
+                            @(User.FindFirstValue("preferred_username") ?? User.FindFirstValue(ClaimTypes.Name) ?? "Utilisateur")
+                        </a>
+                        <div class="user-roles">
+                            @foreach (var role in User.Claims.Where(c => c.Type == ClaimTypes.Role).Select(c => c.Value).Where(r => new[] { "admin", "manager", "user", "auditor" }.Contains(r)))
+                            {
+                                <span class="role-badge role-@role">@role</span>
+                            }
+                        </div>
+                        <a href="/Account/Logout" class="btn-logout">Deconnexion</a>
+                    </div>
+                }
+                else
+                {
+                    <a href="/Account/Login" class="btn-login">Connexion</a>
+                }
+            </div>
+        </div>
+    </nav>
+
+    <main class="container">
+        @RenderBody()
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>Keycloak Authentication Lab &mdash; Programmation Securisee &mdash; Condorcet 2026</p>
+        </div>
+    </footer>
+</body>
+</html>

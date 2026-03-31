@@ -1,0 +1,30 @@
+@model SecureDocument
+@{
+    ViewData["Title"] = Model.Title;
+}
+
+<h1>@Model.Title</h1>
+<p class="subtitle">
+    <span class="classification classification-@Model.Classification">@Model.Classification</span>
+    &mdash; Cree le @Model.CreatedAt.ToString("dd/MM/yyyy") &mdash; Proprietaire : @Model.OwnerId
+</p>
+
+<div class="card">
+    <h3>Contenu</h3>
+    <p style="white-space: pre-wrap; margin-top: 0.5rem;">@Model.Content</p>
+</div>
+
+<div class="card" style="margin-top: 1rem;">
+    <h3>Metadonnees</h3>
+    <table>
+        <tr><td style="color: var(--text-muted);">ID</td><td>@Model.Id</td></tr>
+        <tr><td style="color: var(--text-muted);">Classification</td><td><span class="classification classification-@Model.Classification">@Model.Classification</span></td></tr>
+        <tr><td style="color: var(--text-muted);">Proprietaire</td><td>@Model.OwnerId</td></tr>
+        <tr><td style="color: var(--text-muted);">Date de creation</td><td>@Model.CreatedAt.ToString("dd/MM/yyyy HH:mm:ss")</td></tr>
+        <tr><td style="color: var(--text-muted);">Derniere mise a jour</td><td>@Model.UpdatedAt.ToString("dd/MM/yyyy HH:mm:ss")</td></tr>
+    </table>
+</div>
+
+<div style="margin-top: 1.5rem;">
+    <a href="/Documents" class="btn btn-primary" style="background: var(--surface-2);">Retour a la liste</a>
+</div>

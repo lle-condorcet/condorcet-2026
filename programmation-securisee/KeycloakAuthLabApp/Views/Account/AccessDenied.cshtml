@@ -1,0 +1,19 @@
+@{
+    ViewData["Title"] = "Acces refuse";
+}
+
+<div class="access-denied">
+    <div class="icon">🚫</div>
+    <h1 style="color: var(--danger);">Acces <span class="accent">refuse</span></h1>
+    <p class="subtitle">Vous n'avez pas les autorisations necessaires pour acceder a cette ressource.</p>
+
+    <div class="alert alert-danger" style="max-width: 500px; margin: 2rem auto;">
+        <strong>Erreur 403 :</strong> Votre role actuel ne vous permet pas d'acceder a cette page ou ce document.
+        Contactez votre administrateur si vous pensez que c'est une erreur.
+    </div>
+
+    <div style="margin-top: 2rem;">
+        <a href="/" class="btn btn-primary">Retour a l'accueil</a>
+        <a href="/Home/Dashboard" class="btn btn-primary" style="background: var(--surface-2); margin-left: 0.5rem;">Tableau de bord</a>
+    </div>
+</div>

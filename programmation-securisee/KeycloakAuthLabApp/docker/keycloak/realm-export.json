@@ -1,0 +1,297 @@
+{
+  "id": "securite-lab",
+  "realm": "securite-lab",
+  "displayName": "Securite Lab",
+  "enabled": true,
+  "sslRequired": "none",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": true,
+  "editUsernameAllowed": false,
+  "bruteForceProtected": true,
+  "permanentLockout": false,
+  "maxFailureWaitSeconds": 900,
+  "minimumQuickLoginWaitSeconds": 60,
+  "waitIncrementSeconds": 60,
+  "quickLoginCheckMilliSeconds": 1000,
+  "maxDeltaTimeSeconds": 43200,
+  "failureFactor": 5,
+  "accessTokenLifespan": 300,
+  "accessTokenLifespanForImplicitFlow": 900,
+  "ssoSessionIdleTimeout": 1800,
+  "ssoSessionMaxLifespan": 36000,
+  "offlineSessionIdleTimeout": 2592000,
+  "accessCodeLifespan": 60,
+  "accessCodeLifespanUserAction": 300,
+  "accessCodeLifespanLogin": 1800,
+  "actionTokenGeneratedByAdminLifespan": 43200,
+  "actionTokenGeneratedByUserLifespan": 300,
+  "roles": {
+    "realm": [
+      {
+        "name": "admin",
+        "description": "Administrateur systeme - acces complet a toutes les ressources",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "manager",
+        "description": "Gestionnaire - acces aux documents jusqu'au niveau Confidential",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "user",
+        "description": "Utilisateur standard - acces aux documents Public et Internal",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "auditor",
+        "description": "Auditeur - acces en lecture aux documents jusqu'au niveau Confidential",
+        "composite": false,
+        "clientRole": false
+      }
+    ],
+    "client": {
+      "securite-lab-app": [
+        {
+          "name": "admin",
+          "description": "Client admin role",
+          "composite": false,
+          "clientRole": true
+        },
+        {
+          "name": "manager",
+          "description": "Client manager role",
+          "composite": false,
+          "clientRole": true
+        },
+        {
+          "name": "user",
+          "description": "Client user role",
+          "composite": false,
+          "clientRole": true
+        },
+        {
+          "name": "auditor",
+          "description": "Client auditor role",
+          "composite": false,
+          "clientRole": true
+        }
+      ]
+    }
+  },
+  "clients": [
+    {
+      "clientId": "securite-lab-app",
+      "name": "Securite Lab Application",
+      "description": "Application ASP.NET Core du laboratoire de securite",
+      "enabled": true,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "dev-secret-change-in-production",
+      "redirectUris": [
+        "http://localhost:5000/*",
+        "http://localhost:5001/*",
+        "https://localhost:5001/*",
+        "http://localhost:5232/*"
+      ],
+      "webOrigins": [
+        "http://localhost:5000",
+        "http://localhost:5001",
+        "https://localhost:5001",
+        "http://localhost:5232"
+      ],
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "bearerOnly": false,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": false,
+      "authorizationServicesEnabled": false,
+      "fullScopeAllowed": true,
+      "defaultClientScopes": [
+        "web-origins",
+        "acr",
+        "profile",
+        "roles",
+        "email"
+      ],
+      "optionalClientScopes": [
+        "address",
+        "phone",
+        "offline_access",
+        "microprofile-jwt"
+      ],
+      "protocolMappers": [
+        {
+          "name": "realm-roles-mapper",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-realm-role-mapper",
+          "consentRequired": false,
+          "config": {
+            "multivalued": "true",
+            "userinfo.token.claim": "true",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "claim.name": "realm_access.roles",
+            "jsonType.label": "String"
+          }
+        },
+        {
+          "name": "client-roles-mapper",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-client-role-mapper",
+          "consentRequired": false,
+          "config": {
+            "multivalued": "true",
+            "userinfo.token.claim": "true",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "claim.name": "resource_access.${client_id}.roles",
+            "jsonType.label": "String",
+            "usermodel.clientRoleMapping.clientId": "securite-lab-app"
+          }
+        }
+      ]
+    }
+  ],
+  "users": [
+    {
+      "username": "admin@lab.local",
+      "email": "admin@lab.local",
+      "firstName": "Admin",
+      "lastName": "Systeme",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "Admin123!",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "admin"
+      ],
+      "clientRoles": {
+        "securite-lab-app": [
+          "admin"
+        ]
+      }
+    },
+    {
+      "username": "manager@lab.local",
+      "email": "manager@lab.local",
+      "firstName": "Marie",
+      "lastName": "Dupont",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "Manager123!",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "manager"
+      ],
+      "clientRoles": {
+        "securite-lab-app": [
+          "manager"
+        ]
+      }
+    },
+    {
+      "username": "user@lab.local",
+      "email": "user@lab.local",
+      "firstName": "Jean",
+      "lastName": "Martin",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "User123!",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "user"
+      ],
+      "clientRoles": {
+        "securite-lab-app": [
+          "user"
+        ]
+      }
+    },
+    {
+      "username": "auditor@lab.local",
+      "email": "auditor@lab.local",
+      "firstName": "Sophie",
+      "lastName": "Bernard",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "Auditor123!",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "auditor"
+      ],
+      "clientRoles": {
+        "securite-lab-app": [
+          "auditor"
+        ]
+      }
+    }
+  ],
+  "clientScopes": [
+    {
+      "name": "roles",
+      "description": "OpenID Connect scope for user roles",
+      "protocol": "openid-connect",
+      "attributes": {
+        "include.in.token.scope": "true",
+        "display.on.consent.screen": "true",
+        "consent.screen.text": "Your roles"
+      },
+      "protocolMappers": [
+        {
+          "name": "realm roles",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-realm-role-mapper",
+          "consentRequired": false,
+          "config": {
+            "multivalued": "true",
+            "userinfo.token.claim": "true",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "claim.name": "realm_access.roles",
+            "jsonType.label": "String"
+          }
+        },
+        {
+          "name": "client roles",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-client-role-mapper",
+          "consentRequired": false,
+          "config": {
+            "multivalued": "true",
+            "userinfo.token.claim": "true",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "claim.name": "resource_access.${client_id}.roles",
+            "jsonType.label": "String"
+          }
+        }
+      ]
+    }
+  ]
+}

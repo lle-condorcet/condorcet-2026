@@ -1,0 +1,163 @@
+@using KeycloakAuthLabApp.Models
+@using System.Text.Json
+@{
+    ViewData["Title"] = "Administration";
+    var users = ViewBag.Users as List<JsonElement> ?? new List<JsonElement>();
+    var roles = ViewBag.Roles as List<JsonElement> ?? new List<JsonElement>();
+    var recentLogs = ViewBag.RecentLogs as List<AccessLog> ?? new List<AccessLog>();
+    var failedLogs = ViewBag.FailedLogs as List<AccessLog> ?? new List<AccessLog>();
+}
+
+<h1>Panneau <span class="accent">d'administration</span></h1>
+<p class="subtitle">Gestion des utilisateurs, roles et journaux d'acces.</p>
+
+<div class="card-grid">
+    <div class="stat-card">
+        <div class="stat-value">@users.Count</div>
+        <div class="stat-label">Utilisateurs Keycloak</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">@roles.Count</div>
+        <div class="stat-label">Roles du realm</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">@recentLogs.Count</div>
+        <div class="stat-label">Evenements recents</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value" style="color: var(--danger);">@failedLogs.Count</div>
+        <div class="stat-label">Acces refuses</div>
+    </div>
+</div>
+
+<h2>Utilisateurs Keycloak</h2>
+<div class="card">
+    @if (users.Any())
+    {
+        <table>
+            <thead>
+                <tr>
+                    <th>Nom d'utilisateur</th>
+                    <th>Email</th>
+                    <th>Actif</th>
+                    <th>Email verifie</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var user in users)
+                {
+                    <tr>
+                        <td><strong>@(user.TryGetProperty("username", out var u) ? u.GetString() : "N/A")</strong></td>
+                        <td>@(user.TryGetProperty("email", out var e) ? e.GetString() : "N/A")</td>
+                        <td>
+                            @if (user.TryGetProperty("enabled", out var en) && en.GetBoolean())
+                            {
+                                <span class="success-indicator">Oui</span>
+                            }
+                            else
+                            {
+                                <span class="failure-indicator">Non</span>
+                            }
+                        </td>
+                        <td>
+                            @if (user.TryGetProperty("emailVerified", out var ev) && ev.GetBoolean())
+                            {
+                                <span class="success-indicator">Oui</span>
+                            }
+                            else
+                            {
+                                <span class="failure-indicator">Non</span>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <div class="alert alert-warning">
+            <strong>Note :</strong> Impossible de recuperer les utilisateurs depuis Keycloak.
+            Verifiez que le serveur Keycloak est accessible et que les credentials admin sont corrects.
+        </div>
+    }
+</div>
+
+<h2>Journaux d'acces refuses</h2>
+<div class="card">
+    @if (failedLogs.Any())
+    {
+        <table>
+            <thead>
+                <tr>
+                    <th>Utilisateur</th>
+                    <th>Action</th>
+                    <th>Ressource</th>
+                    <th>Details</th>
+                    <th>IP</th>
+                    <th>Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var log in failedLogs)
+                {
+                    <tr>
+                        <td>@log.UserId</td>
+                        <td>@log.Action</td>
+                        <td>@log.Resource</td>
+                        <td style="max-width: 300px; word-break: break-word;">@log.Details</td>
+                        <td>@log.IpAddress</td>
+                        <td>@log.Timestamp.ToString("dd/MM HH:mm")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <p style="color: var(--text-muted);">Aucun acces refuse enregistre.</p>
+    }
+</div>
+
+<h2>Journaux recents (tous)</h2>
+<div class="card">
+    @if (recentLogs.Any())
+    {
+        <table>
+            <thead>
+                <tr>
+                    <th>Utilisateur</th>
+                    <th>Action</th>
+                    <th>Ressource</th>
+                    <th>Resultat</th>
+                    <th>Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var log in recentLogs.Take(25))
+                {
+                    <tr>
+                        <td>@log.UserId</td>
+                        <td>@log.Action</td>
+                        <td>@log.Resource</td>
+                        <td>
+                            @if (log.Success)
+                            {
+                                <span class="success-indicator">Succes</span>
+                            }
+                            else
+                            {
+                                <span class="failure-indicator">Refuse</span>
+                            }
+                        </td>
+                        <td>@log.Timestamp.ToString("dd/MM HH:mm")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <p style="color: var(--text-muted);">Aucun journal d'acces enregistre.</p>
+    }
+</div>

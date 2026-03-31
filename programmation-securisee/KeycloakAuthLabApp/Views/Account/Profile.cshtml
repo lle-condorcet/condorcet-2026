@@ -1,0 +1,120 @@
+@{
+    ViewData["Title"] = "Mon profil";
+    var claims = ViewBag.Claims as IEnumerable<dynamic> ?? Enumerable.Empty<dynamic>();
+    var roles = ViewBag.Roles as List<string> ?? new List<string>();
+    var displayName = ViewBag.DisplayName as string ?? "Utilisateur";
+    var email = ViewBag.Email as string ?? "N/A";
+    var keycloakId = ViewBag.KeycloakId as string ?? "N/A";
+    var accessToken = ViewBag.AccessToken as string;
+    var idToken = ViewBag.IdToken as string;
+    var refreshToken = ViewBag.RefreshToken as string;
+}
+
+<h1>Profil <span class="accent">utilisateur</span></h1>
+<p class="subtitle">Informations extraites de votre token Keycloak.</p>
+
+<div class="card-grid">
+    <div class="card">
+        <h3>Identite</h3>
+        <table>
+            <tr><td style="color: var(--text-muted);">Nom d'utilisateur</td><td><strong>@displayName</strong></td></tr>
+            <tr><td style="color: var(--text-muted);">Email</td><td>@email</td></tr>
+            <tr><td style="color: var(--text-muted);">Keycloak ID</td><td><code style="font-size: 0.8rem;">@keycloakId</code></td></tr>
+        </table>
+    </div>
+    <div class="card">
+        <h3>Roles</h3>
+        <div style="display: flex; gap: 0.4rem; flex-wrap: wrap; margin-top: 0.5rem;">
+            @foreach (var role in roles)
+            {
+                var cssClass = role switch
+                {
+                    "admin" => "role-admin",
+                    "manager" => "role-manager",
+                    "user" => "role-user",
+                    "auditor" => "role-auditor",
+                    _ => ""
+                };
+                <span class="role-badge @cssClass" style="font-size: 0.85rem; padding: 0.3rem 0.8rem;">@role</span>
+            }
+        </div>
+    </div>
+</div>
+
+<h2>Claims du token</h2>
+<div class="card">
+    <table class="claims-table">
+        <thead>
+            <tr><th>Type</th><th>Valeur</th></tr>
+        </thead>
+        <tbody>
+            @foreach (var claim in claims)
+            {
+                <tr>
+                    <td>@claim.Type</td>
+                    <td style="word-break: break-all; max-width: 500px;">@claim.Value</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@if (!string.IsNullOrEmpty(accessToken))
+{
+    <h2>Access Token (JWT)</h2>
+    <div class="alert alert-warning">
+        <strong>Attention :</strong> Ne jamais exposer les tokens en production. Ceci est a des fins educatives uniquement.
+    </div>
+    <div class="token-display">@accessToken</div>
+
+    @{
+        // Decode JWT parts for display
+        var parts = accessToken.Split('.');
+        if (parts.Length == 3)
+        {
+            <h3>Header (decode)</h3>
+            try
+            {
+                var header = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(PadBase64(parts[0])));
+                <div class="token-display">@header</div>
+            }
+            catch { }
+
+            <h3>Payload (decode)</h3>
+            try
+            {
+                var payload = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(PadBase64(parts[1])));
+                <div class="token-display">@payload</div>
+            }
+            catch { }
+
+            <h3>Signature</h3>
+            <div class="token-display">@parts[2]</div>
+        }
+    }
+}
+
+@if (!string.IsNullOrEmpty(idToken))
+{
+    <h2>ID Token</h2>
+    <div class="token-display">@idToken</div>
+}
+
+@if (!string.IsNullOrEmpty(refreshToken))
+{
+    <h2>Refresh Token</h2>
+    <div class="token-display" style="max-height: 100px; overflow-y: auto;">@refreshToken</div>
+}
+
+@functions {
+    static string PadBase64(string base64)
+    {
+        var s = base64.Replace('-', '+').Replace('_', '/');
+        switch (s.Length % 4)
+        {
+            case 2: s += "=="; break;
+            case 3: s += "="; break;
+        }
+        return s;
+    }
+}

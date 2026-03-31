@@ -1,0 +1,96 @@
+@using KeycloakAuthLabApp.Models
+@{
+    ViewData["Title"] = "Tableau de bord";
+    var roles = ViewBag.Roles as List<string> ?? new List<string>();
+    var recentLogs = ViewBag.RecentLogs as List<AccessLog> ?? new List<AccessLog>();
+    var displayName = ViewBag.DisplayName as string ?? "Utilisateur";
+}
+
+<h1>Tableau de <span class="accent">bord</span></h1>
+<p class="subtitle">Bienvenue, <strong>@displayName</strong>. Voici un apercu de votre activite.</p>
+
+<div class="card-grid">
+    <div class="stat-card">
+        <div class="stat-value">@roles.Count(r => new[] { "admin", "manager", "user", "auditor" }.Contains(r))</div>
+        <div class="stat-label">Roles attribues</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">@recentLogs.Count(l => l.Success)</div>
+        <div class="stat-label">Acces reussis (recents)</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">@recentLogs.Count(l => !l.Success)</div>
+        <div class="stat-label">Acces refuses (recents)</div>
+    </div>
+</div>
+
+<h2>Vos roles</h2>
+<div class="card">
+    @if (roles.Any())
+    {
+        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+            @foreach (var role in roles)
+            {
+                var cssClass = role switch
+                {
+                    "admin" => "role-admin",
+                    "manager" => "role-manager",
+                    "user" => "role-user",
+                    "auditor" => "role-auditor",
+                    _ => ""
+                };
+                <span class="role-badge @cssClass" style="font-size: 0.85rem; padding: 0.3rem 0.8rem;">@role</span>
+            }
+        </div>
+    }
+    else
+    {
+        <p class="text-muted">Aucun role attribue.</p>
+    }
+</div>
+
+<h2>Activite recente</h2>
+<div class="card">
+    @if (recentLogs.Any())
+    {
+        <table>
+            <thead>
+                <tr>
+                    <th>Action</th>
+                    <th>Ressource</th>
+                    <th>Resultat</th>
+                    <th>Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var log in recentLogs)
+                {
+                    <tr>
+                        <td>@log.Action</td>
+                        <td>@log.Resource</td>
+                        <td>
+                            @if (log.Success)
+                            {
+                                <span class="success-indicator">Succes</span>
+                            }
+                            else
+                            {
+                                <span class="failure-indicator">Refuse</span>
+                            }
+                        </td>
+                        <td>@log.Timestamp.ToString("dd/MM/yyyy HH:mm")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <p style="color: var(--text-muted);">Aucune activite recente.</p>
+    }
+</div>
+
+<div style="margin-top: 1.5rem; display: flex; gap: 1rem;">
+    <a href="/Documents" class="btn btn-primary">Voir les documents</a>
+    <a href="/Account/Profile" class="btn btn-primary" style="background: var(--surface-2);">Mon profil</a>
+</div>
